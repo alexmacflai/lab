@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poem Grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /* Colours: every channel is either 0 or 255, plus one grey. */
+  :root {
+    --black: rgb(0 0 0);
+    --white: rgb(255 255 255);
+    --grey: rgb(128 128 128);
+    --red: rgb(255 0 0);
+    --green: rgb(0 255 0);
+    --blue: rgb(0 0 255);
+    --cyan: rgb(0 255 255);
+    --magenta: rgb(255 0 255);
+    --yellow: rgb(255 255 0);
+    --margin: clamp(16px, 4vw, 48px);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--white);
+    color: var(--black);
+    font-family: 'DM Mono', ui-monospace, monospace;
+    touch-action: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #stage {
+    position: fixed;
+    inset: var(--margin);
+    display: flex;
+  }
+  #text {
+    flex: 0 0 auto;
+    max-width: 100%;
+    line-height: 1.35;
+    font-weight: 400;
+    --fill: var(--black);
+    --on: var(--white);
+  }
+  #text .title { margin-bottom: 1em; }
+  #text .stanza + .stanza { margin-top: 1em; }
+  #text .line { min-height: 1lh; }
+  #text.justify .line { text-align: justify; }
+  #text.justify .title { text-align: left; }
+  #text.caps { text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* Highlights */
+  .hl-italic { font-style: italic; }
+  .hl-fill { background: var(--fill); color: var(--on); }
+
+  /* Dividers: every glyph boxed by thin rules, spaces and breaks as solid rectangles */
+  .word { white-space: nowrap; }
+  .ch { border-right: 1px solid var(--grey); }
+  .word .ch:first-child { border-left: 1px solid var(--grey); }
+  .sp, .br, .pbr {
+    display: inline-block;
+    height: 0.72em;
+    vertical-align: -0.08em;
+  }
+  .sp { width: 1ch; background: var(--black); }
+  .br { width: 2ch; margin-left: 1ch; background: var(--grey); }
+  .pbr { width: 4ch; margin-left: 1ch; background: var(--fill); }
+
+  /* Word boxes */
+  .wb {
+    display: inline-block;
+    border: 1px solid var(--black);
+    padding: 0 0.3ch;
+    margin: 0 0.4ch 0.25em 0;
+    line-height: 1.2;
+  }
+
+  /* Letter boxes */
+  .boxes {
+    display: grid;
+    border-left: 1px solid var(--black);
+    border-top: 1px solid var(--black);
+  }
+  .boxes > div {
+    border-right: 1px solid var(--black);
+    border-bottom: 1px solid var(--black);
+    text-align: center;
+    overflow: hidden;
+  }
+  .boxes .eol { background: var(--eol); }
+  .boxes .sp { display: block; width: auto; height: auto; background: var(--space); }
+
+  /* Per-line scaling */
+  #text.scale .line { white-space: nowrap; line-height: 1; }
+
+  /* Invisible grid overlay; press G to reveal it */
+  #grid {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #grid > div { outline: 1px solid transparent; }
+  body.debug #grid > div { outline-color: rgb(255 0 255 / 0.5); }
+  body.debug #grid > div.on { background: rgb(255 0 255 / 0.08); }
+  #hud {
+    position: fixed;
+    left: 8px;
+    bottom: 6px;
+    z-index: 11;
+    font-size: 11px;
+    color: var(--magenta);
+    display: none;
+  }
+  body.debug #hud { display: block; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="text"></div></div>
+<div id="grid"></div>
+<div id="hud"></div>
+
+<script>
+// First paragraph is the title, blank lines separate stanzas.
+const POEM = `Fish air
+
+A man sits outside the fish shop, on a plastic chair, in the shade of a canopy.
+A plastic container of fish in one hand. The paper bag it came in with the other.
+Eyes closed, bag over his mouth. Breathing only from it. Again and again.
+Like the smell is too much. Or not enough. Hard to tell.`;
+
+// pos: horizontal and vertical placement (s = start, c = centre, e = end).
+// w: text width, always capped at the screen. fill: grow text to fill the space.
+const VARIANTS = [
+  { name: 'centre column', mode: 'plain', pos: 'c c', w: '34ch', align: 'center' },
+  { name: 'left top, fixed width', mode: 'plain', pos: 's s', w: '420px', align: 'left' },
+  { name: 'right bottom', mode: 'plain', pos: 'e e', w: '30ch', align: 'right' },
+  { name: 'centre justified', mode: 'plain', pos: 'c c', w: '38ch', align: 'justify' },
+  { name: 'bottom, full width', mode: 'plain', pos: 'c e', w: '100%', align: 'center', fill: true },
+  { name: 'fill left', mode: 'plain', pos: 's s', w: '100%', align: 'left', fill: true },
+  { name: 'title letters italic', mode: 'letters', hl: 'italic', pos: 'c c', w: '34ch', align: 'left' },
+  { name: 'title letters fill', mode: 'letters', hl: 'fill', color: 'blue', pos: 's s', w: '100%', align: 'left', fill: true },
+  { name: 'title words italic', mode: 'words', hl: 'italic', pos: 'e e', w: '30ch', align: 'right' },
+  { name: 'title words fill', mode: 'words', hl: 'fill', color: 'red', pos: 'c c', w: '100%', align: 'center', fill: true },
+  { name: 'dividers', mode: 'dividers', color: 'red', pos: 's c', w: '48ch', align: 'left', scale: 1.3 },
+  { name: 'letter boxes', mode: 'boxes', space: 'white', eol: 'black', pos: 'c c' },
+  { name: 'letter boxes, colour', mode: 'boxes', space: 'black', eol: 'blue', pos: 'c c' },
+  { name: 'word boxes', mode: 'wordboxes', pos: 'c c', w: '100%', align: 'center', fill: true },
+  { name: 'line scale', mode: 'scale', pos: 's c' },
+  { name: 'caps justified', mode: 'plain', caps: true, pos: 'c c', w: '40ch', align: 'justify', scale: 0.75 },
+  { name: 'random fills', mode: 'random', color: 'yellow', pos: 's s', w: '40ch', align: 'left' },
+  { name: 'key words', mode: 'keywords', color: 'green', pos: 'c e', w: '100%', align: 'left', fill: true },
+];
+
+const LIGHT = new Set(['white', 'yellow', 'green', 'cyan']);
+const STOP = new Set('the a an and or of for to in on at it is me my i one that its own like with from by as this'.split(' '));
+const PLACE = { s: 'flex-start', c: 'center', e: 'flex-end' };
+
+const stage = document.getElementById('stage');
+const text = document.getElementById('text');
+const grid = document.getElementById('grid');
+const hud = document.getElementById('hud');
+
+const poem = parse(POEM);
+const titleWords = new Set(poem.title.split(/\s+/).map(norm).filter(Boolean));
+const titleLetters = new Set([...poem.title.toLowerCase()].filter(c => /\p{L}/u.test(c)));
+const keywords = pickKeywords(poem);
+
+function parse(src) {
+  const blocks = src.trim().split(/\n\s*\n/);
+  const title = blocks.shift().trim();
+  const stanzas = blocks.map(b => b.split('\n').map(l => l.trim()).filter(Boolean));
+  return { title, stanzas };
+}
+
+function norm(word) {
+  return word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+function pickKeywords({ stanzas }) {
+  const counts = new Map();
+  for (const line of stanzas.flat()) {
+    for (const w of line.split(/\s+/)) {
+      const k = norm(w);
+      if (k.length > 3 && !STOP.has(k)) counts.set(k, (counts.get(k) || 0) + 1);
+    }
+  }
+  const ranked = [...counts].sort((a, b) => b[1] - a[1]).map(([k]) => k);
+  return new Set([...titleWords, ...ranked.slice(0, 4)]);
+}
+
+function mulberry32(seed) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function el(tag, cls, content) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (content != null) node.textContent = content;
+  return node;
+}
+
+// Splits a line into words and the whitespace between them.
+function tokens(line) {
+  return line.split(/(\s+)/).filter(Boolean);
+}
+
+// Builds the inner content of one line for the flowing modes.
+function lineContent(line, v, rng, isStanzaEnd) {
+  const frag = document.createDocumentFragment();
+  const hl = `hl-${v.hl || 'fill'}`;
+  switch (v.mode) {
+    case 'letters': {
+      let run = '';
+      for (const c of line) {
+        if (titleLetters.has(c.toLowerCase())) {
+          if (run) frag.append(run), run = '';
+          frag.append(el('span', hl, c));
+        } else run += c;
+      }
+      if (run) frag.append(run);
+      return frag;
+    }
+    case 'words':
+    case 'random':
+    case 'keywords': {
+      for (const t of tokens(line)) {
+        const k = norm(t);
+        const on = k && (
+          v.mode === 'words' ? titleWords.has(k) :
+          v.mode === 'keywords' ? keywords.has(k) :
+          rng() < 0.22
+        );
+        frag.append(on ? el('span', hl, t) : t);
+      }
+      return frag;
+    }
+    case 'dividers': {
+      for (const t of tokens(line)) {
+        if (/\s/.test(t)) {
+          for (let i = 0; i < t.length; i++) frag.append(el('span', 'sp'));
+        } else {
+          const word = el('span', 'word');
+          for (const c of t) word.append(el('span', 'ch', c));
+          frag.append(word);
+        }
+      }
+      frag.append(el('span', isStanzaEnd ? 'pbr' : 'br'));
+      return frag;
+    }
+    case 'wordboxes': {
+      for (const t of line.split(/\s+/).filter(Boolean)) frag.append(el('span', 'wb', t));
+      return frag;
+    }
+    default:
+      frag.append(line);
+      return frag;
+  }
+}
+
+function buildFlow(v, rng) {
+  const title = el('div', 'title line');
+  title.append(lineContent(poem.title, v, rng, true));
+  text.append(title);
+  for (const lines of poem.stanzas) {
+    const stanza = el('div', 'stanza');
+    lines.forEach((line, i) => {
+      const row = el('div', 'line');
+      row.append(lineContent(line, v, rng, i === lines.length - 1));
+      stanza.append(row);
+    });
+    text.append(stanza);
+  }
+}
+
+// Shrinks (or grows, for fill variants) the font until the text fits the stage.
+function fitFont(v) {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const fits = () =>
+    text.scrollWidth <= text.clientWidth + 1 &&
+    text.offsetWidth <= W + 1 &&
+    text.offsetHeight <= H + 1;
+  const set = px => (text.style.fontSize = px + 'px');
+  const base = Math.min(20, Math.max(13, innerWidth * 0.011 + 8)) * (v.scale || 1);
+  let lo = 4, hi = v.fill ? Math.max(W, H) : base;
+  set(hi);
+  if (fits()) return;
+  for (let i = 0; i < 18; i++) {
+    const mid = (lo + hi) / 2;
+    set(mid);
+    fits() ? (lo = mid) : (hi = mid);
+  }
+  set(Math.floor(lo * 10) / 10);
+}
+
+// Wraps the poem into rows of `cols` cells. Every line pads to the row end with
+// end-of-line cells; stanzas are separated by a full row of them.
+function wrapCells(cols) {
+  const rows = [];
+  let row = [];
+  const pad = t => { while (row.length < cols) row.push({ t }); };
+  const flush = () => { rows.push(row); row = []; };
+  const para = str => {
+    for (let w of str.split(/\s+/).filter(Boolean)) {
+      let chars = [...w];
+      while (chars.length > cols) {
+        if (row.length) { pad('sp'); flush(); }
+        row = chars.slice(0, cols).map(c => ({ t: 'ch', c }));
+        flush();
+        chars = chars.slice(cols);
+      }
+      if (row.length && row.length + 1 + chars.length > cols) { pad('sp'); flush(); }
+      if (row.length) row.push({ t: 'sp' });
+      for (const c of chars) row.push({ t: 'ch', c });
+    }
+    pad('eol');
+    flush();
+  };
+  para(poem.title);
+  for (const lines of poem.stanzas) {
+    pad('eol'); flush();
+    lines.forEach(para);
+  }
+  return rows;
+}
+
+function layoutBoxes(v) {
+  const W = stage.clientWidth - 1, H = stage.clientHeight - 1;
+  let best = { s: -1 };
+  for (let cols = 8; cols <= 120; cols++) {
+    const rows = wrapCells(cols);
+    const s = Math.max(1, Math.floor(Math.min(W / cols, H / rows.length)));
+    if (s > best.s) best = { s, cols, rows };
+  }
+  const { s, cols, rows } = best;
+  const boxes = el('div', 'boxes');
+  boxes.style.gridTemplateColumns = `repeat(${cols}, ${s}px)`;
+  boxes.style.gridAutoRows = `${s}px`;
+  boxes.style.fontSize = `${s * 0.6}px`;
+  boxes.style.lineHeight = `${s - 1}px`;
+  boxes.style.setProperty('--space', `var(--${v.space})`);
+  boxes.style.setProperty('--eol', `var(--${v.eol})`);
+  const frag = document.createDocumentFragment();
+  for (const cell of rows.flat()) frag.append(el('div', cell.t === 'ch' ? '' : cell.t, cell.c));
+  boxes.append(frag);
+  text.append(boxes);
+}
+
+// Breaks a line into balanced pieces of at most `max` characters, at word boundaries.
+function splitLine(line, max) {
+  const pieces = Math.ceil(line.length / max);
+  if (pieces <= 1) return [line];
+  const target = line.length / pieces;
+  const out = [];
+  let cur = '';
+  for (const w of line.split(' ')) {
+    if (cur && (cur + ' ' + w).length > target && out.length < pieces - 1) { out.push(cur); cur = w; }
+    else cur = cur ? cur + ' ' + w : w;
+  }
+  return [...out, cur];
+}
+
+// Each line gets its own size so it spans the full width; then everything
+// scales down together if the stack is taller than the screen. Lines too long
+// to stay readable at full width are broken into pieces first.
+function layoutScale() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const maxChars = Math.max(12, Math.floor(W / (0.6 * 16)));
+  const rows = [];
+  const add = str => {
+    const row = el('div', 'line', str);
+    row.style.fontSize = '100px';
+    text.append(row);
+    rows.push(row);
+  };
+  add(poem.title);
+  for (const s of poem.stanzas) {
+    text.append(el('div', 'gap'));
+    s.flatMap(line => splitLine(line, maxChars)).forEach(add);
+  }
+  const gaps = [...text.querySelectorAll('.gap')];
+  const sizes = rows.map(r => (100 * W) / r.scrollWidth * 0.99);
+  const lh = rows[0].offsetHeight / 100;
+  const gap = H * 0.025;
+  const total = sizes.reduce((a, b) => a + b * lh, 0) + gap * gaps.length;
+  const k = Math.min(1, (H - gap * gaps.length) / (total - gap * gaps.length));
+  rows.forEach((r, i) => (r.style.fontSize = sizes[i] * k + 'px'));
+  gaps.forEach(g => (g.style.height = gap + 'px'));
+}
+
+let current = -1;
+let seed = 1;
+
+function render() {
+  const v = VARIANTS[current];
+  const [x, y] = v.pos.split(' ');
+  stage.style.justifyContent = PLACE[x];
+  stage.style.alignItems = PLACE[y];
+
+  text.replaceChildren();
+  text.removeAttribute('style');
+  text.className = [v.mode, v.align === 'justify' && 'justify', v.caps && 'caps'].filter(Boolean).join(' ');
+  if (v.color) {
+    text.style.setProperty('--fill', `var(--${v.color})`);
+    text.style.setProperty('--on', LIGHT.has(v.color) ? 'var(--black)' : 'var(--white)');
+  }
+
+  if (v.mode === 'boxes') return layoutBoxes(v);
+  if (v.mode === 'scale') return layoutScale();
+
+  text.style.textAlign = v.align === 'justify' ? 'justify' : v.align;
+  text.style.width = v.w === '100%' ? '100%' : `min(${v.w}, 100%)`;
+  buildFlow(v, mulberry32(seed));
+  fitFont(v);
+}
+
+function show(index) {
+  if (index === current) return;
+  current = index;
+  seed = (Math.random() * 2 ** 31) | 0;
+  hud.textContent = `${index + 1}/${VARIANTS.length} · ${VARIANTS[index].name}`;
+  [...grid.children].forEach((c, i) => c.classList.toggle('on', i % VARIANTS.length === index && i === lastCell));
+  render();
+}
+
+// The grid is as square as possible for the screen's aspect ratio.
+let cols = 1, rows = 1, lastCell = 0;
+function layoutGrid() {
+  const n = VARIANTS.length;
+  cols = Math.max(1, Math.round(Math.sqrt(n * innerWidth / innerHeight)));
+  rows = Math.ceil(n / cols);
+  grid.style.gridTemplate = `repeat(${rows}, 1fr) / repeat(${cols}, 1fr)`;
+  grid.replaceChildren(...Array.from({ length: cols * rows }, () => el('div')));
+}
+
+function onPointer(e) {
+  const c = Math.min(cols - 1, Math.floor((e.clientX / innerWidth) * cols));
+  const r = Math.min(rows - 1, Math.floor((e.clientY / innerHeight) * rows));
+  lastCell = r * cols + c;
+  show(lastCell % VARIANTS.length);
+}
+
+addEventListener('pointermove', onPointer);
+addEventListener('pointerdown', onPointer);
+addEventListener('keydown', e => {
+  if (e.key === 'g' || e.key === 'G') document.body.classList.toggle('debug');
+});
+
+let pending = 0;
+addEventListener('resize', () => {
+  cancelAnimationFrame(pending);
+  pending = requestAnimationFrame(() => { layoutGrid(); render(); });
+});
+
+layoutGrid();
+// index.html#12 opens on variant 12
+show(Math.max(0, Math.min(VARIANTS.length, parseInt(location.hash.slice(1)) || 1) - 1));
+// Refit once DM Mono is in, since measurements against the fallback font are wrong
+Promise.all(['400 16px "DM Mono"', 'italic 400 16px "DM Mono"'].map(f => document.fonts.load(f))).then(render);
+document.fonts.addEventListener('loadingdone', render);
+</script>
+</body>
+</html>
