@@ -37,7 +37,7 @@ const CONFIG = {
   returnEaseIn: 1.8,            // seconds to reach cruise speed
   returnEaseOut: 1.6,           // seconds to come to rest
   cancelBlend: 0.2,             // seconds over which input takes over from the return velocity
-  settleVelocity: 2e-4,         // p/s; the return will not start while moving faster than this
+  settleVelocity: 0.01,         // p/s; the return will not start while moving faster than this
   reducedMotionFade: 0.9,       // seconds; prefers-reduced-motion return is a fade, not a zoom
   reducedMotionFadeIn: 0.25,    // seconds; fade back when input interrupts it
 
