@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:,">
+<title>Keyhole — scroll to look through</title>
+<script>
+/* Everything worth tuning lives here. Progress p runs from 0 (far) to 1 (at the keyhole). */
+const CONFIG = {
+  // The film. Must be same-origin: cross-origin media without CORS gives a tainted
+  // WebGL texture and silent Web Audio. PLACEHOLDER until the real video is supplied.
+  videoSrc: 'placeholder.mp4',
+  videoDescription: 'a placeholder test pattern with moving colour bars and a low hum',
+
+  // Motion: manual input
+  wheelPxForFullTravel: 1500,   // normalised wheel pixels from p = 0 to p = 1
+  wheelLinePx: 40,              // deltaMode 1 (Firefox mouse wheels)
+  wheelPageFraction: 0.9,       // deltaMode 2, as a fraction of the viewport height
+  wheelMaxPxPerEvent: 120,      // one notch, however hard the OS accelerates it
+  wheelMaxPxPerSecond: 2600,    // rate limit, so a hard momentum flick still takes time
+  wheelBurstPx: 240,            // how much may arrive at once before the rate limit applies
+  wheelIsolatedGapMs: 160,      // a wheel event after this long a pause...
+  wheelIsolatedMinPx: 48,       // ...moves at least this far (slow macOS mouse notches report ~4 px)
+  touchScreensForFullTravel: 1.6, // viewport heights of drag from p = 0 to p = 1
+  touchSlopPx: 8,               // movement below this is a tap, not a drag
+  touchFlingSeconds: 0.22,      // release velocity carried on as travel
+  touchFlingMax: 0.3,           // ...up to this much of p
+  keyArrowStep: 0.06,
+  keyPageStep: 0.25,
+  inputSmoothing: 0.16,         // seconds; critically damped spring from input to p
+
+  // Motion: automatic return
+  returnDelay: 0.45,            // seconds after the last input, trackpad momentum included
+  maxReturnSpeed: 0.4,          // p per second
+  returnEaseIn: 1.8,            // seconds to reach cruise speed
+  returnEaseOut: 1.6,           // seconds to come to rest
+  cancelBlend: 0.2,             // seconds over which input takes over from the return velocity
+  settleVelocity: 0.01,         // p/s; the return will not start while moving faster than this
+  reducedMotionFade: 0.9,       // seconds; prefers-reduced-motion return is a fade, not a zoom
+  reducedMotionFadeIn: 0.25,    // seconds; fade back when input interrupts it
+
+  // Time
+  physicsHz: 240,               // fixed step, so 60 Hz and 120 Hz displays follow the same path
+  maxFrameDt: 0.1,              // seconds; longer gaps (hidden tab, stall) are clamped to this
+
+  // Keyhole shape, in units of the circle's radius, circle centred on the origin.
+  slotTopY: -0.62,              // hidden inside the circle
+  slotBottomY: -2.4,
+  slotTopHalfWidth: 0.36,
+  slotBottomHalfWidth: 0.78,
+
+  // Keyhole size: circle radius grows exponentially from sizeFar to a scale computed from the viewport.
+  sizeFar: 0.015,               // circle radius at p = 0, fraction of the shorter viewport side
+  sizeEase: 0.25,               // 0 = pure exponential; higher softens both ends of the travel
+  coverMarginPx: 2,             // extra clearance at p = 1
+  anchorBlendStart: 0.15,       // size-curve position where the zoom origin leaves the shape's visual centre...
+  anchorBlendEnd: 0.6,          // ...and where it has reached the centre of the circle
+
+  // Keyhole edge blur: half-width of the soft edge, fraction of the viewport half-diagonal.
+  kMAX: 0.55,
+  kStart: 0.3,                  // p below this is perfectly sharp
+  kGamma: 1.6,
+  maskScale: 0.25,              // resolution of the blurred shape; it is soft, so this costs nothing visible
+  maskBlendFrom: 4,             // device px of edge blur where the true blur starts to take over...
+  maskBlendTo: 12,              // ...and where it has taken over from the plain soft edge
+  maskTapSoftness: 0.35,        // share of the blur given to each tap's soft edge; the rest is kernel radius
+
+  // Video blur: fraction of the shorter viewport side.
+  bMAX: 0.09,
+  bEnd: 0.93,                   // p at which the video is fully sharp
+  bGamma: 2.2,
+  blurLevels: 7,                // downsample pyramid depth
+
+  // Video opacity
+  opacityEnd: 0.2,              // p at which the video is fully opaque
+  opacityPower: 3,              // higher rises faster from the very first movement
+
+  // Sound
+  vMAX: 0.9,                    // gain at p = 1
+  volumeRangeDb: 48,            // loudness travel; the curve then drops the remainder to true silence
+  volumeGamma: 0.85,
+  lpMAX: 240,                   // Hz, heaviest filtering at p = 0
+  lpOpen: 20000,                // Hz, effectively open at p = 1
+  lpGamma: 1.0,
+  lpQ: -3.01,                   // dB; Butterworth, so the cutoff never rings as it sweeps
+  audioSmoothing: 0.035,        // seconds, time constant for gain and cutoff changes
+  hiddenFade: 0.03,             // seconds, time constant for the fade when the tab is hidden
+  hiddenPauseAfter: 0.18,       // seconds until video and context are paused
+  resumeSmoothing: 0.14,        // seconds, gentler time constant for the first moments back
+  silenceLockAfter: 0.6,        // seconds at a target of 0 before the gain is set to exactly 0
+  unlockTimeout: 1.2,           // seconds before an unanswered unlock attempt counts as failed
+
+  // Hints
+  scrollHintDistance: 0.12,     // cumulative manual travel towards the keyhole; two wheel notches
+  hintFade: 1.4,                // seconds
+
+  // Video arrival
+  videoReadyFade: 0.5,          // seconds; the first frame fades in if p is already above 0
+
+  // Render budget
+  maxDpr: 2,
+  maxRenderPixels: 5.2e6,       // caps a large high-DPI screen; keeps ~60 fps on integrated GPUs
+};
+</script>
+<style>
+  :root { color-scheme: dark; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  body { position: fixed; inset: 0; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+  /* The element must stay in the document for iOS to keep decoding it; only the texture is seen. */
+  #film { position: fixed; left: 0; top: 0; width: 2px; height: 2px; opacity: 0.001; pointer-events: none; }
+  #hints {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px));
+    z-index: 2;
+    margin: 0;
+    text-align: center;
+    font: 12px/1.75 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.02em;
+    /* Mid-grey with a tight dark outline, not mix-blend-mode: difference, which cancels out over
+       mid-grey footage. On black the outline vanishes, leaving plain quiet grey text. */
+    color: #bdbdbd;
+    text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 3px rgb(0 0 0 / 0.55);
+    pointer-events: none;
+  }
+  #hints p { margin: 0; transition: opacity var(--hint-fade, 1.4s) ease; }
+  #hints p.gone { opacity: 0; }
+  #hints p[hidden] { display: none; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+  #debug {
+    position: fixed;
+    top: max(8px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    z-index: 3;
+    margin: 0;
+    padding: 8px 10px;
+    max-height: calc(100% - 16px);
+    overflow: hidden;
+    background: rgb(0 0 0 / 0.72);
+    color: #cfcfcf;
+    font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre;
+    pointer-events: none;
+  }
+  #debug[hidden] { display: none; }
+</style>
+</head>
+<body>
+<canvas id="stage" role="img"></canvas>
+<p class="sr-only">A black screen with a keyhole at its centre, through which you can look into a video with sound. Scroll, drag, or use the arrow keys, Page Down or Space to come closer. Stop and you drift back into the dark. Any click, tap or key press turns on the sound.</p>
+<div id="hints">
+  <p id="hint-scroll">scroll to look</p>
+  <p id="hint-sound">click for sound</p>
+  <p id="message" role="status" hidden></p>
+</div>
+<video id="film" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+<pre id="debug" hidden aria-hidden="true"></pre>
+
+<script>
+'use strict';
+
+/* ---------------------------------------------------------------- helpers */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const mix = (a, b, t) => a + (b - a) * t;
+const smooth = (t) => { t = clamp(t); return t * t * (3 - 2 * t); };
+const smoothRange = (a, b, x) => smooth((x - a) / (b - a));
+
+const state = { failed: false, playError: '', hiddenTimer: null, pageGone: false, ready: 0 };
+
+/* ----------------------------------------------------------------- motion
+   Owns p. Two regimes:
+   - manual: a critically damped spring pulls p towards an input target. At the
+     moment input cancels a return, the spring's force ramps in over cancelBlend,
+     so the return velocity bleeds off instead of being replaced.
+   - returning: a closed-form S-curve from (p0, 0) to (0, 0). Being closed-form it
+     lands on exactly 0 and does not depend on the frame rate. */
+function createMotion(cfg) {
+  const h = 1 / cfg.physicsHz;
+  const omega = 2 / cfg.inputSmoothing;
+  const m = {
+    p: 0, v: 0, target: 0,
+    mode: 'rest',          // rest | manual | returning | fading
+    clock: 0,
+    lastInput: -Infinity,
+    holding: false,
+    blendFrom: -Infinity,
+    plan: null,
+    fade: 1,               // only below 1 during the reduced-motion return
+    fadeFrom: 0,
+    reducedMotion: false,
+    rendered: 0,           // p at this frame's exact time: the fixed step plus the leftover fraction
+  };
+  let acc = 0;
+
+  function planReturn(p0) {
+    const crit = cfg.maxReturnSpeed * (cfg.returnEaseIn + cfg.returnEaseOut) / 2;
+    // Too short to reach cruise: scale speed and ease times together, keeping acceleration the same.
+    const k = p0 >= crit ? 1 : Math.sqrt(p0 / crit);
+    const vp = cfg.maxReturnSpeed * k, teIn = cfg.returnEaseIn * k, teOut = cfg.returnEaseOut * k;
+    return { p0, vp, teIn, teOut, cruise: Math.max(0, p0 / vp - (teIn + teOut) / 2), t0: m.clock };
+  }
+
+  // Distance travelled during an ease of length te at peak vp, s in 0..1 (integral of smoothstep).
+  const rampX = (s, vp, te) => vp * te * (s * s * s - 0.5 * s * s * s * s);
+
+  function sampleReturn(pl, t) {
+    const total = pl.teIn + pl.cruise + pl.teOut;
+    if (t >= total) return { p: 0, v: 0, done: true };
+    let x, speed;
+    if (t < pl.teIn) {
+      const s = t / pl.teIn;
+      x = rampX(s, pl.vp, pl.teIn); speed = pl.vp * smooth(s);
+    } else if (t < pl.teIn + pl.cruise) {
+      x = pl.vp * pl.teIn * 0.5 + pl.vp * (t - pl.teIn); speed = pl.vp;
+    } else {
+      const s = (total - t) / pl.teOut;
+      x = pl.p0 - rampX(s, pl.vp, pl.teOut); speed = pl.vp * smooth(s);
+    }
+    return { p: Math.max(0, pl.p0 - x), v: -speed, done: false };
+  }
+
+  function step() {
+    m.clock += h;
+    if (m.holding) m.lastInput = m.clock;
+    if (m.mode !== 'fading' && m.fade < 1) m.fade = Math.min(1, m.fade + h / cfg.reducedMotionFadeIn);
+
+    if (m.mode === 'manual') {
+      const force = omega * omega * (m.target - m.p) - 2 * omega * m.v;
+      m.v += force * smooth((m.clock - m.blendFrom) / cfg.cancelBlend) * h;
+      m.p += m.v * h;
+      if (m.p <= 0) { m.p = 0; m.v = Math.max(0, m.v); }
+      if (m.p >= 1) { m.p = 1; m.v = Math.min(0, m.v); }
+      if (Math.abs(m.p - m.target) < 1e-5 && Math.abs(m.v) < 1e-3) { m.p = m.target; m.v = 0; }
+
+      if (!m.holding) {
+        if (m.p === 0 && m.target === 0 && m.v === 0) m.mode = 'rest';
+        else if (m.clock - m.lastInput >= cfg.returnDelay && Math.abs(m.v) < cfg.settleVelocity) {
+          m.v = 0;
+          if (m.reducedMotion) { m.mode = 'fading'; m.fadeFrom = m.clock; }
+          else { m.mode = 'returning'; m.plan = planReturn(m.p); }
+        }
+      }
+    } else if (m.mode === 'returning') {
+      const s = sampleReturn(m.plan, m.clock - m.plan.t0);
+      m.p = s.p; m.v = s.v;
+      if (s.done) { m.target = 0; m.mode = 'rest'; m.plan = null; }
+    } else if (m.mode === 'fading') {
+      m.fade = 1 - smooth((m.clock - m.fadeFrom) / cfg.reducedMotionFade);
+      if (m.fade <= 0) { m.p = 0; m.v = 0; m.target = 0; m.fade = 1; m.mode = 'rest'; }
+    }
+  }
+
+  return {
+    state: m,
+    /** Manual travel in units of p. Positive is towards the keyhole. */
+    input(delta) {
+      m.lastInput = m.clock;
+      if (m.mode === 'returning') {
+        m.blendFrom = m.clock;
+        m.target = clamp(m.p + delta);
+        m.plan = null;
+      } else {
+        m.target = clamp(m.target + delta);
+      }
+      m.mode = 'manual';
+    },
+    /** A finger resting on the glass keeps p where it is, and holds off the return. */
+    hold(on) {
+      m.holding = on;
+      m.lastInput = m.clock;
+      if (on && (m.mode === 'returning' || m.mode === 'fading')) {
+        if (m.mode === 'returning') m.blendFrom = m.clock;
+        m.target = m.p; m.plan = null; m.mode = 'manual';
+      }
+    },
+    advance(dt) {
+      acc += Math.min(dt, cfg.maxFrameDt);
+      while (acc >= h) { acc -= h; step(); }
+      m.rendered = clamp(m.p + m.v * acc);
+    },
+    phase() {
+      if (m.mode === 'returning' && m.plan) {
+        const t = m.clock - m.plan.t0;
+        return t < m.plan.teIn ? 'return: ease in' : t < m.plan.teIn + m.plan.cruise ? 'return: cruise' : 'return: ease out';
+      }
+      if (m.mode === 'manual') {
+        if (m.holding) return 'holding';
+        if (m.clock - m.blendFrom < cfg.cancelBlend) return 'cancel blend';
+        return Math.abs(m.v) > 1e-3 ? 'input' : 'waiting ' + Math.max(0, cfg.returnDelay - (m.clock - m.lastInput)).toFixed(2) + 's';
+      }
+      return m.mode === 'fading' ? 'reduced-motion fade' : 'rest';
+    },
+  };
+}
+
+/* ---------------------------------------------------------------- mapping
+   One function from p to every parameter. Sizes come out in device pixels of the render target. */
+const SHAPE_CENTRE_Y = (1 + CONFIG.slotBottomY) / 2;   // middle of the shape's bounding box
+
+// Where the slot's flared edge leaves the circle.
+const SHOULDER = (() => {
+  const c = CONFIG;
+  const edgeX = (y) => mix(c.slotTopHalfWidth, c.slotBottomHalfWidth, (c.slotTopY - y) / (c.slotTopY - c.slotBottomY));
+  let inside = c.slotTopY, outside = c.slotBottomY;
+  for (let i = 0; i < 40; i++) {
+    const y = (inside + outside) / 2;
+    if (edgeX(y) ** 2 + y * y < 1) inside = y; else outside = y;
+  }
+  return { x: edgeX(inside), y: inside };
+})();
+const view = { w: 1, h: 1, cssW: 1, cssH: 1, halfDiag: 1, minSide: 1, sizeNear: 1, sizeFarPx: 1 };
+
+function measureView(w, h, cssW, cssH) {
+  view.w = w; view.h = h; view.cssW = cssW; view.cssH = cssH;
+  view.halfDiag = Math.hypot(w, h) / 2;
+  view.minSide = Math.min(w, h);
+  view.sizeFarPx = CONFIG.sizeFar * view.minSide;
+  // At p = 1 the zoom origin is the circle's centre, so a circle of this radius contains the
+  // viewport in any aspect ratio, and the whole soft edge lies beyond the corners.
+  view.sizeNear = view.halfDiag * (1 + CONFIG.kMAX) + CONFIG.coverMarginPx;
+}
+
+// Linear in decibels, then shifted so that p = 0 is true silence rather than a very quiet floor.
+function perceptualGain(p) {
+  if (p <= 0) return 0;
+  const floor = Math.pow(10, -CONFIG.volumeRangeDb / 20);
+  const db = -CONFIG.volumeRangeDb * (1 - Math.pow(p, CONFIG.volumeGamma));
+  return CONFIG.vMAX * (Math.pow(10, db / 20) - floor) / (1 - floor);
+}
+
+function derive(p) {
+  const c = CONFIG;
+  const u = mix(p, smooth(p), c.sizeEase);
+  const size = view.sizeFarPx * Math.pow(view.sizeNear / view.sizeFarPx, u);
+  return {
+    size,
+    anchorY: mix(SHAPE_CENTRE_Y, 0, smoothRange(c.anchorBlendStart, c.anchorBlendEnd, u)),
+    edgeBlur: c.kMAX * view.halfDiag * Math.pow(smoothRange(c.kStart, 1, p), c.kGamma),
+    opacity: 1 - Math.pow(1 - clamp(p / c.opacityEnd), c.opacityPower),
+    videoBlur: c.bMAX * view.minSide * Math.pow(clamp(1 - p / c.bEnd), c.bGamma),
+    volume: perceptualGain(p),
+    cutoff: c.lpMAX * Math.pow(c.lpOpen / c.lpMAX, Math.pow(p, c.lpGamma)),
+  };
+}
+
+/* --------------------------------------------------------------- renderer
+   The video is a texture; the keyhole is a signed distance field, so the edge stays crisp at any
+   scale and its blur costs only a wider smoothstep. Video blur is a downsample pyramid sampled
+   with a B-spline filter between two levels, skipped entirely when blur is 0. The frame stays fixed
+   behind the opening, like a room seen through it: only the mask and the focus change. */
+const VERT = `attribute vec2 aPos; varying vec2 vUv;
+void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+const DOWN_FRAG = `precision mediump float; varying vec2 vUv; uniform sampler2D uTex; uniform vec2 uTexel;
+void main() {
+  vec4 c = texture2D(uTex, vUv) * 4.0;
+  c += texture2D(uTex, vUv + uTexel * vec2(-1.0, -1.0));
+  c += texture2D(uTex, vUv + uTexel * vec2( 1.0, -1.0));
+  c += texture2D(uTex, vUv + uTexel * vec2(-1.0,  1.0));
+  c += texture2D(uTex, vUv + uTexel * vec2( 1.0,  1.0));
+  gl_FragColor = c / 8.0;
+}`;
+
+const KEYHOLE_SDF = `float sdSegment(vec2 p, vec2 a, vec2 b) {
+  vec2 pa = p - a, ba = b - a;
+  return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0));
+}
+// Exact distance to the merged outline: one arc and two straight edges, mirrored in x. There is no
+// seam inside the shape, so a wide soft edge stays one continuous form, as a boolean union should.
+float sdKeyhole(vec2 q) {
+  const vec2 shoulder = vec2(${SHOULDER.x.toFixed(6)}, ${SHOULDER.y.toFixed(6)});
+  const vec2 corner = vec2(${CONFIG.slotBottomHalfWidth.toFixed(6)}, ${CONFIG.slotBottomY.toFixed(6)});
+  vec2 p = vec2(abs(q.x), q.y);
+  float r = length(p);
+  float arc = p.y > shoulder.y * r ? abs(r - 1.0) : length(p - shoulder);
+  float d = min(arc, min(sdSegment(p, shoulder, corner), sdSegment(p, corner, vec2(0.0, corner.y))));
+  float slotHalf = mix(shoulder.x, corner.x, (shoulder.y - p.y) / (shoulder.y - corner.y));
+  bool inside = r < 1.0 || (p.y >= corner.y && p.y <= shoulder.y && p.x <= slotHalf);
+  return inside ? -d : d;
+}`;
+
+// The merged shape, then blurred: the average of the shape over a disc around each pixel. Unlike
+// widening the edge of a distance field, this leaves no creases inside the shape.
+const MASK_TAPS = 16;
+const MASK_FRAG = `precision highp float;
+uniform vec2 uTargetSize; uniform vec2 uViewport;
+uniform float uSize; uniform float uAnchorY; uniform float uRadius; uniform float uSoft;
+${KEYHOLE_SDF}
+float tap(vec2 px) {
+  return 1.0 - smoothstep(-uSoft, uSoft, sdKeyhole(px / uSize + vec2(0.0, uAnchorY)) * uSize);
+}
+void main() {
+  vec2 px = (gl_FragCoord.xy / uTargetSize - 0.5) * uViewport;
+  float m = 0.0;
+${Array.from({ length: MASK_TAPS }, (_, i) => {
+    const r = Math.sqrt((i + 0.5) / MASK_TAPS), a = i * 2.399963;
+    return `  m += tap(px + uRadius * vec2(${(r * Math.cos(a)).toFixed(5)}, ${(r * Math.sin(a)).toFixed(5)}));`;
+  }).join('\n')}
+  m /= ${MASK_TAPS}.0;
+  gl_FragColor = vec4(m, m, m, 1.0);
+}`;
+
+const COMPOSITE_FRAG = (blurred) => `precision highp float;
+uniform vec2 uViewport; uniform vec2 uUvScale;
+uniform float uSize; uniform float uAnchorY; uniform float uEdge; uniform float uAmount;
+uniform sampler2D uMask; uniform float uMaskMix;
+uniform sampler2D uA; uniform sampler2D uB; uniform vec2 uSizeA; uniform vec2 uSizeB; uniform float uMix; uniform float uABicubic;
+
+${KEYHOLE_SDF}
+${blurred ? `
+vec4 bspline(sampler2D tex, vec2 uv, vec2 size) {
+  vec2 st = uv * size - 0.5, i = floor(st), f = st - i;
+  vec2 f2 = f * f, f3 = f2 * f;
+  vec2 w0 = (1.0 - 3.0 * f + 3.0 * f2 - f3) / 6.0;
+  vec2 w1 = (4.0 - 6.0 * f2 + 3.0 * f3) / 6.0;
+  vec2 w2 = (1.0 + 3.0 * f + 3.0 * f2 - 3.0 * f3) / 6.0;
+  vec2 w3 = f3 / 6.0;
+  vec2 g0 = w0 + w1, g1 = w2 + w3;
+  vec2 o0 = (i - 0.5 + w1 / g0) / size, o1 = (i + 1.5 + w3 / g1) / size;
+  return (texture2D(tex, vec2(o0.x, o0.y)) * g0.x + texture2D(tex, vec2(o1.x, o0.y)) * g1.x) * g0.y
+       + (texture2D(tex, vec2(o0.x, o1.y)) * g0.x + texture2D(tex, vec2(o1.x, o1.y)) * g1.x) * g1.y;
+}` : ''}
+void main() {
+  vec2 px = gl_FragCoord.xy - 0.5 * uViewport;
+  float sd = sdKeyhole(px / uSize + vec2(0.0, uAnchorY)) * uSize;
+  float mask = 1.0 - smoothstep(-uEdge, uEdge, sd);
+  if (uMaskMix > 0.0) mask = mix(mask, texture2D(uMask, gl_FragCoord.xy / uViewport).r, uMaskMix);
+  float a = mask * uAmount;
+  if (a <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+  vec2 uv = (gl_FragCoord.xy / uViewport - 0.5) * uUvScale + 0.5;
+${blurred ? `  vec3 ca = uABicubic > 0.5 ? bspline(uA, uv, uSizeA).rgb : texture2D(uA, uv).rgb;
+  vec3 col = mix(ca, bspline(uB, uv, uSizeB).rgb, uMix);` : `  vec3 col = texture2D(uA, uv).rgb;`}
+  // Interleaved gradient noise, one 8-bit step wide, scaled by a so black stays exactly black.
+  float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  gl_FragColor = vec4(col * a + (n - 0.5) / 255.0 * min(a * 48.0, 1.0), 1.0);
+}`;
+
+const canvas = document.getElementById('stage');
+const video = document.getElementById('film');
+video.src = CONFIG.videoSrc;
+canvas.setAttribute('aria-label', 'A keyhole. Through it: ' + CONFIG.videoDescription + '.');
+
+const R = {
+  gl: null, down: null, sharp: null, blurred: null, source: null,
+  levels: [], levelsValid: 0, videoW: 0, videoH: 0,
+  frameDirty: true, hasFrame: false, lastTime: -1, usingFrameCallback: false, lastFrameCallback: 0,
+  dirty: true, uploads: 0, drawMs: 0, lastDrawn: null,
+};
+
+function compile(gl, vs, fs, uniforms) {
+  const prog = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    gl.attachShader(prog, sh);
+  }
+  gl.bindAttribLocation(prog, 0, 'aPos');
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  const u = {};
+  for (const n of uniforms) u[n] = gl.getUniformLocation(prog, n);
+  return { prog, u };
+}
+
+function makeTexture(gl) {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+}
+
+function initGL() {
+  const opts = { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: 'high-performance' };
+  const gl = canvas.getContext('webgl2', opts) || canvas.getContext('webgl', opts);
+  if (!gl) return false;
+  R.gl = gl;
+  const compositeUniforms = ['uViewport', 'uUvScale', 'uSize', 'uAnchorY', 'uEdge', 'uAmount', 'uA', 'uB', 'uSizeA', 'uSizeB', 'uMix', 'uABicubic', 'uMask', 'uMaskMix'];
+  R.down = compile(gl, VERT, DOWN_FRAG, ['uTex', 'uTexel']);
+  R.sharp = compile(gl, VERT, COMPOSITE_FRAG(false), compositeUniforms);
+  R.blurred = compile(gl, VERT, COMPOSITE_FRAG(true), compositeUniforms);
+  R.mask = compile(gl, VERT, MASK_FRAG, ['uTargetSize', 'uViewport', 'uSize', 'uAnchorY', 'uRadius', 'uSoft']);
+  R.maskTarget = null;
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  R.source = makeTexture(gl);
+  R.levels = []; R.levelsValid = 0; R.videoW = 0; R.videoH = 0;
+  R.hasFrame = false; R.frameDirty = true; R.dirty = true;
+  return true;
+}
+
+function buildPyramid(gl) {
+  for (const l of R.levels) { gl.deleteTexture(l.tex); gl.deleteFramebuffer(l.fbo); }
+  R.levels = [];
+  let w = R.videoW, h = R.videoH;
+  for (let i = 0; i < CONFIG.blurLevels && Math.min(w, h) > 4; i++) {
+    w = Math.max(2, Math.floor(w / 2)); h = Math.max(2, Math.floor(h / 2));
+    const tex = makeTexture(gl);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    R.levels.push({ tex, fbo, w, h });
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  R.levelsValid = 0;
+}
+
+function uploadFrame() {
+  const gl = R.gl;
+  if (!gl || gl.isContextLost() || state.failed) return;
+  if (video.readyState < 2 || !video.videoWidth) return;
+  const useCallback = R.usingFrameCallback && performance.now() - R.lastFrameCallback < 250;
+  if (useCallback ? !R.frameDirty : video.currentTime === R.lastTime && R.hasFrame) return;
+  R.frameDirty = false;
+  R.lastTime = video.currentTime;
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, R.source);
+  try {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+  } catch (err) {
+    // A tainted source: cross-origin media without CORS, or a page opened from file://.
+    fail('The video could not be drawn. Serve it from the same origin as this page.');
+    return;
+  }
+  R.uploads++;
+  if (video.videoWidth !== R.videoW || video.videoHeight !== R.videoH) {
+    R.videoW = video.videoWidth; R.videoH = video.videoHeight;
+    buildPyramid(gl);
+  }
+  R.levelsValid = 0;
+  if (!R.hasFrame) warmUp(gl);
+  R.hasFrame = true;
+}
+
+// Run every shader once, unseen, so the first scroll doesn't stall on a lazy compile.
+function warmUp(gl) {
+  ensureLevels(gl, R.levels.length);
+  R.levelsValid = 0;
+  gl.enable(gl.SCISSOR_TEST);
+  gl.scissor(0, 0, 1, 1);
+  for (const prog of [R.sharp, R.blurred, R.mask]) {
+    gl.useProgram(prog.prog);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  R.dirty = true;
+}
+if (video.requestVideoFrameCallback) {
+  const onFrame = () => {
+    R.usingFrameCallback = true; R.frameDirty = true; R.lastFrameCallback = performance.now();
+    video.requestVideoFrameCallback(onFrame);
+  };
+  video.requestVideoFrameCallback(onFrame);
+}
+
+function ensureLevels(gl, upTo) {
+  if (R.levelsValid >= upTo) return;
+  gl.useProgram(R.down.prog);
+  gl.uniform1i(R.down.u.uTex, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.disable(gl.SCISSOR_TEST);
+  for (let i = R.levelsValid; i < upTo; i++) {
+    const src = i === 0 ? { tex: R.source, w: R.videoW, h: R.videoH } : R.levels[i - 1];
+    const dst = R.levels[i];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fbo);
+    gl.viewport(0, 0, dst.w, dst.h);
+    gl.bindTexture(gl.TEXTURE_2D, src.tex);
+    gl.uniform2f(R.down.u.uTexel, 1 / src.w, 1 / src.h);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  R.levelsValid = upTo;
+}
+
+function renderMask(gl, d, edge) {
+  const w = Math.max(2, Math.ceil(view.w * CONFIG.maskScale)), h = Math.max(2, Math.ceil(view.h * CONFIG.maskScale));
+  let t = R.maskTarget;
+  if (!t || t.w !== w || t.h !== h) {
+    if (t) { gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fbo); }
+    const tex = makeTexture(gl);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    t = R.maskTarget = { tex, fbo, w, h };
+  }
+  const u = R.mask.u;
+  gl.useProgram(R.mask.prog);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, t.fbo);
+  gl.viewport(0, 0, w, h);
+  gl.disable(gl.SCISSOR_TEST);
+  gl.uniform2f(u.uTargetSize, w, h);
+  gl.uniform2f(u.uViewport, view.w, view.h);
+  gl.uniform1f(u.uSize, d.size);
+  gl.uniform1f(u.uAnchorY, d.anchorY);
+  // Kernel radius and tap softness add up to the edge blur, so nothing reaches further than it.
+  gl.uniform1f(u.uRadius, edge * (1 - CONFIG.maskTapSoftness));
+  gl.uniform1f(u.uSoft, Math.max(edge * CONFIG.maskTapSoftness, 0.75));
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
+// Render-target pixels per video pixel when the frame covers the viewport.
+const coverScale = () => Math.max(view.w / R.videoW, view.h / R.videoH);
+
+function draw(d, amount) {
+  const gl = R.gl;
+  if (!gl || gl.isContextLost()) return;
+  const t0 = performance.now();
+  const visible = amount > 0 && R.hasFrame;
+  // At rest there is nothing to redraw: one black frame, then no GPU work at all.
+  if (!visible) {
+    if (R.lastDrawn !== 'black' || R.dirty) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.disable(gl.SCISSOR_TEST);
+      gl.viewport(0, 0, view.w, view.h);
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      R.lastDrawn = 'black'; R.dirty = false;
+    }
+    R.drawMs = performance.now() - t0;
+    return;
+  }
+
+  // Blur radius to pyramid position. 0.6 approximates the sigma of one level, in its own pixels.
+  const lod = d.videoBlur > 0 ? Math.min(R.levels.length, Math.log2(1 + d.videoBlur / (coverScale() * 0.6))) : 0;
+  const blurred = lod > 1e-3 && R.levels.length > 0;
+  const lo = Math.floor(lod), hi = Math.min(lo + 1, R.levels.length);
+  if (blurred) ensureLevels(gl, hi);
+
+  // Once the opening contains the whole viewport, the mask is 1 everywhere: skip it.
+  const softEdge = Math.max(d.edgeBlur, 0.75);
+  const maskMix = d.size - softEdge > view.halfDiag ? 0 : smoothRange(CONFIG.maskBlendFrom, CONFIG.maskBlendTo, softEdge);
+  if (maskMix > 0) renderMask(gl, d, softEdge);
+
+  const prog = blurred ? R.blurred : R.sharp;
+  gl.useProgram(prog.prog);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, view.w, view.h);
+  gl.disable(gl.SCISSOR_TEST);
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  // Only touch the pixels the shape can reach: most of the screen is black for much of the travel.
+  const edge = Math.max(d.edgeBlur, 0.75);
+  const reachX = d.size * Math.max(1, CONFIG.slotBottomHalfWidth) + edge + 2;
+  const top = view.h / 2 + d.size * (1 - d.anchorY) + edge + 2;
+  const bottom = view.h / 2 + d.size * (CONFIG.slotBottomY - d.anchorY) - edge - 2;
+  const x0 = Math.max(0, Math.floor(view.w / 2 - reachX)), x1 = Math.min(view.w, Math.ceil(view.w / 2 + reachX));
+  const y0 = Math.max(0, Math.floor(bottom)), y1 = Math.min(view.h, Math.ceil(top));
+  gl.enable(gl.SCISSOR_TEST);
+  gl.scissor(x0, y0, x1 - x0, y1 - y0);
+
+  const u = prog.u;
+  const viewAspect = view.w / view.h, videoAspect = R.videoW / R.videoH;
+  gl.uniform2f(u.uViewport, view.w, view.h);
+  gl.uniform2f(u.uUvScale, viewAspect > videoAspect ? 1 : viewAspect / videoAspect, viewAspect > videoAspect ? videoAspect / viewAspect : 1);
+  gl.uniform1f(u.uSize, d.size);
+  gl.uniform1f(u.uAnchorY, d.anchorY);
+  gl.uniform1f(u.uEdge, edge);
+  gl.uniform1f(u.uAmount, amount);
+  gl.uniform1f(u.uMaskMix, maskMix);
+  gl.uniform1i(u.uMask, 2);
+  if (maskMix > 0) {
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, R.maskTarget.tex);
+  }
+  gl.uniform1i(u.uA, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  if (blurred) {
+    const a = lo === 0 ? { tex: R.source, w: R.videoW, h: R.videoH } : R.levels[lo - 1];
+    const b = R.levels[hi - 1];
+    gl.bindTexture(gl.TEXTURE_2D, a.tex);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, b.tex);
+    gl.uniform1i(u.uB, 1);
+    gl.uniform2f(u.uSizeA, a.w, a.h);
+    gl.uniform2f(u.uSizeB, b.w, b.h);
+    gl.uniform1f(u.uMix, lod - lo);
+    gl.uniform1f(u.uABicubic, lo === 0 ? 0 : 1);
+    gl.activeTexture(gl.TEXTURE0);
+  } else {
+    gl.bindTexture(gl.TEXTURE_2D, R.source);
+  }
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  R.lastDrawn = 'frame'; R.dirty = false;
+  R.drawMs = performance.now() - t0;
+  R.lod = lod;
+}
+
+function syncSize() {
+  const cssW = canvas.clientWidth || innerWidth, cssH = canvas.clientHeight || innerHeight;
+  let dpr = Math.min(devicePixelRatio || 1, CONFIG.maxDpr);
+  const px = cssW * cssH * dpr * dpr;
+  if (px > CONFIG.maxRenderPixels) dpr *= Math.sqrt(CONFIG.maxRenderPixels / px);
+  const w = Math.max(1, Math.round(cssW * dpr)), h = Math.max(1, Math.round(cssH * dpr));
+  if (canvas.width === w && canvas.height === h && view.cssW === cssW && view.cssH === cssH) return false;
+  canvas.width = w; canvas.height = h;
+  measureView(w, h, cssW, cssH);
+  R.dirty = true;
+  return true;
+}
+
+/* ------------------------------------------------------------------ audio
+   MediaElementSource -> lowpass -> gain -> destination. Nothing below is needed for the piece to
+   run: without an unlock it simply stays silent. */
+const A = { ctx: null, filter: null, gain: null, analyser: null, unlocked: false, attempt: 0, attempts: 0,
+  lastGain: -1, lastCutoff: -1, zeroSince: null, locked: false, smoothing: CONFIG.audioSmoothing,
+  smoothingUntil: 0, lastError: '', rmsBuf: null };
+
+function buildGraph() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return false;
+  A.ctx = new AC();
+  const src = A.ctx.createMediaElementSource(video);
+  A.filter = A.ctx.createBiquadFilter();
+  A.filter.type = 'lowpass';
+  A.filter.Q.value = CONFIG.lpQ;
+  A.gain = A.ctx.createGain();
+  A.gain.gain.value = 0;
+  A.analyser = A.ctx.createAnalyser();
+  A.analyser.fftSize = 2048;
+  src.connect(A.filter); A.filter.connect(A.gain); A.gain.connect(A.ctx.destination); A.gain.connect(A.analyser);
+  A.ctx.addEventListener('statechange', () => {
+    // iOS can leave a running context 'interrupted' after a call or a route change.
+    if (A.unlocked && !document.hidden && A.ctx.state !== 'running' && A.ctx.state !== 'closed') A.ctx.resume().catch(() => {});
+  });
+  return true;
+}
+
+/* Called synchronously from a gesture. The three calls that the browser ties to the user action
+   (resume, unmute, play) happen before anything asynchronous. */
+function tryUnlock() {
+  if (state.failed) return;
+  if ('userActivation' in navigator && !navigator.userActivation.isActive) return; // would pause the video
+  if (A.unlocked) {
+    // Already unlocked, but a gesture is also the moment to recover anything the system took away.
+    if (A.ctx.state !== 'running') A.ctx.resume().catch(() => {});
+    if (video.muted) video.muted = false;
+    if (video.paused && !document.hidden) video.play().catch(() => {});
+    return;
+  }
+  A.attempts++;
+  const attempt = ++A.attempt;
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = 'playback'; // sound with the ringer off
+    if (!A.ctx && !buildGraph()) return;
+  } catch (err) { A.lastError = String(err); return; }
+
+  const resumed = A.ctx.resume();
+  video.muted = false;
+  const played = video.play();
+
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('unlock timed out')), CONFIG.unlockTimeout * 1000));
+  Promise.race([Promise.all([resumed, played]), timeout]).then(() => {
+    if (A.ctx.state !== 'running' || video.muted || video.paused) throw new Error('unlock did not take: ' + A.ctx.state);
+    A.unlocked = true;
+    A.lastError = '';
+    fadeHint('sound');
+  }).catch((err) => {
+    if (A.unlocked || attempt !== A.attempt) return;
+    A.lastError = String(err && err.message || err);
+    // Back to muted so the picture keeps running; the next gesture tries again.
+    video.muted = true;
+    startVideo();
+  });
+}
+
+function updateAudio(d, mult, now) {
+  if (!A.ctx) return;
+  const t = A.ctx.currentTime;
+  const tc = now < A.smoothingUntil ? A.smoothing : CONFIG.audioSmoothing;
+  const g = d.volume * mult;
+  if (g !== A.lastGain) {
+    A.gain.gain.setTargetAtTime(g, t, tc);
+    A.lastGain = g;
+    A.zeroSince = g === 0 ? now : null;
+    A.locked = false;
+  }
+  // setTargetAtTime only approaches its target. Close the last gap so that p = 0 is digital silence.
+  if (g === 0 && !A.locked && A.zeroSince !== null && now - A.zeroSince > CONFIG.silenceLockAfter * 1000) {
+    A.gain.gain.cancelScheduledValues(t);
+    A.gain.gain.setValueAtTime(0, t);
+    A.locked = true;
+  }
+  const f = Math.min(d.cutoff, A.ctx.sampleRate * 0.49);
+  if (Math.abs(f - A.lastCutoff) > 0.5) {
+    A.filter.frequency.setTargetAtTime(f, t, tc);
+    A.lastCutoff = f;
+  }
+}
+
+function outputRms() {
+  if (!A.analyser) return 0;
+  A.rmsBuf = A.rmsBuf || new Float32Array(A.analyser.fftSize);
+  A.analyser.getFloatTimeDomainData(A.rmsBuf);
+  let sum = 0;
+  for (let i = 0; i < A.rmsBuf.length; i++) sum += A.rmsBuf[i] * A.rmsBuf[i];
+  return Math.sqrt(sum / A.rmsBuf.length);
+}
+
+/* ---------------------------------------------------------- video lifecycle */
+function startVideo() {
+  // A rejected play (iOS Low Power Mode, a strict autoplay setting) is retried on the next gesture.
+  const r = video.play();
+  if (r) r.catch((err) => { state.playError = err.name; });
+}
+
+video.addEventListener('error', () => fail('The video could not be loaded.'));
+video.addEventListener('playing', () => { state.playError = ''; });
+
+function suspendForHidden() {
+  if (state.hiddenTimer) return;
+  if (A.ctx) {
+    A.gain.gain.setTargetAtTime(0, A.ctx.currentTime, CONFIG.hiddenFade);
+    A.lastGain = 0; A.zeroSince = null; A.locked = false;
+  }
+  state.hiddenTimer = setTimeout(() => {
+    state.hiddenTimer = null;
+    if (!document.hidden && !state.pageGone) return;
+    video.pause();
+    if (A.ctx && A.ctx.state === 'running') A.ctx.suspend().catch(() => {});
+  }, CONFIG.hiddenPauseAfter * 1000);
+}
+function resumeFromHidden() {
+  if (state.hiddenTimer) { clearTimeout(state.hiddenTimer); state.hiddenTimer = null; }
+  state.pageGone = false;
+  lastNow = performance.now();
+  A.smoothing = CONFIG.resumeSmoothing;
+  A.smoothingUntil = lastNow + CONFIG.resumeSmoothing * 4000;
+  A.lastGain = -1;    // reassert the target, from wherever the fade left it
+  if (A.ctx && A.ctx.state !== 'running') A.ctx.resume().catch(() => {});
+  if (video.paused && !state.failed) {
+    const r = video.play();
+    if (r) r.catch(() => {
+      if (video.muted) { state.playError = 'blocked after return'; return; }
+      // Refused with sound: keep the picture and bring sound back on the next gesture.
+      video.muted = true;
+      startVideo();
+    });
+  }
+}
+document.addEventListener('visibilitychange', () => { document.hidden ? suspendForHidden() : resumeFromHidden(); });
+addEventListener('pagehide', () => { state.pageGone = true; suspendForHidden(); });
+addEventListener('pageshow', () => { if (!document.hidden) resumeFromHidden(); });
+
+/* ------------------------------------------------------------------ hints */
+const hintEls = { scroll: document.getElementById('hint-scroll'), sound: document.getElementById('hint-sound') };
+const hints = { scroll: 'shown', sound: 'shown' };
+const messageEl = document.getElementById('message');
+document.documentElement.style.setProperty('--hint-fade', CONFIG.hintFade + 's');
+if (matchMedia('(hover: none) and (pointer: coarse)').matches) hintEls.sound.textContent = 'tap for sound';
+
+function fadeHint(name) {
+  if (hints[name] !== 'shown') return;
+  hints[name] = 'faded';       // never comes back during this visit
+  hintEls[name].classList.add('gone');
+  hintEls[name].setAttribute('aria-hidden', 'true');
+}
+
+function fail(text) {
+  state.failed = true;
+  hintEls.scroll.hidden = true;
+  hintEls.sound.hidden = true;
+  messageEl.textContent = text;
+  messageEl.hidden = false;
+}
+
+/* ------------------------------------------------------------------ input */
+const motion = createMotion(CONFIG);
+const input = { scrolled: 0 };
+
+function manualTravel(delta) {
+  if (delta === 0) return;
+  if (delta > 0) {
+    input.scrolled += delta;
+    if (input.scrolled >= CONFIG.scrollHintDistance) fadeHint('scroll');
+  }
+  if (video.paused && !document.hidden && !state.failed) startVideo();
+  motion.input(delta);
+}
+
+// Wheel: convert to pixels, then limit per event and per second, so a notched mouse,
+// a trackpad swipe with momentum and a free-spinning wheel all cover similar ground.
+const wheel = { lastTs: -Infinity, allowance: CONFIG.wheelBurstPx };
+function normaliseWheel(e) {
+  const unit = e.deltaMode === 1 ? CONFIG.wheelLinePx
+    : e.deltaMode === 2 ? innerHeight * CONFIG.wheelPageFraction : 1;
+  let px = Math.abs(e.deltaY * unit);
+  const gap = e.timeStamp - wheel.lastTs;
+  wheel.lastTs = e.timeStamp;
+  wheel.allowance = Math.min(CONFIG.wheelBurstPx, wheel.allowance + Math.min(gap, 1000) / 1000 * CONFIG.wheelMaxPxPerSecond);
+  if (px === 0) return 0;
+  if (gap > CONFIG.wheelIsolatedGapMs) px = Math.max(px, CONFIG.wheelIsolatedMinPx);
+  px = Math.min(px, CONFIG.wheelMaxPxPerEvent, wheel.allowance);
+  wheel.allowance -= px;
+  return Math.sign(e.deltaY) * px / CONFIG.wheelPxForFullTravel;
+}
+addEventListener('wheel', (e) => {
+  if (e.ctrlKey) return;          // pinch and browser zoom stay with the browser
+  e.preventDefault();             // no overscroll, no swipe-back
+  manualTravel(normaliseWheel(e));
+}, { passive: false });
+
+// Touch: an upward drag is a downward scroll. A finger at rest holds p.
+const touch = { id: null, y: 0, startY: 0, dragging: false, vel: 0, lastT: 0 };
+addEventListener('touchstart', (e) => {
+  if (touch.id !== null) return;
+  const t = e.changedTouches[0];
+  Object.assign(touch, { id: t.identifier, y: t.clientY, startY: t.clientY, dragging: false, vel: 0, lastT: e.timeStamp });
+}, { passive: true });
+addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const t = [...e.changedTouches].find((c) => c.identifier === touch.id);
+  if (!t) return;
+  if (!touch.dragging) {
+    if (Math.abs(t.clientY - touch.startY) < CONFIG.touchSlopPx) return;
+    touch.dragging = true;
+    touch.y = t.clientY;
+    motion.hold(true);
+  }
+  const delta = (touch.y - t.clientY) / (innerHeight * CONFIG.touchScreensForFullTravel);
+  const dt = Math.max(1, e.timeStamp - touch.lastT) / 1000;
+  touch.vel = mix(touch.vel, delta / dt, 0.4);
+  touch.y = t.clientY; touch.lastT = e.timeStamp;
+  manualTravel(delta);
+}, { passive: false });
+function endTouch(e) {
+  const t = [...e.changedTouches].find((c) => c.identifier === touch.id);
+  if (!t) return;
+  touch.id = null;
+  if (!touch.dragging) {
+    if (e.type === 'touchend') tryUnlock();   // a tap; a drag's touchend is not a user action
+    return;
+  }
+  motion.hold(false);
+  const idle = e.timeStamp - touch.lastT > 80;   // paused before lifting: no fling
+  if (!idle) manualTravel(clamp(touch.vel * CONFIG.touchFlingSeconds, -CONFIG.touchFlingMax, CONFIG.touchFlingMax));
+}
+addEventListener('touchend', endTouch, { passive: true });
+addEventListener('touchcancel', endTouch, { passive: true });
+
+addEventListener('click', () => tryUnlock());
+
+// Keyboard. These keys never count as a user action, so they must not attempt an unlock.
+const NON_ACTIVATING_KEYS = /^(Escape|Shift|Control|Alt|Meta|CapsLock|NumLock|ScrollLock|PrintScreen|Fn|FnLock|Dead|Unidentified|F\d+)$/;
+addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!NON_ACTIVATING_KEYS.test(e.key)) tryUnlock();
+  const steps = {
+    ArrowDown: CONFIG.keyArrowStep, ArrowRight: CONFIG.keyArrowStep,
+    ArrowUp: -CONFIG.keyArrowStep, ArrowLeft: -CONFIG.keyArrowStep,
+    PageDown: CONFIG.keyPageStep, PageUp: -CONFIG.keyPageStep,
+    ' ': e.shiftKey ? -CONFIG.keyPageStep : CONFIG.keyPageStep,
+    End: 1, Home: -1,
+  };
+  if (e.key in steps) { e.preventDefault(); manualTravel(steps[e.key]); }
+  else if ((e.key === 'd' || e.key === 'D') && !e.repeat) toggleDebug();
+});
+
+const reducedMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+const applyReducedMotion = () => { motion.state.reducedMotion = reducedMotionQuery.matches; };
+reducedMotionQuery.addEventListener('change', applyReducedMotion);
+applyReducedMotion();
+
+/* ------------------------------------------------------------------ debug */
+const debugEl = document.getElementById('debug');
+const fps = { frames: 0, since: 0, value: 0, worst: 0, worstShown: 0 };
+function toggleDebug() { debugEl.hidden = !debugEl.hidden; }
+if (location.hash.includes('debug')) debugEl.hidden = false;
+
+const out = { d: null, amount: 0 };
+function renderDebug() {
+  const m = motion.state;
+  debugEl.textContent = [
+    `p            ${m.p.toFixed(4)}   target ${m.target.toFixed(4)}`,
+    `velocity     ${m.v.toFixed(4)} /s`,
+    `state        ${motion.phase()}`,
+    `scrolled     ${input.scrolled.toFixed(3)}`,
+    `-- derived`,
+    `size         ${out.d.size.toFixed(1)} px   near ${view.sizeNear.toFixed(0)}   far ${view.sizeFarPx.toFixed(1)}`,
+    `anchorY      ${out.d.anchorY.toFixed(3)}`,
+    `edge blur    ${out.d.edgeBlur.toFixed(1)} px`,
+    `opacity      ${out.d.opacity.toFixed(3)}   drawn ${out.amount.toFixed(3)}`,
+    `video blur   ${out.d.videoBlur.toFixed(1)} px   lod ${(R.lod || 0).toFixed(2)}`,
+    `volume       ${out.d.volume.toFixed(4)}   cutoff ${out.d.cutoff.toFixed(0)} Hz`,
+    `-- render`,
+    `canvas       ${view.w}x${view.h}   css ${view.cssW}x${view.cssH}   ${R.gl instanceof (window.WebGL2RenderingContext || Object) ? 'webgl2' : 'webgl1'}`,
+    `draw         ${R.drawMs.toFixed(2)} ms   uploads ${R.uploads}`,
+    `-- hints`,
+    `scroll       ${hints.scroll}   (${input.scrolled.toFixed(3)} / ${CONFIG.scrollHintDistance})`,
+    `sound        ${hints.sound}`,
+    `-- audio`,
+    `context      ${A.ctx ? A.ctx.state : 'not created'}   unlocked ${A.unlocked}   attempts ${A.attempts}`,
+    A.ctx ? `gain now     ${A.gain.gain.value.toFixed(4)}   cutoff now ${A.filter.frequency.value.toFixed(0)} Hz` : `gain now     -`,
+    A.ctx ? `output rms   ${outputRms().toFixed(5)}` : `output rms   -`,
+    A.lastError ? `last error   ${A.lastError}` : `last error   none`,
+    `session      ${navigator.audioSession ? navigator.audioSession.type : 'unavailable'}`,
+    `-- video`,
+    `playing      ${!video.paused}   muted ${video.muted}   ready ${video.readyState}   net ${video.networkState}`,
+    `time         ${video.currentTime.toFixed(2)} / ${(video.duration || 0).toFixed(2)}   ${video.videoWidth}x${video.videoHeight}`,
+    `problems     ${video.error ? 'error ' + video.error.code : state.failed ? 'failed' : state.playError || 'none'}`,
+    `fps          ${fps.value.toFixed(0)}   worst ${fps.worstShown.toFixed(1)} ms`,
+  ].join('\n');
+}
+
+/* ------------------------------------------------------------------- loop */
+function render(dt = 0) {
+  syncSize();
+  const p = window.__keyhole.forceP ?? motion.state.rendered;
+  out.d = derive(p);
+  if (p > 0 || !R.hasFrame) uploadFrame();   // the first frame arrives early, unseen
+  if (R.hasFrame && !state.failed) state.ready = Math.min(1, state.ready + dt / CONFIG.videoReadyFade);
+  else if (state.failed) state.ready = 0;
+  const presence = motion.state.fade * state.ready;
+  out.amount = out.d.opacity * presence;
+  draw(out.d, out.amount);
+  if (!document.hidden) updateAudio(out.d, presence, performance.now());
+}
+
+let lastNow = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.max(0, (now - lastNow) / 1000);
+  lastNow = now;
+  motion.advance(dt);
+  render(Math.min(dt, CONFIG.maxFrameDt));
+
+  fps.frames++;
+  fps.worst = Math.max(fps.worst, dt * 1000);
+  if (now - fps.since >= 500) {
+    fps.value = fps.frames * 1000 / (now - fps.since);
+    fps.worstShown = fps.worst;
+    fps.frames = 0; fps.worst = 0; fps.since = now;
+  }
+  if (!debugEl.hidden) renderDebug();
+}
+requestAnimationFrame(frame);
+
+/* Small inspection handle, used by the debug tooling. Nothing in the page depends on it. */
+window.__keyhole = { CONFIG, motion, createMotion, input, derive, view, video, R, A, hints, state, outputRms, render, forceP: null,
+  // Pixel statistics of the whole render, read back in the same task as the draw.
+  stats() {
+    render();
+    const gl = R.gl, buf = new Uint8Array(view.w * view.h * 4);
+    gl.readPixels(0, 0, view.w, view.h, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    let lit = 0, max = 0, corners = [0, view.w - 1, (view.h - 1) * view.w, view.h * view.w - 1].map((i) => [...buf.subarray(i * 4, i * 4 + 3)]);
+    for (let i = 0; i < buf.length; i += 4) { const m = Math.max(buf[i], buf[i + 1], buf[i + 2]); if (m > 0) lit++; if (m > max) max = m; }
+    return { lit, total: view.w * view.h, max, corners, w: view.w, h: view.h };
+  },
+};
+/* ------------------------------------------------------------------- boot */
+canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); });
+canvas.addEventListener('webglcontextrestored', () => {
+  try { initGL(); } catch (err) { fail('This piece needs WebGL, which stopped working in this browser.'); }
+});
+new ResizeObserver(() => { if (syncSize()) render(); }).observe(canvas);
+
+let glReady = false;
+try { glReady = initGL(); } catch (err) { console.error(err); }
+syncSize();
+if (glReady) startVideo();
+else fail('This piece needs WebGL, which this browser has not made available.');
+</script>
+</body>
+</html>
