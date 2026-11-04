@@ -68,7 +68,8 @@ def render(prototypes):
     rows = []
     for m in prototypes:
         rows.append(
-            f'      <li><a href="prototypes/{html.escape(m["folder"])}/">'
+            # Name index.html in full: over file:// a link to the folder opens a directory listing.
+            f'      <li><a href="prototypes/{html.escape(m["folder"])}/index.html">'
             f'<time datetime="{html.escape(m["date"])}">{html.escape(m["date"])}</time>'
             f'<span class="title">{html.escape(m["title"])}</span>'
             f'<span class="description">{html.escape(m["description"])}</span></a></li>'
