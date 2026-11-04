@@ -22,7 +22,7 @@ A growing set of pieces, each worth showing because of how its interaction feels
 
 ## Scope
 
-The lab holds standalone interactive pieces that run in a browser.
+The lab holds standalone interactive pieces that run in a browser, listed in the root `index.html`. Each follows [prototypes.md](prototypes.md).
 
 It deliberately leaves out:
 

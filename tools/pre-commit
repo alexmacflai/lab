@@ -1,0 +1,15 @@
+#!/bin/sh
+# Git pre-commit hook: block the commit if the index of prototypes is out of
+# date, or the repository breaks the framework's conventions.
+#
+# Install from the repository root:
+#   ln -s ../../tools/pre-commit .git/hooks/pre-commit
+
+root=$(git rev-parse --show-toplevel) || exit 1
+
+if ! python3 "$root/tools/update-index.py" --check; then
+    echo "Commit blocked: fix the errors above." >&2
+    exit 1
+fi
+
+exec "$root/knowledge/tools/pre-commit"

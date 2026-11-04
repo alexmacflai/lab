@@ -8,7 +8,7 @@ Step-by-step procedures for common tasks, one folder each. Agent tools list them
 |---|---|
 | Kick-off | [set-up-project](set-up-project/SKILL.md), which runs the other `set-up-` skills |
 | Starting work | [start-task](start-task/SKILL.md), [write-spec](write-spec/SKILL.md) |
-| Doing the work | [investigate-problem](investigate-problem/SKILL.md), [document-pattern](document-pattern/SKILL.md), [maintain-structure](maintain-structure/SKILL.md) |
+| Doing the work | [create-prototype](create-prototype/SKILL.md), [investigate-problem](investigate-problem/SKILL.md), [document-pattern](document-pattern/SKILL.md), [maintain-structure](maintain-structure/SKILL.md) |
 | Checking | [verify-work](verify-work/SKILL.md), [review-change](review-change/SKILL.md) |
 | Handing over | [hand-off](hand-off/SKILL.md) |
 
@@ -17,6 +17,7 @@ Step-by-step procedures for common tasks, one folder each. Agent tools list them
 <!-- routing:start (generated, do not edit) -->
 | File | Description |
 |---|---|
+| [create-prototype/](create-prototype/SKILL.md) | Build a new prototype from notes, with the plan approved first. |
 | [document-pattern/](document-pattern/SKILL.md) | Record how a recurring change is done here. |
 | [hand-off/](hand-off/SKILL.md) | Write a handoff report for unfinished work. |
 | [investigate-problem/](investigate-problem/SKILL.md) | Find the cause of a failure from evidence. |

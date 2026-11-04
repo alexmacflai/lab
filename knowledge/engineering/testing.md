@@ -17,4 +17,4 @@ The lab has no automated tests. Do not add test tooling to the repository unless
 ## Before work is done
 
 - The piece loads and works in a browser, with no errors or warnings from its code in the console. Commands to serve it are in [setup.md](../setup.md).
-- `python3 knowledge/tools/adf.py check` reports no errors.
+- `python3 tools/update-index.py --check` and `python3 knowledge/tools/adf.py check` report no errors.

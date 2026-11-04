@@ -1,6 +1,6 @@
 # Agent instructions
 
-This repository is a lab of independent interactive web prototypes, each in its own top-level folder.
+This repository is a lab of independent interactive web prototypes, each in its own folder under `prototypes/`.
 
 Write in British English.
 
@@ -10,7 +10,7 @@ Write in British English.
 - Follow [knowledge/agents/](knowledge/agents/README.md): when to act or ask, scope, conflicts, communication, verification, safety and learning.
 - Choose guidance by what the work changes, not how the request is worded: work that changes what users read is copywriting work; work that changes how the interface looks or behaves is design work. Reproducing supplied copy or a supplied design exactly needs no domain guidance.
 - Before committing, run `python3 knowledge/tools/adf.py check` and fix every error.
-- Keep each prototype in its own top-level folder, with no build step or framework, unless the user asks otherwise.
+- Follow [prototypes.md](knowledge/product/prototypes.md) when adding or changing a prototype.
 - Several agent sessions often work in this checkout at once. Before switching its branch, check for other running sessions. If there are any, use a separate worktree.
 
 ## Routing
@@ -29,6 +29,7 @@ Write in British English.
 | Adding, moving or removing files or domains | [knowledge/meta/](knowledge/meta/README.md)          | [maintain-structure](.agents/skills/maintain-structure/SKILL.md) |
 | Setting up, building, testing or running  | [knowledge/setup.md](knowledge/setup.md)               | —        |
 | Looking for a skill                       | [.agents/skills/](.agents/skills/README.md)            | —        |
-| Building or changing a prototype          | [knowledge/setup.md](knowledge/setup.md)               | [verify-work](.agents/skills/verify-work/SKILL.md) |
+| Creating a prototype from notes or an idea | [prototypes.md](knowledge/product/prototypes.md)      | [create-prototype](.agents/skills/create-prototype/SKILL.md) |
+| Changing a prototype                      | [prototypes.md](knowledge/product/prototypes.md), [knowledge/setup.md](knowledge/setup.md) | [verify-work](.agents/skills/verify-work/SKILL.md) |
 | Deciding what a prototype does or how it should feel | [knowledge/product/](knowledge/product/README.md) | —        |
 | Writing or changing code                  | [knowledge/engineering/](knowledge/engineering/README.md) | —        |

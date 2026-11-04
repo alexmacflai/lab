@@ -17,12 +17,14 @@ verified: 2026-11-04
 
 | Content | Path | Status |
 |---|---|---|
-| A piece's page | `<piece>/index.html` | In use |
-| A piece's media | `<piece>/`, beside its page | In use: `keyhole/placeholder.mp4` |
-| A piece's other code | `<piece>/` | Created when a piece is split to fit the [size limits](code-rules.md) |
+| A piece's page and README | `prototypes/<name>/` | In use |
+| A piece's media | `prototypes/<name>/`, beside its page | In use: `prototypes/keyhole/placeholder.mp4` |
+| A piece's other code | `prototypes/<name>/` | Created when a piece is split to fit the [size limits](code-rules.md) |
+| The index of prototypes | `index.html` | In use; its list is generated |
+| Scripts for the repository | `tools/` | In use |
 | Agent guidance and project knowledge | `AGENTS.md`, `knowledge/`, `.agents/skills/` | In use |
 
-Nothing shared between pieces belongs at the repository root.
+Nothing shared between pieces belongs in `prototypes/`.
 
 ## Invariants
 
