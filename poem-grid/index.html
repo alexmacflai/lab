@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Poem Grid</title>
+<title>Micro-thoughts prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
@@ -199,7 +199,7 @@
     left: 0;
     top: 0;
     z-index: 15;
-    width: clamp(132px, 24vw, 280px);
+    width: clamp(180px, 30vw, 420px);
     background: var(--white);
     border: 1px solid var(--black);
     font-size: 11px;
@@ -214,22 +214,31 @@
   #cam-frame { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--black); }
   #cam-video, #cam-mesh { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   #cam-video { object-fit: cover; transform: scaleX(-1); }
-  #cam-steps { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid var(--black); }
-  #cam-steps span { text-align: center; border-left: 1px solid var(--black); color: var(--grey); }
-  #cam-steps span:first-child { border-left: 0; }
-  #cam-steps span.done { color: var(--black); }
-  #cam-steps span.now { background: var(--black); color: var(--white); }
-  #cam-status { padding: 4px 6px; min-height: 5.2em; }
+  #cam-status { padding: 3px 6px; border-bottom: 1px solid var(--black); }
+  #cam-status.ready { background: var(--green); }
   #cam-note { color: var(--red); }
+  .cam-grip { position: absolute; top: 0; width: 28px; height: 28px; touch-action: none; }
+  .cam-grip::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    background: var(--white);
+    border: 1px solid var(--black);
+  }
+  #cam-grip-left { left: 0; cursor: nwse-resize; }
+  #cam-grip-left::after { left: 0; }
+  #cam-grip-right { right: 0; cursor: nesw-resize; }
+  #cam-grip-right::after { right: 0; }
   #cam-foot {
     display: flex;
     justify-content: space-between;
     align-items: stretch;
-    border-top: 1px solid var(--black);
   }
-  #cam-count { padding: 4px 6px; flex: 1; }
+  #cam-count { padding: 3px 6px; flex: 1; }
   #cam.blink #cam-count { background: var(--yellow); }
-  #cam-stop { border-width: 0 0 0 1px; padding: 4px 8px; font-size: 11px; min-height: 32px; }
+  #cam-stop { border-width: 0 0 0 1px; padding: 3px 8px; font-size: 11px; min-height: 26px; }
 
   /* Camera debug values; press G in Camera mode */
   #cam-debug {
@@ -255,12 +264,13 @@
 <div id="stage"><div id="text"></div></div>
 <div id="grid"></div>
 <div id="hud"></div>
-<section id="cam" tabindex="0" aria-label="Camera view. Arrow keys move it." hidden>
+<section id="cam" tabindex="0" aria-label="Camera view. Arrow keys move it, plus and minus resize it." hidden>
   <div id="cam-frame">
     <video id="cam-video" playsinline muted autoplay></video>
     <canvas id="cam-mesh"></canvas>
+    <div class="cam-grip" id="cam-grip-left"></div>
+    <div class="cam-grip" id="cam-grip-right"></div>
   </div>
-  <div id="cam-steps" aria-hidden="true"></div>
   <div id="cam-status" aria-live="polite"><div id="cam-stage"></div><div id="cam-note"></div></div>
   <div id="cam-foot"><span id="cam-count">0 blinks</span><button id="cam-stop" class="act" type="button">Stop</button></div>
 </section>
@@ -275,7 +285,7 @@
   </div>
 </div>
 <main id="selector">
-  <header><span id="selector-title"></span><span id="selector-esc">Esc returns here</span></header>
+  <header><span>Micro-thoughts prototype</span><span id="selector-esc">Esc returns here</span></header>
   <button class="choice" id="choose-mouse" type="button"><b>Mouse</b><span>Move across the page to change the layout.</span></button>
   <button class="choice" id="choose-camera" type="button"><b>Camera</b><span>Blink to change the layout. The video stays on this device.</span></button>
 </main>
@@ -689,7 +699,6 @@ function backToSelector() {
   last.focus();
 }
 
-document.getElementById('selector-title').textContent = poem.title;
 chooseMouse.addEventListener('click', enterMouse);
 chooseCamera.addEventListener('click', enterCamera);
 selector.addEventListener('keydown', e => {
@@ -1029,26 +1038,26 @@ const TRACKER = {
 };
 
 const STAGES = {
-  camera: [1, 'Enabling the camera. Allow it if the browser asks.'],
-  loading: [1, 'Camera on. Loading the tracker, about 18 MB the first time.'],
-  face: [2, 'Looking for a face.'],
-  eyes: [3, 'Face found. Looking for the eyes.'],
-  tracking: [4, 'Eyes found. Tracking them.'],
-  calibrating: [5, 'Learning your open eyes. Hold still a moment.'],
-  blinks: [6, 'Ready. Blink to change the layout.'],
+  camera: 'Allow the camera',
+  loading: 'Loading tracker',
+  face: 'Finding your face',
+  eyes: 'Finding your eyes',
+  tracking: 'Tracking your eyes',
+  calibrating: 'Keep your eyes open',
+  blinks: 'Ready. Blink.',
 };
 
 const NOTES = {
-  'no face': 'No face in frame. It will pick up when you return.',
-  'too dark': 'Too dark to read your eyes. Paused.',
-  'too far': 'Too far away to read your eyes. Paused.',
-  'head turned': 'Face the camera. Paused.',
-  'look down': 'Look up. Blinks are paused while you look down.',
-  dim: 'Low light. Blinks may be missed.',
-  slow: 'Low frame rate. Blinks may be missed.',
-  crowd: 'More than one person. Staying with this face.',
-  hidden: 'Paused while the tab was hidden.',
-  muted: 'The system paused the camera. Waiting.',
+  'no face': 'No face in view',
+  'too dark': 'Too dark. Paused',
+  'too far': 'Too far. Move closer',
+  'head turned': 'Face the camera',
+  'look down': 'Look up. Paused',
+  dim: 'Low light',
+  slow: 'Low frame rate',
+  crowd: 'Staying on one face',
+  hidden: 'Resumed after pause',
+  muted: 'Camera paused',
 };
 
 const FAILURES = {
@@ -1067,7 +1076,7 @@ const camBox = document.getElementById('cam');
 const camFrame = document.getElementById('cam-frame');
 const camVideo = document.getElementById('cam-video');
 const camMesh = document.getElementById('cam-mesh');
-const camSteps = document.getElementById('cam-steps');
+const camStatus = document.getElementById('cam-status');
 const camStage = document.getElementById('cam-stage');
 const camNote = document.getElementById('cam-note');
 const camCount = document.getElementById('cam-count');
@@ -1075,8 +1084,6 @@ const camDebug = document.getElementById('cam-debug');
 const notice = document.getElementById('notice');
 const meshCtx = camMesh.getContext('2d');
 const COLOURS = {};
-
-camSteps.replaceChildren(...[1, 2, 3, 4, 5, 6].map(n => el('span', '', n)));
 
 let cam = null;           // this visit to Camera mode: survives a retry
 let run = null;           // one attempt at the camera and tracker: a retry starts a new one
@@ -1094,6 +1101,8 @@ function enterCamera() {
 
   camBox.addEventListener('pointerdown', dragStart, { signal });
   camBox.addEventListener('keydown', nudgeCam, { signal });
+  document.getElementById('cam-grip-left').addEventListener('pointerdown', e => resizeStart(e, -1), { signal });
+  document.getElementById('cam-grip-right').addEventListener('pointerdown', e => resizeStart(e, 1), { signal });
   document.getElementById('cam-stop').addEventListener('click', backToSelector, { signal });
   document.getElementById('notice-retry').addEventListener('click', startRun, { signal });
   document.getElementById('notice-back').addEventListener('click', backToSelector, { signal });
@@ -1108,6 +1117,7 @@ function leaveCamera() {
   clearTimeout(cam?.flash);
   camBox.classList.remove('blink', 'dragging');
   camBox.hidden = true;
+  camBox.style.width = '';
   notice.hidden = true;
   camDebug.textContent = '';
   document.body.classList.remove('camera');
@@ -1409,11 +1419,15 @@ function setStage(r, key) {
   if (r.stage === key) return;
   r.stage = key;
   r.stageAt = performance.now();
-  const [n, words] = STAGES[key];
-  camStage.textContent = words;
-  [...camSteps.children].forEach((c, i) => {
-    c.className = i + 1 === n ? 'now' : i + 1 < n ? 'done' : '';
-  });
+  camStage.textContent = STAGES[key];
+  showStatus(r);
+}
+
+// One line: a note, when there is something to say, otherwise the stage.
+function showStatus(r) {
+  camStage.hidden = Boolean(r.noteKey);
+  camStatus.classList.toggle('ready', r.stage === 'blinks' && !r.noteKey);
+  placeCam(); // a line that wraps at small sizes must not push the view off screen
 }
 
 function updateStage(r, sample) {
@@ -1434,6 +1448,7 @@ function setNote(r, key) {
   if (r.noteKey === key) return;
   r.noteKey = key;
   camNote.textContent = key ? NOTES[key] : '';
+  showStatus(r);
 }
 
 function updateNote(r, sample, now) {
@@ -1617,15 +1632,27 @@ function onVisibility() {
   }
 }
 
-/* The floating view: starts in a corner, drags anywhere, stays on screen. */
+/* The floating view: starts in a corner, drags and resizes, stays on screen. */
+
+const CAM_MIN_WIDTH = 140;
 
 function placeCam() {
   if (!cam || camBox.hidden) return;
+  camBox.style.width = cam.width ? `${cam.width}px` : '';
+  const limit = camWidthLimit();
+  if (camBox.getBoundingClientRect().width > limit) camBox.style.width = `${limit}px`;
   const box = camBox.getBoundingClientRect();
   const gap = 12;
   const maxX = Math.max(0, innerWidth - box.width), maxY = Math.max(0, innerHeight - box.height);
   const pos = cam.pos ?? { x: maxX - gap, y: maxY - gap };
   moveCam(Math.min(maxX, Math.max(0, pos.x)), Math.min(maxY, Math.max(0, pos.y)), !cam.pos);
+}
+
+// The widest the view can be and still fit on screen, picture and status included.
+function camWidthLimit() {
+  const box = camBox.getBoundingClientRect(), frame = camFrame.getBoundingClientRect();
+  const aspect = frame.width / frame.height;
+  return Math.max(CAM_MIN_WIDTH, Math.min(innerWidth, (innerHeight - (box.height - frame.height)) * aspect));
 }
 
 function moveCam(x, y, unset) {
@@ -1635,7 +1662,7 @@ function moveCam(x, y, unset) {
 }
 
 function dragStart(e) {
-  if (e.target.closest('button')) return;
+  if (e.target.closest('button, .cam-grip')) return;
   const box = camBox.getBoundingClientRect();
   const dx = e.clientX - box.left, dy = e.clientY - box.top;
   camBox.setPointerCapture(e.pointerId);
@@ -1655,7 +1682,39 @@ function dragStart(e) {
   }
 }
 
+// Resizes from a top corner and keeps the opposite bottom corner where it is. The picture
+// keeps its proportions because only the width is set. side: -1 left grip, 1 right grip.
+function resizeStart(e, side) {
+  e.preventDefault();
+  const grip = e.currentTarget;
+  const box = camBox.getBoundingClientRect(), frame = camFrame.getBoundingClientRect();
+  const aspect = frame.width / frame.height;
+  const fromX = e.clientX, fromY = e.clientY;
+  grip.setPointerCapture(e.pointerId);
+  const drag = new AbortController();
+  grip.addEventListener('pointermove', m => {
+    const wide = (m.clientX - fromX) * side, tall = (fromY - m.clientY) * aspect;
+    const width = box.width + (Math.abs(wide) > Math.abs(tall) ? wide : tall);
+    cam.width = Math.max(CAM_MIN_WIDTH, Math.min(camWidthLimit(), width));
+    camBox.style.width = `${cam.width}px`;
+    const now = camBox.getBoundingClientRect();
+    cam.pos = { x: side < 0 ? box.right - now.width : box.left, y: box.bottom - now.height };
+    placeCam();
+  }, { signal: drag.signal });
+  const end = () => drag.abort();
+  cam.endDrag = end;
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    grip.addEventListener(type, end, { signal: drag.signal });
+  }
+}
+
 function nudgeCam(e) {
+  if (e.target === camBox && '+=-_'.includes(e.key)) {
+    const box = camBox.getBoundingClientRect();
+    cam.width = Math.max(CAM_MIN_WIDTH, Math.min(camWidthLimit(), box.width + ('+='.includes(e.key) ? 20 : -20)));
+    placeCam();
+    return;
+  }
   const step = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] }[e.key];
   if (!step || e.target !== camBox) return;
   e.preventDefault();
