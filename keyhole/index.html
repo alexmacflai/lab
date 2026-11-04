@@ -32,9 +32,10 @@ const CONFIG = {
   inputSmoothing: 0.16,         // seconds; critically damped spring from input to p
 
   // Motion: automatic return
-  returnDelay: 1.2,             // seconds after the last input, trackpad momentum included
-  maxReturnSpeed: 0.13,         // p per second
-  returnEase: 1.5,              // seconds to reach cruise speed, and to come to rest
+  returnDelay: 0.9,             // seconds after the last input, trackpad momentum included
+  maxReturnSpeed: 0.2,          // p per second
+  returnEaseIn: 3.0,            // seconds to reach cruise speed
+  returnEaseOut: 2.0,           // seconds to come to rest
   cancelBlend: 0.2,             // seconds over which input takes over from the return velocity
   settleVelocity: 2e-4,         // p/s; the return will not start while moving faster than this
   reducedMotionFade: 0.9,       // seconds; prefers-reduced-motion return is a fade, not a zoom
@@ -49,10 +50,9 @@ const CONFIG = {
   slotBottomY: -2.4,
   slotTopHalfWidth: 0.36,
   slotBottomHalfWidth: 0.78,
-  neckFillet: 0.06,             // softens the corner where circle meets slot
 
   // Keyhole size: circle radius grows exponentially from sizeFar to a scale computed from the viewport.
-  sizeFar: 0.0075,              // circle radius at p = 0, fraction of the shorter viewport side
+  sizeFar: 0.015,               // circle radius at p = 0, fraction of the shorter viewport side
   sizeEase: 0.25,               // 0 = pure exponential; higher softens both ends of the travel
   coverMarginPx: 2,             // extra clearance at p = 1
   anchorBlendStart: 0.15,       // size-curve position where the zoom origin leaves the shape's visual centre...
@@ -62,6 +62,10 @@ const CONFIG = {
   kMAX: 0.55,
   kStart: 0.3,                  // p below this is perfectly sharp
   kGamma: 1.6,
+  maskScale: 0.25,              // resolution of the blurred shape; it is soft, so this costs nothing visible
+  maskBlendFrom: 4,             // device px of edge blur where the true blur starts to take over...
+  maskBlendTo: 12,              // ...and where it has taken over from the plain soft edge
+  maskTapSoftness: 0.35,        // share of the blur given to each tap's soft edge; the rest is kernel radius
 
   // Video blur: fraction of the shorter viewport side.
   bMAX: 0.09,
@@ -70,8 +74,8 @@ const CONFIG = {
   blurLevels: 7,                // downsample pyramid depth
 
   // Video opacity
-  opacityEnd: 0.22,             // p at which the video is fully opaque
-  opacityGamma: 1.3,
+  opacityEnd: 0.2,              // p at which the video is fully opaque
+  opacityPower: 3,              // higher rises faster from the very first movement
 
   // Sound
   vMAX: 0.9,                    // gain at p = 1
@@ -206,28 +210,28 @@ function createMotion(cfg) {
   let acc = 0;
 
   function planReturn(p0) {
-    const crit = cfg.maxReturnSpeed * cfg.returnEase;
-    // Too short to reach cruise: scale speed and ease time together, keeping acceleration the same.
+    const crit = cfg.maxReturnSpeed * (cfg.returnEaseIn + cfg.returnEaseOut) / 2;
+    // Too short to reach cruise: scale speed and ease times together, keeping acceleration the same.
     const k = p0 >= crit ? 1 : Math.sqrt(p0 / crit);
-    const vp = cfg.maxReturnSpeed * k, te = cfg.returnEase * k;
-    return { p0, vp, te, cruise: Math.max(0, p0 / vp - te), t0: m.clock };
+    const vp = cfg.maxReturnSpeed * k, teIn = cfg.returnEaseIn * k, teOut = cfg.returnEaseOut * k;
+    return { p0, vp, teIn, teOut, cruise: Math.max(0, p0 / vp - (teIn + teOut) / 2), t0: m.clock };
   }
 
   // Distance travelled during an ease of length te at peak vp, s in 0..1 (integral of smoothstep).
   const rampX = (s, vp, te) => vp * te * (s * s * s - 0.5 * s * s * s * s);
 
   function sampleReturn(pl, t) {
-    const total = 2 * pl.te + pl.cruise;
+    const total = pl.teIn + pl.cruise + pl.teOut;
     if (t >= total) return { p: 0, v: 0, done: true };
     let x, speed;
-    if (t < pl.te) {
-      const s = t / pl.te;
-      x = rampX(s, pl.vp, pl.te); speed = pl.vp * smooth(s);
-    } else if (t < pl.te + pl.cruise) {
-      x = pl.vp * pl.te * 0.5 + pl.vp * (t - pl.te); speed = pl.vp;
+    if (t < pl.teIn) {
+      const s = t / pl.teIn;
+      x = rampX(s, pl.vp, pl.teIn); speed = pl.vp * smooth(s);
+    } else if (t < pl.teIn + pl.cruise) {
+      x = pl.vp * pl.teIn * 0.5 + pl.vp * (t - pl.teIn); speed = pl.vp;
     } else {
-      const s = (total - t) / pl.te;
-      x = pl.p0 - rampX(s, pl.vp, pl.te); speed = pl.vp * smooth(s);
+      const s = (total - t) / pl.teOut;
+      x = pl.p0 - rampX(s, pl.vp, pl.teOut); speed = pl.vp * smooth(s);
     }
     return { p: Math.max(0, pl.p0 - x), v: -speed, done: false };
   }
@@ -294,7 +298,7 @@ function createMotion(cfg) {
     phase() {
       if (m.mode === 'returning' && m.plan) {
         const t = m.clock - m.plan.t0;
-        return t < m.plan.te ? 'return: ease in' : t < m.plan.te + m.plan.cruise ? 'return: cruise' : 'return: ease out';
+        return t < m.plan.teIn ? 'return: ease in' : t < m.plan.teIn + m.plan.cruise ? 'return: cruise' : 'return: ease out';
       }
       if (m.mode === 'manual') {
         if (m.holding) return 'holding';
@@ -309,6 +313,18 @@ function createMotion(cfg) {
 /* ---------------------------------------------------------------- mapping
    One function from p to every parameter. Sizes come out in device pixels of the render target. */
 const SHAPE_CENTRE_Y = (1 + CONFIG.slotBottomY) / 2;   // middle of the shape's bounding box
+
+// Where the slot's flared edge leaves the circle.
+const SHOULDER = (() => {
+  const c = CONFIG;
+  const edgeX = (y) => mix(c.slotTopHalfWidth, c.slotBottomHalfWidth, (c.slotTopY - y) / (c.slotTopY - c.slotBottomY));
+  let inside = c.slotTopY, outside = c.slotBottomY;
+  for (let i = 0; i < 40; i++) {
+    const y = (inside + outside) / 2;
+    if (edgeX(y) ** 2 + y * y < 1) inside = y; else outside = y;
+  }
+  return { x: edgeX(inside), y: inside };
+})();
 const view = { w: 1, h: 1, cssW: 1, cssH: 1, halfDiag: 1, minSide: 1, sizeNear: 1, sizeFarPx: 1 };
 
 function measureView(w, h, cssW, cssH) {
@@ -337,7 +353,7 @@ function derive(p) {
     size,
     anchorY: mix(SHAPE_CENTRE_Y, 0, smoothRange(c.anchorBlendStart, c.anchorBlendEnd, u)),
     edgeBlur: c.kMAX * view.halfDiag * Math.pow(smoothRange(c.kStart, 1, p), c.kGamma),
-    opacity: Math.pow(smoothRange(0, c.opacityEnd, p), c.opacityGamma),
+    opacity: 1 - Math.pow(1 - clamp(p / c.opacityEnd), c.opacityPower),
     videoBlur: c.bMAX * view.minSide * Math.pow(clamp(1 - p / c.bEnd), c.bGamma),
     volume: perceptualGain(p),
     cutoff: c.lpMAX * Math.pow(c.lpOpen / c.lpMAX, Math.pow(p, c.lpGamma)),
@@ -362,27 +378,52 @@ void main() {
   gl_FragColor = c / 8.0;
 }`;
 
+const KEYHOLE_SDF = `float sdSegment(vec2 p, vec2 a, vec2 b) {
+  vec2 pa = p - a, ba = b - a;
+  return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0));
+}
+// Exact distance to the merged outline: one arc and two straight edges, mirrored in x. There is no
+// seam inside the shape, so a wide soft edge stays one continuous form, as a boolean union should.
+float sdKeyhole(vec2 q) {
+  const vec2 shoulder = vec2(${SHOULDER.x.toFixed(6)}, ${SHOULDER.y.toFixed(6)});
+  const vec2 corner = vec2(${CONFIG.slotBottomHalfWidth.toFixed(6)}, ${CONFIG.slotBottomY.toFixed(6)});
+  vec2 p = vec2(abs(q.x), q.y);
+  float r = length(p);
+  float arc = p.y > shoulder.y * r ? abs(r - 1.0) : length(p - shoulder);
+  float d = min(arc, min(sdSegment(p, shoulder, corner), sdSegment(p, corner, vec2(0.0, corner.y))));
+  float slotHalf = mix(shoulder.x, corner.x, (shoulder.y - p.y) / (shoulder.y - corner.y));
+  bool inside = r < 1.0 || (p.y >= corner.y && p.y <= shoulder.y && p.x <= slotHalf);
+  return inside ? -d : d;
+}`;
+
+// The merged shape, then blurred: the average of the shape over a disc around each pixel. Unlike
+// widening the edge of a distance field, this leaves no creases inside the shape.
+const MASK_TAPS = 16;
+const MASK_FRAG = `precision highp float;
+uniform vec2 uTargetSize; uniform vec2 uViewport;
+uniform float uSize; uniform float uAnchorY; uniform float uRadius; uniform float uSoft;
+${KEYHOLE_SDF}
+float tap(vec2 px) {
+  return 1.0 - smoothstep(-uSoft, uSoft, sdKeyhole(px / uSize + vec2(0.0, uAnchorY)) * uSize);
+}
+void main() {
+  vec2 px = (gl_FragCoord.xy / uTargetSize - 0.5) * uViewport;
+  float m = 0.0;
+${Array.from({ length: MASK_TAPS }, (_, i) => {
+    const r = Math.sqrt((i + 0.5) / MASK_TAPS), a = i * 2.399963;
+    return `  m += tap(px + uRadius * vec2(${(r * Math.cos(a)).toFixed(5)}, ${(r * Math.sin(a)).toFixed(5)}));`;
+  }).join('\n')}
+  m /= ${MASK_TAPS}.0;
+  gl_FragColor = vec4(m, m, m, 1.0);
+}`;
+
 const COMPOSITE_FRAG = (blurred) => `precision highp float;
 uniform vec2 uViewport; uniform vec2 uUvScale;
 uniform float uSize; uniform float uAnchorY; uniform float uEdge; uniform float uAmount;
+uniform sampler2D uMask; uniform float uMaskMix;
 uniform sampler2D uA; uniform sampler2D uB; uniform vec2 uSizeA; uniform vec2 uSizeB; uniform float uMix; uniform float uABicubic;
 
-float sdTrapezoid(vec2 p, float r1, float r2, float he) {
-  vec2 k1 = vec2(r2, he), k2 = vec2(r2 - r1, 2.0 * he);
-  p.x = abs(p.x);
-  vec2 ca = vec2(p.x - min(p.x, p.y < 0.0 ? r1 : r2), abs(p.y) - he);
-  vec2 cb = p - k1 + k2 * clamp(dot(k1 - p, k2) / dot(k2, k2), 0.0, 1.0);
-  float s = (cb.x < 0.0 && ca.y < 0.0) ? -1.0 : 1.0;
-  return s * sqrt(min(dot(ca, ca), dot(cb, cb)));
-}
-float sdKeyhole(vec2 q) {
-  float circle = length(q) - 1.0;
-  float slot = sdTrapezoid(q - vec2(0.0, ${((CONFIG.slotTopY + CONFIG.slotBottomY) / 2).toFixed(4)}),
-    ${CONFIG.slotBottomHalfWidth.toFixed(4)}, ${CONFIG.slotTopHalfWidth.toFixed(4)}, ${((CONFIG.slotTopY - CONFIG.slotBottomY) / 2).toFixed(4)});
-  float k = ${CONFIG.neckFillet.toFixed(4)};
-  float h = max(k - abs(circle - slot), 0.0) / k;
-  return min(circle, slot) - h * h * k * 0.25;
-}
+${KEYHOLE_SDF}
 ${blurred ? `
 vec4 bspline(sampler2D tex, vec2 uv, vec2 size) {
   vec2 st = uv * size - 0.5, i = floor(st), f = st - i;
@@ -400,6 +441,7 @@ void main() {
   vec2 px = gl_FragCoord.xy - 0.5 * uViewport;
   float sd = sdKeyhole(px / uSize + vec2(0.0, uAnchorY)) * uSize;
   float mask = 1.0 - smoothstep(-uEdge, uEdge, sd);
+  if (uMaskMix > 0.0) mask = mix(mask, texture2D(uMask, gl_FragCoord.xy / uViewport).r, uMaskMix);
   float a = mask * uAmount;
   if (a <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
   vec2 uv = (gl_FragCoord.xy / uViewport - 0.5) * uUvScale + 0.5;
@@ -453,10 +495,12 @@ function initGL() {
   const gl = canvas.getContext('webgl2', opts) || canvas.getContext('webgl', opts);
   if (!gl) return false;
   R.gl = gl;
-  const compositeUniforms = ['uViewport', 'uUvScale', 'uSize', 'uAnchorY', 'uEdge', 'uAmount', 'uA', 'uB', 'uSizeA', 'uSizeB', 'uMix', 'uABicubic'];
+  const compositeUniforms = ['uViewport', 'uUvScale', 'uSize', 'uAnchorY', 'uEdge', 'uAmount', 'uA', 'uB', 'uSizeA', 'uSizeB', 'uMix', 'uABicubic', 'uMask', 'uMaskMix'];
   R.down = compile(gl, VERT, DOWN_FRAG, ['uTex', 'uTexel']);
   R.sharp = compile(gl, VERT, COMPOSITE_FRAG(false), compositeUniforms);
   R.blurred = compile(gl, VERT, COMPOSITE_FRAG(true), compositeUniforms);
+  R.mask = compile(gl, VERT, MASK_FRAG, ['uTargetSize', 'uViewport', 'uSize', 'uAnchorY', 'uRadius', 'uSoft']);
+  R.maskTarget = null;
   const buf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
@@ -519,7 +563,7 @@ function warmUp(gl) {
   R.levelsValid = 0;
   gl.enable(gl.SCISSOR_TEST);
   gl.scissor(0, 0, 1, 1);
-  for (const prog of [R.sharp, R.blurred]) {
+  for (const prog of [R.sharp, R.blurred, R.mask]) {
     gl.useProgram(prog.prog);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
@@ -552,6 +596,34 @@ function ensureLevels(gl, upTo) {
   R.levelsValid = upTo;
 }
 
+function renderMask(gl, d, edge) {
+  const w = Math.max(2, Math.ceil(view.w * CONFIG.maskScale)), h = Math.max(2, Math.ceil(view.h * CONFIG.maskScale));
+  let t = R.maskTarget;
+  if (!t || t.w !== w || t.h !== h) {
+    if (t) { gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fbo); }
+    const tex = makeTexture(gl);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    t = R.maskTarget = { tex, fbo, w, h };
+  }
+  const u = R.mask.u;
+  gl.useProgram(R.mask.prog);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, t.fbo);
+  gl.viewport(0, 0, w, h);
+  gl.disable(gl.SCISSOR_TEST);
+  gl.uniform2f(u.uTargetSize, w, h);
+  gl.uniform2f(u.uViewport, view.w, view.h);
+  gl.uniform1f(u.uSize, d.size);
+  gl.uniform1f(u.uAnchorY, d.anchorY);
+  // Kernel radius and tap softness add up to the edge blur, so nothing reaches further than it.
+  gl.uniform1f(u.uRadius, edge * (1 - CONFIG.maskTapSoftness));
+  gl.uniform1f(u.uSoft, Math.max(edge * CONFIG.maskTapSoftness, 0.75));
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
 // Render-target pixels per video pixel when the frame covers the viewport.
 const coverScale = () => Math.max(view.w / R.videoW, view.h / R.videoH);
 
@@ -580,6 +652,11 @@ function draw(d, amount) {
   const lo = Math.floor(lod), hi = Math.min(lo + 1, R.levels.length);
   if (blurred) ensureLevels(gl, hi);
 
+  // Once the opening contains the whole viewport, the mask is 1 everywhere: skip it.
+  const softEdge = Math.max(d.edgeBlur, 0.75);
+  const maskMix = d.size - softEdge > view.halfDiag ? 0 : smoothRange(CONFIG.maskBlendFrom, CONFIG.maskBlendTo, softEdge);
+  if (maskMix > 0) renderMask(gl, d, softEdge);
+
   const prog = blurred ? R.blurred : R.sharp;
   gl.useProgram(prog.prog);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -606,6 +683,12 @@ function draw(d, amount) {
   gl.uniform1f(u.uAnchorY, d.anchorY);
   gl.uniform1f(u.uEdge, edge);
   gl.uniform1f(u.uAmount, amount);
+  gl.uniform1f(u.uMaskMix, maskMix);
+  gl.uniform1i(u.uMask, 2);
+  if (maskMix > 0) {
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, R.maskTarget.tex);
+  }
   gl.uniform1i(u.uA, 0);
   gl.activeTexture(gl.TEXTURE0);
   if (blurred) {
