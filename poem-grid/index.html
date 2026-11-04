@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Poem Grid</title>
+<title>Micro-thoughts prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
@@ -118,12 +118,177 @@
     display: none;
   }
   body.debug #hud { display: block; }
+  body.camera #grid, body.camera #hud { display: none; }
+
+  /* Start screen and full-screen notices */
+  [hidden] { display: none !important; }
+  #selector, #notice {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: var(--white);
+    font-size: clamp(13px, 1.4vw, 16px);
+    line-height: 1.35;
+  }
+  #selector { display: grid; grid-template: auto 1fr / 1fr 1fr; }
+  #selector header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    gap: 2ch;
+    padding: 12px var(--margin);
+    border-bottom: 1px solid var(--black);
+  }
+  @media (hover: none) { #selector-esc { display: none; } }
+  .choice {
+    appearance: none;
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+    padding: var(--margin);
+    background: var(--white);
+    color: var(--black);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.5em;
+    min-width: 0;
+  }
+  .choice + .choice { border-left: 1px solid var(--black); }
+  .choice b { font-weight: 400; font-size: clamp(40px, 9vw, 150px); line-height: 1; }
+  .choice:active { background: var(--black); color: var(--white); }
+  @media (hover: hover) { .choice:hover { background: var(--black); color: var(--white); } }
+  @media (orientation: portrait) {
+    #selector { grid-template: auto 1fr 1fr / 1fr; }
+    .choice + .choice { border-left: 0; border-top: 1px solid var(--black); }
+  }
+  .choice:focus-visible, .act:focus-visible, #cam:focus-visible {
+    outline: 3px solid var(--magenta);
+    outline-offset: -6px;
+  }
+  #notice {
+    padding: var(--margin);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1em;
+  }
+  #notice h1 { margin: 0; font-weight: 400; font-size: clamp(32px, 7vw, 96px); line-height: 1.05; }
+  #notice p { margin: 0; max-width: 52ch; }
+  #notice-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1em; }
+  .act {
+    appearance: none;
+    border: 1px solid var(--black);
+    border-radius: 0;
+    margin: 0;
+    padding: 0.6em 1.2ch;
+    background: var(--white);
+    color: var(--black);
+    font: inherit;
+    cursor: pointer;
+  }
+  .act:active { background: var(--black); color: var(--white); }
+  @media (hover: hover) { .act:hover { background: var(--black); color: var(--white); } }
+
+  /* Floating camera view. Fixed and out of flow, so #stage never measures it. */
+  #cam {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 15;
+    width: clamp(180px, 30vw, 420px);
+    background: var(--white);
+    border: 1px solid var(--black);
+    font-size: 11px;
+    line-height: 1.3;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  #cam.dragging { cursor: grabbing; }
+  #cam.blink { outline: 4px solid var(--yellow); }
+  #cam-frame { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--black); }
+  #cam-video, #cam-mesh { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #cam-video { object-fit: cover; transform: scaleX(-1); }
+  #cam-status { padding: 3px 6px; border-bottom: 1px solid var(--black); }
+  #cam-status.ready { background: var(--green); }
+  #cam-note { color: var(--red); }
+  .cam-grip { position: absolute; top: 0; width: 28px; height: 28px; touch-action: none; }
+  .cam-grip::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    background: var(--white);
+    border: 1px solid var(--black);
+  }
+  #cam-grip-left { left: 0; cursor: nwse-resize; }
+  #cam-grip-left::after { left: 0; }
+  #cam-grip-right { right: 0; cursor: nesw-resize; }
+  #cam-grip-right::after { right: 0; }
+  #cam-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+  }
+  #cam-count { padding: 3px 6px; flex: 1; }
+  #cam.blink #cam-count { background: var(--yellow); }
+  #cam-stop { border-width: 0 0 0 1px; padding: 3px 8px; font-size: 11px; min-height: 26px; }
+
+  /* Camera debug values; press G in Camera mode */
+  #cam-debug {
+    position: fixed;
+    left: 8px;
+    top: 8px;
+    z-index: 16;
+    margin: 0;
+    padding: 4px 6px;
+    max-width: calc(100vw - 16px);
+    background: var(--white);
+    color: var(--magenta);
+    font: 11px/1.3 'DM Mono', ui-monospace, monospace;
+    white-space: pre;
+    overflow: hidden;
+    pointer-events: none;
+    display: none;
+  }
+  body.camera.debug #cam-debug { display: block; }
 </style>
 </head>
 <body>
 <div id="stage"><div id="text"></div></div>
 <div id="grid"></div>
 <div id="hud"></div>
+<section id="cam" tabindex="0" aria-label="Camera view. Arrow keys move it, plus and minus resize it." hidden>
+  <div id="cam-frame">
+    <video id="cam-video" playsinline muted autoplay></video>
+    <canvas id="cam-mesh"></canvas>
+    <div class="cam-grip" id="cam-grip-left"></div>
+    <div class="cam-grip" id="cam-grip-right"></div>
+  </div>
+  <div id="cam-status" aria-live="polite"><div id="cam-stage"></div><div id="cam-note"></div></div>
+  <div id="cam-foot"><span id="cam-count">0 blinks</span><button id="cam-stop" class="act" type="button">Stop</button></div>
+</section>
+<pre id="cam-debug"></pre>
+<div id="notice" role="alert" hidden>
+  <h1 id="notice-title"></h1>
+  <p id="notice-body"></p>
+  <div id="notice-actions">
+    <button id="notice-retry" class="act" type="button">Try again</button>
+    <button id="notice-mouse" class="act" type="button">Use mouse</button>
+    <button id="notice-back" class="act" type="button">Back</button>
+  </div>
+</div>
+<main id="selector">
+  <header><span>Micro-thoughts prototype</span><span id="selector-esc">Esc returns here</span></header>
+  <button class="choice" id="choose-mouse" type="button"><b>Mouse</b><span>Move across the page to change the layout.</span></button>
+  <button class="choice" id="choose-camera" type="button"><b>Camera</b><span>Blink to change the layout. The video stays on this device.</span></button>
+</main>
 
 <script>
 // First paragraph is the title, blank lines separate stanzas.
@@ -402,6 +567,7 @@ let current = -1;
 let seed = 1;
 
 function render() {
+  if (current < 0) return; // nothing on stage yet: start screen, or fonts arriving behind it
   const v = VARIANTS[current];
   const [x, y] = v.pos.split(' ');
   stage.style.justifyContent = PLACE[x];
@@ -450,21 +616,1113 @@ function onPointer(e) {
   show(lastCell % VARIANTS.length);
 }
 
-addEventListener('pointermove', onPointer);
-addEventListener('pointerdown', onPointer);
-addEventListener('keydown', e => {
-  if (e.key === 'g' || e.key === 'G') document.body.classList.toggle('debug');
-});
+/* ---------- Layout selection ---------- */
 
+// A layout can come back only after this many others have followed it.
+const LAYOUT_COOLDOWN = 3;
+
+// history: layout indexes in the order shown, the one on screen last. rng: () => [0, 1).
+// The last LAYOUT_COOLDOWN entries are excluded, so a layout shown on blink N is
+// out for N+1, N+2 and N+3, and eligible again on N+4.
+function pickLayout(history, count, rng) {
+  const excluded = new Set(history.slice(-LAYOUT_COOLDOWN));
+  const eligible = [];
+  for (let i = 0; i < count; i++) if (!excluded.has(i)) eligible.push(i);
+  return eligible[Math.floor(rng() * eligible.length)];
+}
+
+/* ---------- Modes ---------- */
+
+const selector = document.getElementById('selector');
+const chooseMouse = document.getElementById('choose-mouse');
+const chooseCamera = document.getElementById('choose-camera');
+
+let mode = null; // null on the start screen, then 'mouse' or 'camera'
+let modeListeners = null; // AbortController for everything the current mode listens to
 let pending = 0;
-addEventListener('resize', () => {
-  cancelAnimationFrame(pending);
-  pending = requestAnimationFrame(() => { layoutGrid(); render(); });
-});
 
-layoutGrid();
 // index.html#12 opens on variant 12
-show(Math.max(0, Math.min(VARIANTS.length, parseInt(location.hash.slice(1)) || 1) - 1));
+function firstLayout() {
+  return Math.max(0, Math.min(VARIANTS.length, parseInt(location.hash.slice(1)) || 1) - 1);
+}
+
+function onResize() {
+  cancelAnimationFrame(pending);
+  pending = requestAnimationFrame(() => {
+    if (mode === 'mouse') layoutGrid();
+    render();
+    if (mode === 'camera') placeCam();
+  });
+}
+
+function enterMode(next) {
+  mode = next;
+  selector.hidden = true;
+  modeListeners = new AbortController();
+  const { signal } = modeListeners;
+  addEventListener('resize', onResize, { signal });
+  addEventListener('keydown', e => {
+    if (e.key === 'g' || e.key === 'G') document.body.classList.toggle('debug');
+  }, { signal });
+  return signal;
+}
+
+function enterMouse() {
+  const signal = enterMode('mouse');
+  addEventListener('pointermove', onPointer, { signal });
+  addEventListener('pointerdown', onPointer, { signal });
+  layoutGrid();
+  show(firstLayout());
+}
+
+function leaveMode() {
+  if (mode === 'camera') leaveCamera();
+  modeListeners?.abort();
+  modeListeners = null;
+  cancelAnimationFrame(pending);
+  mode = null;
+  document.body.classList.remove('debug');
+  // Empty the stage, so the next choice starts from nothing and show() can't skip.
+  current = -1;
+  lastCell = 0;
+  text.replaceChildren();
+  text.removeAttribute('style');
+  text.className = '';
+  grid.replaceChildren();
+  hud.textContent = '';
+}
+
+function backToSelector() {
+  const last = mode === 'camera' ? chooseCamera : chooseMouse;
+  leaveMode();
+  selector.hidden = false;
+  last.focus();
+}
+
+chooseMouse.addEventListener('click', enterMouse);
+chooseCamera.addEventListener('click', enterCamera);
+selector.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') chooseMouse.focus();
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') chooseCamera.focus();
+});
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && mode) backToSelector();
+});
+if (matchMedia('(hover: hover)').matches) chooseMouse.focus();
+
+/* ---------- Blink detector ---------- */
+
+// Every tunable value for blink detection. Closure runs from 0 (this person's eye
+// at rest) to 1 (fully closed). Times are in milliseconds, angles in degrees.
+const BLINK = {
+  // How each eye's closure is read from its two signals
+  BLEND_WEIGHT: 0.5,      // share of the blendshape; the rest is eye aspect ratio
+  BLEND_FULL: 0.6,        // blendshape value that counts as fully closed
+  EAR_CLOSED_RATIO: 0.55, // aspect ratio at full closure, as a share of the open baseline
+  // Hysteresis: both eyes must pass these
+  CLOSING_ENTER: 0.25,    // open -> closing
+  CLOSED_ENTER: 0.6,      // closing -> closed
+  REOPEN_BELOW: 0.35,     // closed -> reopened, which is where the blink counts
+  OPEN_BELOW: 0.2,        // an abandoned closure is over once below this
+  WINK_ASYMMETRY: 0.4,    // closure difference between the eyes that rules out a blink
+  WINK_MS: 60,            // how long one eye may lead the other on the way back
+  // Each eye's aspect ratio must also fall this far, as a share of its baseline. In 106
+  // real blinks the shallower eye always got to 0.64 or lower. An eye that is narrowed
+  // but open (a glance down, a smile, the other side of a wink) reads closed on its
+  // blendshape, but not here.
+  MUST_REACH_EAR_RATIO: 0.65,
+  // Timing
+  MAX_CLOSING_MS: 300,    // slower than this is a droop or a glance, not a blink
+  MIN_BLINK_MS: 50,       // onset to reopening; shorter than this is one noisy frame
+  MAX_CLOSED_MS: 500,     // longer than this is resting the eyes
+  REFRACTORY_MS: 120,     // after a count, one blink can never count twice
+  MAX_GAP_MS: 450,        // a longer gap between samples means the reading can't be trusted
+  SETTLE_MS: 250,         // wait after a face returns or a pause ends
+  // Open-eye baseline
+  BASE_WINDOW_MS: 4000,   // rolling window for the median
+  BASE_SAMPLE_MS: 100,    // one baseline sample per this long, at any frame rate
+  BASE_MIN_SAMPLES: 8,    // samples needed before blinks can count
+  BASE_MAX_BLEND: 0.5,    // never calibrate on eyes that look shut
+  HOLD_ADAPT_MS: 1500,    // a narrowed eye held this long becomes the new baseline...
+  HOLD_ADAPT_BELOW: 0.85, // ...unless it is really shut, which must not
+  FACE_FORGET_MS: 3000,   // a face gone this long may be someone else: recalibrate
+  // When the reading is unreliable
+  MAX_YAW: 28,
+  MAX_PITCH: 22,
+  MAX_ROLL: 35,
+  MAX_HEAD_SPEED: 240,    // degrees per second
+  LOOK_DOWN_PAUSE: 0.6,   // gaze blendshape, read only while the eyes are open
+};
+
+function blinkInit() {
+  return {
+    phase: 'open', // open, closing, closed, reopened, hold (waits for open) or paused
+    t: null,
+    enteredAt: 0,  // when the current phase began
+    closedAt: 0,
+    onsetAt: 0,
+    asymAt: null,
+    deepestL: 1,   // lowest aspect ratio against baseline, per eye, since the onset
+    deepestR: 1,
+    settleUntil: 0,
+    pause: null,
+    lostAt: null,
+    gazeDown: false,
+    pose: null,
+    samples: [],   // [{t, earL, earR, blinkL, blinkR}], baseline window
+    sampledAt: -Infinity,
+    base: null,
+    closureL: 0,
+    closureR: 0,
+    lastReject: null,
+  };
+}
+
+function median(values) {
+  const v = [...values].sort((a, b) => a - b);
+  const m = v.length >> 1;
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+
+function clamp01(x) {
+  return x < 0 ? 0 : x > 1 ? 1 : x;
+}
+
+// One eye's closure against this person's open-eye baseline.
+function eyeClosure(ear, blend, baseEar, baseBlend, cfg) {
+  const byEar = baseEar > 0 ? (1 - ear / baseEar) / (1 - cfg.EAR_CLOSED_RATIO) : 0;
+  const byBlend = (blend - baseBlend) / Math.max(0.15, cfg.BLEND_FULL - baseBlend);
+  return cfg.BLEND_WEIGHT * clamp01(byBlend) + (1 - cfg.BLEND_WEIGHT) * clamp01(byEar);
+}
+
+function withBaseline(s, sample, cfg) {
+  if (sample.t - s.sampledAt < cfg.BASE_SAMPLE_MS) return s;
+  const samples = s.samples.filter(b => sample.t - b.t <= cfg.BASE_WINDOW_MS);
+  samples.push({
+    t: sample.t,
+    earL: sample.left.ear, earR: sample.right.ear,
+    blinkL: sample.left.blink, blinkR: sample.right.blink,
+  });
+  const base = samples.length < cfg.BASE_MIN_SAMPLES ? s.base : {
+    earL: median(samples.map(b => b.earL)), earR: median(samples.map(b => b.earR)),
+    blinkL: median(samples.map(b => b.blinkL)), blinkR: median(samples.map(b => b.blinkR)),
+  };
+  return { ...s, samples, sampledAt: sample.t, base };
+}
+
+// Pure: takes the previous state and one sample, returns the next state and any event.
+// sample: { t, face, left: {ear, blink}, right: {ear, blink}, yaw, pitch, roll, lookDown,
+//           tooSmall, tooDark }. No sample field is read from the camera directly, so
+// recorded or synthetic sequences behave exactly as live ones do.
+// event: { type: 'blink', t, closedMs, totalMs } or { type: 'reject', t, reason }.
+//
+// A blink counts on reopening. Only then is it known that both eyes shut together, for
+// a believable time, and came back. Counting at closure would be about 100ms sooner but
+// would fire on every wink, long closure and downward glance that later proves false.
+function blinkStep(prev, sample, cfg = BLINK) {
+  const { t } = sample;
+  if (prev.t !== null && t <= prev.t) return { state: prev, event: null };
+
+  const midBlink = prev.phase === 'closing' || prev.phase === 'closed';
+  const drop = reason => (midBlink ? { type: 'reject', t, reason } : null);
+  let s = { ...prev, t };
+  const rest = (next, reason) => {
+    const event = drop(reason);
+    return {
+      state: {
+        ...s, ...next,
+        enteredAt: t,
+        settleUntil: t + cfg.SETTLE_MS,
+        closureL: 0, closureR: 0,
+        lastReject: event ? reason : s.lastReject,
+      },
+      event,
+    };
+  };
+
+  if (prev.t !== null && t - prev.t > cfg.MAX_GAP_MS) {
+    s = { ...s, phase: 'open', pose: null };
+    if (!sample.face) return rest({ pause: 'no face', lostAt: t }, 'gap');
+  }
+
+  if (!sample.face) {
+    const lostAt = s.lostAt ?? t;
+    const forget = t - lostAt > cfg.FACE_FORGET_MS
+      ? { samples: [], base: null, sampledAt: -Infinity } : null;
+    return rest({ phase: 'open', pause: 'no face', lostAt, pose: null, gazeDown: false, ...forget }, 'face lost');
+  }
+  s.lostAt = null;
+
+  const pose = { yaw: sample.yaw, pitch: sample.pitch, roll: sample.roll, t };
+  const dt = prev.pose ? t - prev.pose.t : 0;
+  const speed = dt > 0
+    ? Math.hypot(pose.yaw - prev.pose.yaw, pose.pitch - prev.pose.pitch, pose.roll - prev.pose.roll) / dt * 1000
+    : 0;
+  s.pose = pose;
+  const unreliable =
+    sample.tooDark ? 'too dark' :
+    sample.tooSmall ? 'too far' :
+    Math.abs(pose.yaw) > cfg.MAX_YAW || Math.abs(pose.pitch) > cfg.MAX_PITCH || Math.abs(pose.roll) > cfg.MAX_ROLL ? 'head turned' :
+    speed > cfg.MAX_HEAD_SPEED ? 'head moving' : null;
+  if (unreliable) return rest({ phase: 'paused', pause: unreliable }, unreliable);
+  if (s.phase === 'paused') s.phase = 'open';
+  s.pause = null;
+
+  if (!s.base) {
+    const shut = (sample.left.blink + sample.right.blink) / 2 > cfg.BASE_MAX_BLEND;
+    return { state: shut ? s : withBaseline(s, sample, cfg), event: null };
+  }
+
+  const cL = eyeClosure(sample.left.ear, sample.left.blink, s.base.earL, s.base.blinkL, cfg);
+  const cR = eyeClosure(sample.right.ear, sample.right.blink, s.base.earR, s.base.blinkR, cfg);
+  const lo = Math.min(cL, cR), hi = Math.max(cL, cR);
+  s.closureL = cL;
+  s.closureR = cR;
+
+  // Gaze is read only while the eyes are clearly open. The blendshape also rises during
+  // a real blink, so reading it then would veto the very thing being looked for.
+  if (hi < cfg.CLOSING_ENTER) s.gazeDown = (sample.lookDown ?? 0) > cfg.LOOK_DOWN_PAUSE;
+
+  if (s.phase === 'open') s.deepestL = s.deepestR = 1;
+  s.deepestL = Math.min(s.deepestL, sample.left.ear / s.base.earL);
+  s.deepestR = Math.min(s.deepestR, sample.right.ear / s.base.earR);
+
+  let event = null;
+  const reject = reason => {
+    event = { type: 'reject', t, reason };
+    s.lastReject = reason;
+    s.phase = 'hold';
+    s.enteredAt = t;
+  };
+
+  switch (s.phase) {
+    case 'open':
+      if (t < s.settleUntil || s.gazeDown) break;
+      if (lo >= cfg.CLOSED_ENTER && hi - lo <= cfg.WINK_ASYMMETRY) {
+        // Low frame rate: the closing phase can fall between two frames.
+        s.phase = 'closed';
+        s.enteredAt = s.closedAt = s.onsetAt = t;
+        s.asymAt = null;
+      } else if (lo >= cfg.CLOSING_ENTER) {
+        s.phase = 'closing';
+        s.enteredAt = s.onsetAt = t;
+      }
+      break;
+    case 'closing':
+      if (lo >= cfg.CLOSED_ENTER && hi - lo <= cfg.WINK_ASYMMETRY) {
+        s.phase = 'closed';
+        s.enteredAt = s.closedAt = t;
+        s.asymAt = null;
+      } else if (hi < cfg.OPEN_BELOW) {
+        s.phase = 'open';
+        s.enteredAt = t;
+      } else if (t - s.onsetAt > cfg.MAX_CLOSING_MS) {
+        reject(hi - lo > cfg.WINK_ASYMMETRY ? 'wink' : 'too slow');
+      }
+      break;
+    case 'closed': {
+      const closedMs = t - s.closedAt;
+      if (hi <= cfg.REOPEN_BELOW) {
+        const reason =
+          t - s.onsetAt < cfg.MIN_BLINK_MS ? 'too short' :
+          Math.max(s.deepestL, s.deepestR) > cfg.MUST_REACH_EAR_RATIO ? 'not shut' : null;
+        if (reason) {
+          event = { type: 'reject', t, reason };
+          s.lastReject = reason;
+          s.phase = 'open';
+          s.enteredAt = t;
+        } else {
+          event = { type: 'blink', t, closedMs, totalMs: t - s.onsetAt };
+          s.phase = 'reopened';
+          s.enteredAt = t;
+        }
+      } else if (closedMs > cfg.MAX_CLOSED_MS) {
+        reject('too long');
+      } else if (lo <= cfg.REOPEN_BELOW && hi >= cfg.CLOSED_ENTER) {
+        if (s.asymAt === null) s.asymAt = t;
+        else if (t - s.asymAt >= cfg.WINK_MS) reject('wink');
+      } else {
+        s.asymAt = null;
+      }
+      break;
+    }
+    case 'reopened':
+      if (t - s.enteredAt >= cfg.REFRACTORY_MS) {
+        s.phase = 'open';
+        s.enteredAt = t;
+      }
+      break;
+    case 'hold':
+      if (hi < cfg.OPEN_BELOW) {
+        s.phase = 'open';
+        s.enteredAt = t;
+      } else if (t - s.enteredAt > cfg.HOLD_ADAPT_MS && hi < cfg.HOLD_ADAPT_BELOW) {
+        s = withBaseline(s, sample, cfg); // eyes settled narrower: smiling, say
+      }
+      break;
+  }
+
+  if (s.phase === 'open' && hi < cfg.CLOSING_ENTER && !s.gazeDown) s = withBaseline(s, sample, cfg);
+  return { state: s, event };
+}
+
+/* ---------- Signals from landmarks ---------- */
+
+// MediaPipe landmark indexes. "left" and "right" are the subject's own.
+const EYES = {
+  right: {
+    corners: [33, 133], lids: [[160, 144], [158, 153]],
+    ring: [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246],
+    iris: [468, 469, 470, 471, 472],
+  },
+  left: {
+    corners: [362, 263], lids: [[385, 380], [387, 373]],
+    ring: [263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 388, 466],
+    iris: [473, 474, 475, 476, 477],
+  },
+};
+
+// Landmarks are normalised to each axis separately, so distances only mean something
+// once they are back in pixels.
+function pixelDistance(a, b, w, h) {
+  return Math.hypot((a.x - b.x) * w, (a.y - b.y) * h);
+}
+
+function eyeAspect(lm, eye, w, h) {
+  const width = pixelDistance(lm[eye.corners[0]], lm[eye.corners[1]], w, h);
+  const open = eye.lids.reduce((sum, [a, b]) => sum + pixelDistance(lm[a], lm[b], w, h), 0);
+  return width > 0 ? open / (2 * width) : 0;
+}
+
+function shapeScore(shapes, name) {
+  return shapes.find(c => c.categoryName === name)?.score ?? 0;
+}
+
+// Head angles from the facial transformation matrix (column-major, may include scale).
+function headAngles(m) {
+  const d = m.data;
+  const sx = Math.hypot(d[0], d[1], d[2]) || 1;
+  const sy = Math.hypot(d[4], d[5], d[6]) || 1;
+  const sz = Math.hypot(d[8], d[9], d[10]) || 1;
+  const deg = 180 / Math.PI;
+  return {
+    yaw: Math.atan2(d[8] / sz, d[10] / sz) * deg,
+    pitch: Math.asin(Math.max(-1, Math.min(1, -d[9] / sz))) * deg,
+    roll: Math.atan2(d[1] / sy, d[0] / sx) * deg,
+  };
+}
+
+/* ---------- Camera mode ---------- */
+
+const TRACKER = {
+  BUNDLE: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/vision_bundle.mjs',
+  WASM: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1/wasm',
+  MODEL: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+  LOAD_TIMEOUT_MS: 45000,
+  STALL_MS: 8000,          // no new frames for this long, while visible, is a failure
+  STAGE_MIN_MS: 350,       // each stage stays up at least this long on the way forward
+  NOTE_HOLD_MS: 500,       // a condition must last this long before it is mentioned
+  LIGHT_EVERY_MS: 500,
+  LIGHT_WARN: 45,          // mean brightness out of 255
+  LIGHT_PAUSE: 16,
+  MIN_EYE_PX: 12,          // narrower than this in the video is too coarse to read
+  MIN_FPS: 12,             // below this, real blinks start to fall between frames
+  HISTORY_KEEP: 8,
+  FLASH_MS: 180,
+  // The floating view follows the face
+  ZOOM_FACE_FILL: 0.75,    // share of the view the face should fill
+  ZOOM_MAX: 4,
+  ZOOM_EASE_MS: 300,       // how quickly the view catches up with the face
+  ZOOM_DEADBAND: 0.03,     // ignore smaller changes, so a still face gets a still picture
+  ZOOM_RELEASE_MS: 1200,   // with no face for this long, show the whole picture again
+};
+
+const STAGES = {
+  camera: 'Allow the camera',
+  loading: 'Loading tracker',
+  face: 'Finding your face',
+  eyes: 'Finding your eyes',
+  tracking: 'Tracking your eyes',
+  calibrating: 'Keep your eyes open',
+  blinks: 'Ready. Blink.',
+};
+
+const NOTES = {
+  'no face': 'No face in view',
+  'too dark': 'Too dark. Paused',
+  'too far': 'Too far. Move closer',
+  'head turned': 'Face the camera',
+  'look down': 'Look up. Paused',
+  dim: 'Low light',
+  slow: 'Low frame rate',
+  crowd: 'Staying on one face',
+  hidden: 'Resumed after pause',
+  muted: 'Camera paused',
+};
+
+const FAILURES = {
+  insecure: ['This page is not secure.', 'Browsers give the camera only to https and localhost pages. Open this page at http://localhost instead.'],
+  unsupported: ['No camera access here.', 'This browser does not offer camera access. Try a current browser.'],
+  denied: ['The camera is blocked.', 'The browser said no. Allow the camera for this page in the address bar, and in system settings if it is off there, then try again.'],
+  none: ['No camera found.', 'Nothing here can see you. Connect a camera, then try again.'],
+  busy: ['The camera is busy.', 'Something else may be using it. Close that, then try again.'],
+  load: ['The tracker did not load.', 'It comes from a CDN the first time. Check the connection, then try again.'],
+  gone: ['The camera went away.', 'It was unplugged or switched off. Connect it, then try again.'],
+  stalled: ['The camera stopped.', 'No new pictures have arrived for a while. Try again.'],
+  crashed: ['The tracker stopped.', 'It hit an error while reading the video. Try again.'],
+};
+
+const camBox = document.getElementById('cam');
+const camFrame = document.getElementById('cam-frame');
+const camVideo = document.getElementById('cam-video');
+const camMesh = document.getElementById('cam-mesh');
+const camStatus = document.getElementById('cam-status');
+const camStage = document.getElementById('cam-stage');
+const camNote = document.getElementById('cam-note');
+const camCount = document.getElementById('cam-count');
+const camDebug = document.getElementById('cam-debug');
+const notice = document.getElementById('notice');
+const meshCtx = camMesh.getContext('2d');
+const COLOURS = {};
+
+let cam = null;           // this visit to Camera mode: survives a retry
+let run = null;           // one attempt at the camera and tracker: a retry starts a new one
+let trackerFailures = 0;
+
+function enterCamera() {
+  const signal = enterMode('camera');
+  document.body.classList.add('camera');
+  for (const c of ['green', 'yellow', 'red', 'cyan']) {
+    COLOURS[c] = getComputedStyle(document.documentElement).getPropertyValue(`--${c}`).trim();
+  }
+  show(firstLayout());
+  cam = { count: 0, history: [current], pos: null, flash: 0 };
+  camCount.textContent = blinkLabel(0);
+
+  camBox.addEventListener('pointerdown', dragStart, { signal });
+  camBox.addEventListener('keydown', nudgeCam, { signal });
+  document.getElementById('cam-grip-left').addEventListener('pointerdown', e => resizeStart(e, -1), { signal });
+  document.getElementById('cam-grip-right').addEventListener('pointerdown', e => resizeStart(e, 1), { signal });
+  document.getElementById('cam-stop').addEventListener('click', backToSelector, { signal });
+  document.getElementById('notice-retry').addEventListener('click', startRun, { signal });
+  document.getElementById('notice-back').addEventListener('click', backToSelector, { signal });
+  document.getElementById('notice-mouse').addEventListener('click', () => { leaveMode(); enterMouse(); }, { signal });
+  document.addEventListener('visibilitychange', onVisibility, { signal });
+  startRun();
+}
+
+function leaveCamera() {
+  stopRun();
+  cam?.endDrag?.();
+  clearTimeout(cam?.flash);
+  camBox.classList.remove('blink', 'dragging');
+  camBox.hidden = true;
+  camBox.style.width = '';
+  notice.hidden = true;
+  camDebug.textContent = '';
+  document.body.classList.remove('camera');
+  cam = null;
+}
+
+function stopRun() {
+  if (!run) return;
+  const r = run;
+  run = null;
+  r.alive = false;
+  r.listeners.abort();
+  clearInterval(r.watchdog);
+  if (r.frameCb && camVideo.cancelVideoFrameCallback) camVideo.cancelVideoFrameCallback(r.frameCb);
+  cancelAnimationFrame(r.raf);
+  r.stream?.getTracks().forEach(track => track.stop());
+  camVideo.pause();
+  camVideo.srcObject = null;
+  camVideo.style.transform = '';
+  r.landmarker?.close();
+  meshCtx.clearRect(0, 0, camMesh.width, camMesh.height);
+}
+
+function fail(kind) {
+  stopRun();
+  const [title, body] = FAILURES[kind];
+  document.getElementById('notice-title').textContent = title;
+  document.getElementById('notice-body').textContent = body;
+  const retry = document.getElementById('notice-retry');
+  retry.hidden = kind === 'insecure' || kind === 'unsupported';
+  camBox.hidden = true;
+  notice.hidden = false;
+  (retry.hidden ? document.getElementById('notice-mouse') : retry).focus();
+}
+
+async function startRun() {
+  stopRun();
+  notice.hidden = true;
+  camBox.hidden = false;
+  placeCam();
+  const r = run = {
+    alive: true,
+    listeners: new AbortController(),
+    stream: null,
+    landmarker: null,
+    frameCb: 0,
+    raf: 0,
+    watchdog: 0,
+    lastTs: 0,
+    lastVideoTime: -1,
+    lastFrameAt: 0,
+    det: blinkInit(),
+    face: null,
+    faces: 0,
+    stage: null,
+    stageAt: 0,
+    noteKey: null,
+    noteWant: null,
+    noteWantAt: 0,
+    noteUntil: 0,
+    hiddenNote: false,
+    muted: false,
+    light: 255,
+    lightAt: 0,
+    fps: 0,
+    detectMs: 0,
+    debugAt: 0,
+    meshDrawn: false,
+    view: FULL_VIEW,
+    viewTarget: FULL_VIEW,
+    viewAt: 0,
+    faceSeenAt: 0,
+    vw: 0,
+    vh: 0,
+  };
+  setStage(r, 'camera');
+  setNote(r, null);
+
+  if (!window.isSecureContext) return fail('insecure');
+  if (!navigator.mediaDevices?.getUserMedia) return fail('unsupported');
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+    });
+  } catch (err) {
+    if (r.alive) fail(cameraFailure(err));
+    return;
+  }
+  // Esc may have come while the browser was asking. Never keep a camera nobody wants.
+  if (!r.alive) return stream.getTracks().forEach(track => track.stop());
+  r.stream = stream;
+
+  const { signal } = r.listeners;
+  for (const track of stream.getVideoTracks()) {
+    track.addEventListener('ended', () => { if (r.alive) fail('gone'); }, { signal });
+    track.addEventListener('mute', () => { r.muted = true; }, { signal });
+    track.addEventListener('unmute', () => { r.muted = false; r.lastFrameAt = performance.now(); }, { signal });
+  }
+
+  camVideo.srcObject = stream;
+  try {
+    await camVideo.play();
+  } catch (err) {
+    if (r.alive) fail('busy');
+    return;
+  }
+  if (!r.alive) return;
+
+  setStage(r, 'loading');
+  let landmarker;
+  try {
+    landmarker = await withTimeout(loadTracker(), TRACKER.LOAD_TIMEOUT_MS);
+  } catch (err) {
+    trackerFailures++;
+    if (r.alive) fail('load');
+    return;
+  }
+  if (!r.alive) return landmarker.close();
+  r.landmarker = landmarker;
+
+  setStage(r, 'face');
+  r.lastFrameAt = performance.now();
+  r.watchdog = setInterval(() => watchFrames(r), 1000);
+  nextFrame(r);
+}
+
+function cameraFailure(err) {
+  switch (err?.name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'denied';
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+    case 'OverconstrainedError':
+      return 'none';
+    default:
+      return 'busy'; // NotReadableError, TrackStartError, AbortError
+  }
+}
+
+function withTimeout(promise, ms) {
+  let timer;
+  const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timed out')), ms); });
+  // A tracker that arrives after the timeout has no owner, so close it.
+  promise.then(t => { if (timer === null) t.close(); }, () => {});
+  return Promise.race([promise, timeout]).finally(() => { clearTimeout(timer); timer = null; });
+}
+
+async function loadTracker() {
+  // The browser remembers a failed module fetch for the life of the page, so a retry
+  // after a failure needs a URL it has not seen.
+  const url = TRACKER.BUNDLE + (trackerFailures ? `?retry=${trackerFailures}` : '');
+  const { FilesetResolver, FaceLandmarker } = await import(url);
+  const files = await FilesetResolver.forVisionTasks(TRACKER.WASM);
+  const options = delegate => ({
+    baseOptions: { modelAssetPath: TRACKER.MODEL, delegate },
+    runningMode: 'VIDEO',
+    numFaces: 2,
+    outputFaceBlendshapes: true,
+    outputFacialTransformationMatrixes: true,
+  });
+  try {
+    return await FaceLandmarker.createFromOptions(files, options('GPU'));
+  } catch (err) {
+    return await FaceLandmarker.createFromOptions(files, options('CPU'));
+  }
+}
+
+function nextFrame(r) {
+  if (camVideo.requestVideoFrameCallback) {
+    r.frameCb = camVideo.requestVideoFrameCallback(now => onFrame(r, now));
+  } else {
+    // Older browsers. A live stream's currentTime never stops moving, so it can't reveal
+    // a new frame; pacing to the camera's own rate is the closest available.
+    const frameRate = r.stream.getVideoTracks()[0]?.getSettings().frameRate || 30;
+    r.raf = requestAnimationFrame(now => {
+      if (!r.alive) return;
+      if (now - r.lastVideoTime < 1000 / frameRate - 4) return nextFrame(r);
+      r.lastVideoTime = now;
+      onFrame(r, now);
+    });
+  }
+}
+
+function onFrame(r, now) {
+  if (!r.alive) return;
+  nextFrame(r);
+  const vw = camVideo.videoWidth, vh = camVideo.videoHeight;
+  if (document.hidden || !vw || !vh) return;
+
+  // Timestamps must strictly increase, and whole milliseconds are what the tracker expects.
+  const ts = Math.max(r.lastTs + 1, Math.round(now));
+  const dt = r.lastTs ? ts - r.lastTs : 0;
+  r.lastTs = ts;
+  r.lastFrameAt = performance.now();
+  if (dt > 0 && dt < 1000) r.fps = r.fps ? r.fps * 0.95 + (1000 / dt) * 0.05 : 1000 / dt;
+  if (vw !== r.vw || vh !== r.vh) {
+    r.vw = vw;
+    r.vh = vh;
+    camFrame.style.aspectRatio = `${vw} / ${vh}`;
+    placeCam();
+  }
+  if (ts - r.lightAt >= TRACKER.LIGHT_EVERY_MS) {
+    r.lightAt = ts;
+    r.light = measureLight(r.face?.box, vw, vh);
+  }
+
+  let result;
+  const started = performance.now();
+  try {
+    result = r.landmarker.detectForVideo(camVideo, ts);
+  } catch (err) {
+    console.error(err);
+    return fail('crashed');
+  }
+  r.detectMs = r.detectMs * 0.9 + (performance.now() - started) * 0.1;
+
+  const face = pickFace(r, result);
+  const sample = face
+    ? readSample(ts, face, vw, vh, r.light)
+    : { t: ts, face: false };
+  const { state, event } = blinkStep(r.det, sample);
+  r.det = state;
+
+  updateView(r, vw, vh, ts);
+  drawMesh(r, face?.lm, vw, vh);
+  updateStage(r, sample);
+  updateNote(r, sample, ts);
+  if (document.body.classList.contains('debug') && ts - r.debugAt >= 100) {
+    r.debugAt = ts;
+    writeDebug(r, sample);
+  }
+  if (event?.type === 'blink') onBlink();
+}
+
+// Staying on one face matters more than which one: if two people are in frame, the
+// reading must not jump between them mid-blink.
+function pickFace(r, result) {
+  const all = result.faceLandmarks;
+  r.faces = all.length;
+  if (!all.length) {
+    r.face = null;
+    return null;
+  }
+  let best = 0;
+  if (all.length > 1) {
+    let score = Infinity;
+    all.forEach((lm, i) => {
+      const nose = lm[1];
+      const width = Math.abs(lm[454].x - lm[234].x);
+      const s = r.face ? Math.hypot(nose.x - r.face.x, nose.y - r.face.y) : -width;
+      if (s < score) { score = s; best = i; }
+    });
+  }
+  const lm = all[best];
+  // Sides of the face and forehead to chin, kept inside the picture.
+  const x = Math.max(0, Math.min(lm[234].x, lm[454].x)), y = Math.max(0, lm[10].y);
+  const w = Math.min(1, Math.max(lm[234].x, lm[454].x)) - x, h = Math.min(1, lm[152].y) - y;
+  r.face = { x: lm[1].x, y: lm[1].y, box: w > 0 && h > 0 ? { x, y, w, h } : null };
+  return { lm, shapes: result.faceBlendshapes[best]?.categories ?? [], matrix: result.facialTransformationMatrixes[best] };
+}
+
+function readSample(t, { lm, shapes, matrix }, w, h, light) {
+  const eyeWidth = eye => pixelDistance(lm[eye.corners[0]], lm[eye.corners[1]], w, h);
+  const inFrame = eye => eye.corners.every(i => lm[i].x >= 0 && lm[i].x <= 1 && lm[i].y >= 0 && lm[i].y <= 1);
+  const angles = matrix ? headAngles(matrix) : { yaw: 0, pitch: 0, roll: 0 };
+  return {
+    t,
+    face: true,
+    left: { ear: eyeAspect(lm, EYES.left, w, h), blink: shapeScore(shapes, 'eyeBlinkLeft') },
+    right: { ear: eyeAspect(lm, EYES.right, w, h), blink: shapeScore(shapes, 'eyeBlinkRight') },
+    lookDown: (shapeScore(shapes, 'eyeLookDownLeft') + shapeScore(shapes, 'eyeLookDownRight')) / 2,
+    ...angles,
+    eyesVisible: inFrame(EYES.left) && inFrame(EYES.right),
+    tooSmall: Math.min(eyeWidth(EYES.left), eyeWidth(EYES.right)) < TRACKER.MIN_EYE_PX,
+    tooDark: light < TRACKER.LIGHT_PAUSE,
+  };
+}
+
+function onBlink() {
+  cam.count++;
+  camCount.textContent = blinkLabel(cam.count);
+  camBox.classList.add('blink');
+  clearTimeout(cam.flash);
+  cam.flash = setTimeout(() => camBox.classList.remove('blink'), TRACKER.FLASH_MS);
+  const next = pickLayout(cam.history, VARIANTS.length, Math.random);
+  cam.history = [...cam.history, next].slice(-TRACKER.HISTORY_KEEP);
+  show(next);
+}
+
+function blinkLabel(n) {
+  return `${n} ${n === 1 ? 'blink' : 'blinks'}`;
+}
+
+function setStage(r, key) {
+  if (r.stage === key) return;
+  r.stage = key;
+  r.stageAt = performance.now();
+  camStage.textContent = STAGES[key];
+  showStatus(r);
+}
+
+// One line: a note, when there is something to say, otherwise the stage.
+function showStatus(r) {
+  camStage.hidden = Boolean(r.noteKey);
+  camStatus.classList.toggle('ready', r.stage === 'blinks' && !r.noteKey);
+  placeCam(); // a line that wraps at small sizes must not push the view off screen
+}
+
+function updateStage(r, sample) {
+  const want =
+    !sample.face ? 'face' :
+    !sample.eyesVisible ? 'eyes' :
+    r.det.base ? 'blinks' : 'calibrating';
+  const order = ['face', 'eyes', 'tracking', 'calibrating', 'blinks'];
+  const at = order.indexOf(r.stage), to = order.indexOf(want);
+  if (to <= at) {
+    setStage(r, want); // going back is immediate
+  } else if (performance.now() - r.stageAt >= TRACKER.STAGE_MIN_MS) {
+    setStage(r, order[at + 1]); // going forward shows each stage in turn
+  }
+}
+
+function setNote(r, key) {
+  if (r.noteKey === key) return;
+  r.noteKey = key;
+  camNote.textContent = key ? NOTES[key] : '';
+  showStatus(r);
+}
+
+function updateNote(r, sample, now) {
+  const want =
+    r.muted ? 'muted' :
+    r.det.pause === 'too dark' ? 'too dark' :
+    !sample.face ? 'no face' :
+    r.det.pause === 'too far' ? 'too far' :
+    r.det.pause === 'head turned' ? 'head turned' :
+    r.det.gazeDown ? 'look down' :
+    r.light < TRACKER.LIGHT_WARN ? 'dim' :
+    r.fps && r.fps < TRACKER.MIN_FPS ? 'slow' :
+    r.faces > 1 ? 'crowd' :
+    r.hiddenNote && now < r.noteUntil ? 'hidden' : null;
+  if (want !== r.noteWant) {
+    r.noteWant = want;
+    r.noteWantAt = now;
+  }
+  // Conditions must hold for a moment first, so brief ones don't make the text flicker.
+  if (now - r.noteWantAt >= TRACKER.NOTE_HOLD_MS || want === 'hidden') setNote(r, want);
+}
+
+// Mean brightness of the face, or of the whole picture until there is one. A lit face
+// in a dark room is perfectly readable, so the background must not count against it.
+function measureLight(box, vw, vh) {
+  const c = measureLight.ctx ??= Object.assign(document.createElement('canvas'), { width: 32, height: 24 })
+    .getContext('2d', { willReadFrequently: true });
+  if (box) c.drawImage(camVideo, box.x * vw, box.y * vh, box.w * vw, box.h * vh, 0, 0, 32, 24);
+  else c.drawImage(camVideo, 0, 0, 32, 24);
+  const { data } = c.getImageData(0, 0, 32, 24);
+  let sum = 0;
+  for (let i = 0; i < data.length; i += 4) sum += data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11;
+  return sum / (data.length / 4);
+}
+
+// How video pixels land in a box with object-fit: cover, mirrored horizontally.
+function coverMap(vw, vh, bw, bh) {
+  const s = Math.max(bw / vw, bh / vh);
+  const ox = (bw - vw * s) / 2, oy = (bh - vh * s) / 2;
+  return {
+    x: nx => bw - (ox + nx * vw * s),
+    y: ny => oy + ny * vh * s,
+  };
+}
+
+// The view is a zoom and a centre, the centre as a share of the frame as displayed.
+const FULL_VIEW = { z: 1, cx: 0.5, cy: 0.5 };
+
+function clampView({ z, cx, cy }) {
+  const half = 0.5 / z; // never pan past the edge of the picture
+  return { z, cx: Math.min(1 - half, Math.max(half, cx)), cy: Math.min(1 - half, Math.max(half, cy)) };
+}
+
+// Pure: the view that frames a face box given in video coordinates (0 to 1).
+function faceView(box, vw, vh, bw, bh, cfg = TRACKER) {
+  const map = coverMap(vw, vh, bw, bh);
+  const faceW = Math.abs(map.x(box.x + box.w) - map.x(box.x));
+  const faceH = map.y(box.y + box.h) - map.y(box.y);
+  const fit = cfg.ZOOM_FACE_FILL * Math.min(bw / faceW, bh / faceH);
+  return clampView({
+    z: Math.max(1, Math.min(cfg.ZOOM_MAX, fit)),
+    cx: map.x(box.x + box.w / 2) / bw,
+    cy: map.y(box.y + box.h / 2) / bh,
+  });
+}
+
+// Pure: eases from one view to another, the same at any frame rate.
+function easeView(from, to, dt, cfg = TRACKER) {
+  const k = 1 - Math.exp(-dt / cfg.ZOOM_EASE_MS);
+  return clampView({
+    z: from.z + (to.z - from.z) * k,
+    cx: from.cx + (to.cx - from.cx) * k,
+    cy: from.cy + (to.cy - from.cy) * k,
+  });
+}
+
+function updateView(r, vw, vh, now) {
+  const { width: bw, height: bh } = camFrame.getBoundingClientRect();
+  if (r.face?.box) {
+    r.faceSeenAt = now;
+    const next = faceView(r.face.box, vw, vh, bw, bh);
+    const t = r.viewTarget;
+    const d = TRACKER.ZOOM_DEADBAND;
+    if (Math.abs(next.z / t.z - 1) > d || Math.abs(next.cx - t.cx) > d / t.z || Math.abs(next.cy - t.cy) > d / t.z) r.viewTarget = next;
+  } else if (now - r.faceSeenAt > TRACKER.ZOOM_RELEASE_MS) {
+    r.viewTarget = FULL_VIEW;
+  }
+  r.view = easeView(r.view, r.viewTarget, r.viewAt ? now - r.viewAt : 0);
+  r.viewAt = now;
+  const { z, cx, cy } = r.view;
+  camVideo.style.transform = `translate(${z * (0.5 - cx) * bw}px, ${z * (0.5 - cy) * bh}px) scale(${z}) scaleX(-1)`;
+}
+
+function drawMesh(r, lm, vw, vh) {
+  if (!lm) {
+    if (r.meshDrawn) meshCtx.clearRect(0, 0, camMesh.width, camMesh.height);
+    r.meshDrawn = false;
+    return;
+  }
+  const box = camFrame.getBoundingClientRect();
+  const k = devicePixelRatio || 1;
+  const pw = Math.round(box.width * k), ph = Math.round(box.height * k);
+  // Assigning canvas size reallocates it, so only do that when it really changed.
+  if (camMesh.width !== pw) camMesh.width = pw;
+  if (camMesh.height !== ph) camMesh.height = ph;
+  // Exactly what the video's transform does to the same point.
+  const cover = coverMap(vw, vh, box.width, box.height);
+  const { z, cx, cy } = r.view;
+  const map = {
+    x: nx => box.width / 2 + z * (cover.x(nx) - cx * box.width),
+    y: ny => box.height / 2 + z * (cover.y(ny) - cy * box.height),
+  };
+  const c = meshCtx;
+  c.setTransform(pw / box.width, 0, 0, ph / box.height, 0, 0);
+  c.clearRect(0, 0, box.width, box.height);
+
+  const dots = (from, to, size) => {
+    c.beginPath();
+    for (let i = from; i < to; i++) c.rect(map.x(lm[i].x) - size / 2, map.y(lm[i].y) - size / 2, size, size);
+    c.fill();
+  };
+  c.fillStyle = COLOURS.green;
+  dots(0, 468, 1);
+
+  c.strokeStyle = COLOURS.yellow;
+  c.lineWidth = 1;
+  c.beginPath();
+  for (const eye of [EYES.left, EYES.right]) {
+    eye.ring.forEach((i, n) => {
+      if (n) c.lineTo(map.x(lm[i].x), map.y(lm[i].y));
+      else c.moveTo(map.x(lm[i].x), map.y(lm[i].y));
+    });
+    c.closePath();
+  }
+  c.stroke();
+
+  c.fillStyle = COLOURS.red;
+  dots(468, Math.min(478, lm.length), 2);
+  r.meshDrawn = true;
+}
+
+function writeDebug(r, sample) {
+  const d = r.det, b = d.base;
+  const n = x => (x == null || Number.isNaN(x) ? '  - ' : x.toFixed(2).padStart(5));
+  const a = x => (x == null ? '   -' : x.toFixed(0).padStart(4));
+  const c = BLINK;
+  camDebug.textContent = [
+    `video     ${r.vw}x${r.vh}  fps ${r.fps.toFixed(1)}  detect ${r.detectMs.toFixed(1)}ms`,
+    `state     ${d.phase}${d.pause ? ` (${d.pause})` : ''}${d.gazeDown ? ' (gaze down)' : ''}  stage ${r.stage}`,
+    `                L     R`,
+    `ear       ${n(sample.left?.ear)} ${n(sample.right?.ear)}`,
+    `  base    ${n(b?.earL)} ${n(b?.earR)}`,
+    `blend     ${n(sample.left?.blink)} ${n(sample.right?.blink)}`,
+    `  base    ${n(b?.blinkL)} ${n(b?.blinkR)}`,
+    `closure   ${n(d.closureL)} ${n(d.closureR)}`,
+    `thresh    closing ${c.CLOSING_ENTER}  closed ${c.CLOSED_ENTER}  reopen ${c.REOPEN_BELOW}  open ${c.OPEN_BELOW}`,
+    `head      yaw${a(sample.yaw)} pitch${a(sample.pitch)} roll${a(sample.roll)}  down ${n(sample.lookDown)}`,
+    `light     ${r.light.toFixed(0)}  faces ${r.faces}`,
+    `blinks    ${cam.count}  last reject ${d.lastReject ?? '-'}`,
+    `layouts   ${cam.history.map(i => i + 1).join(' ')}`,
+    `now       ${current + 1}/${VARIANTS.length} ${VARIANTS[current].name}`,
+  ].join('\n');
+}
+
+function watchFrames(r) {
+  if (!r.alive || document.hidden || r.muted) return;
+  if (performance.now() - r.lastFrameAt > TRACKER.STALL_MS) fail('stalled');
+}
+
+function onVisibility() {
+  if (!run) return;
+  const r = run;
+  if (document.hidden) {
+    // Whatever the eyes do while hidden can't be seen, so nothing half-read may carry over.
+    r.det = { ...r.det, phase: 'open', closureL: 0, closureR: 0, pose: null, t: null };
+  } else {
+    r.lastFrameAt = performance.now();
+    r.hiddenNote = true;
+    r.noteUntil = (r.lastTs || 0) + 2000;
+    if (camVideo.srcObject) camVideo.play().catch(() => {});
+  }
+}
+
+/* The floating view: starts in a corner, drags and resizes, stays on screen. */
+
+const CAM_MIN_WIDTH = 140;
+
+function placeCam() {
+  if (!cam || camBox.hidden) return;
+  camBox.style.width = cam.width ? `${cam.width}px` : '';
+  const limit = camWidthLimit();
+  if (camBox.getBoundingClientRect().width > limit) camBox.style.width = `${limit}px`;
+  const box = camBox.getBoundingClientRect();
+  const gap = 12;
+  const maxX = Math.max(0, innerWidth - box.width), maxY = Math.max(0, innerHeight - box.height);
+  const pos = cam.pos ?? { x: maxX - gap, y: maxY - gap };
+  moveCam(Math.min(maxX, Math.max(0, pos.x)), Math.min(maxY, Math.max(0, pos.y)), !cam.pos);
+}
+
+// The widest the view can be and still fit on screen, picture and status included.
+function camWidthLimit() {
+  const box = camBox.getBoundingClientRect(), frame = camFrame.getBoundingClientRect();
+  const aspect = frame.width / frame.height;
+  return Math.max(CAM_MIN_WIDTH, Math.min(innerWidth, (innerHeight - (box.height - frame.height)) * aspect));
+}
+
+function moveCam(x, y, unset) {
+  if (!unset) cam.pos = { x, y };
+  camBox.style.left = `${x}px`;
+  camBox.style.top = `${y}px`;
+}
+
+function dragStart(e) {
+  if (e.target.closest('button, .cam-grip')) return;
+  const box = camBox.getBoundingClientRect();
+  const dx = e.clientX - box.left, dy = e.clientY - box.top;
+  camBox.setPointerCapture(e.pointerId);
+  camBox.classList.add('dragging');
+  const drag = new AbortController();
+  camBox.addEventListener('pointermove', m => {
+    cam.pos = { x: m.clientX - dx, y: m.clientY - dy };
+    placeCam();
+  }, { signal: drag.signal });
+  const end = () => {
+    drag.abort();
+    camBox.classList.remove('dragging');
+  };
+  cam.endDrag = end; // Esc can arrive mid-drag
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    camBox.addEventListener(type, end, { signal: drag.signal });
+  }
+}
+
+// Resizes from a top corner and keeps the opposite bottom corner where it is. The picture
+// keeps its proportions because only the width is set. side: -1 left grip, 1 right grip.
+function resizeStart(e, side) {
+  e.preventDefault();
+  const grip = e.currentTarget;
+  const box = camBox.getBoundingClientRect(), frame = camFrame.getBoundingClientRect();
+  const aspect = frame.width / frame.height;
+  const fromX = e.clientX, fromY = e.clientY;
+  grip.setPointerCapture(e.pointerId);
+  const drag = new AbortController();
+  grip.addEventListener('pointermove', m => {
+    const wide = (m.clientX - fromX) * side, tall = (fromY - m.clientY) * aspect;
+    const width = box.width + (Math.abs(wide) > Math.abs(tall) ? wide : tall);
+    cam.width = Math.max(CAM_MIN_WIDTH, Math.min(camWidthLimit(), width));
+    camBox.style.width = `${cam.width}px`;
+    const now = camBox.getBoundingClientRect();
+    cam.pos = { x: side < 0 ? box.right - now.width : box.left, y: box.bottom - now.height };
+    placeCam();
+  }, { signal: drag.signal });
+  const end = () => drag.abort();
+  cam.endDrag = end;
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    grip.addEventListener(type, end, { signal: drag.signal });
+  }
+}
+
+function nudgeCam(e) {
+  if (e.target === camBox && '+=-_'.includes(e.key)) {
+    const box = camBox.getBoundingClientRect();
+    cam.width = Math.max(CAM_MIN_WIDTH, Math.min(camWidthLimit(), box.width + ('+='.includes(e.key) ? 20 : -20)));
+    placeCam();
+    return;
+  }
+  const step = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] }[e.key];
+  if (!step || e.target !== camBox) return;
+  e.preventDefault();
+  const box = camBox.getBoundingClientRect();
+  cam.pos = { x: box.left + step[0], y: box.top + step[1] };
+  placeCam();
+}
+
 // Refit once DM Mono is in, since measurements against the fallback font are wrong
 Promise.all(['400 16px "DM Mono"', 'italic 400 16px "DM Mono"'].map(f => document.fonts.load(f))).then(render);
 document.fonts.addEventListener('loadingdone', render);
