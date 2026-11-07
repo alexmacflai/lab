@@ -21,7 +21,7 @@ npx --yes http-server -a 127.0.0.1 -p 8080 -c-1 .
 To prove it works, request part of a video. The answer must be `206`:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -r 0-99 http://127.0.0.1:8080/prototypes/keyhole/placeholder.mp4
+curl -s -o /dev/null -w '%{http_code}\n' -r 0-99 http://127.0.0.1:8080/prototypes/keyhole/video.mp4
 ```
 
 Then install the pre-commit hook, once per clone:
@@ -49,5 +49,5 @@ ln -s ../../tools/pre-commit .git/hooks/pre-commit
 | Symptom | Cause | Fix | Verified |
 |---|---|---|---|
 | A video does not play in Safari, or the server answers `200` to a range request | Python's `http.server` ignores Range requests | Use `http-server`, as above | 2026-11-04 |
-| The keyhole prototype says the video could not be drawn | The page was opened from `file://`, which taints the WebGL texture | Serve it over HTTP | 2026-11-04 |
+| The keyhole prototype says it can't run as a local file | The page was opened from `file://`, which taints the WebGL texture | Serve it over HTTP | 2026-11-04 |
 | A request returns another project's response or a 404 | Another process is on that port, sometimes on all interfaces | Pick a free port and check it with `lsof` | 2026-11-04 |

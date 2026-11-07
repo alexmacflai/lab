@@ -6,7 +6,7 @@ date: 2026-11-04
 
 # Keyhole
 
-A black screen with a keyhole you approach by scrolling, until you are looking through it into a video with sound. Stop and you drift back into the dark. The video is still a generated placeholder.
+A black screen with a keyhole you approach by scrolling, until you are looking through it into a video with sound. Stop and you drift back into the dark.
 
 ## How to use
 

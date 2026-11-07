@@ -11,8 +11,8 @@
 const CONFIG = {
   // The film. Must be same-origin: cross-origin media without CORS gives a tainted
   // WebGL texture and silent Web Audio. PLACEHOLDER until the real video is supplied.
-  videoSrc: 'placeholder.mp4',
-  videoDescription: 'a placeholder test pattern with moving colour bars and a low hum',
+  videoSrc: 'video.mp4',
+  videoDescription: 'a person in a black hoodie on a sofa, eating from a bowl behind a table with a potted plant',
 
   // Motion: manual input
   wheelPxForFullTravel: 1500,   // normalised wheel pixels from p = 0 to p = 1
@@ -544,7 +544,9 @@ function uploadFrame() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
   } catch (err) {
     // A tainted source: cross-origin media without CORS, or a page opened from file://.
-    fail('The video could not be drawn. Serve it from the same origin as this page.');
+    fail(location.protocol === 'file:'
+      ? "Keyhole can't run as a local file. Open it through a local server."
+      : 'The video could not be drawn because it is hosted on another site.');
     return;
   }
   R.uploads++;
