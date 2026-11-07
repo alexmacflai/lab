@@ -1,0 +1,24 @@
+#!/bin/sh
+# Git pre-commit hook: block the commit if the repository breaks the
+# framework's conventions. It only checks; it never changes files.
+#
+# Install from the repository root:
+#   ln -s ../../knowledge/tools/pre-commit .git/hooks/pre-commit
+#
+# Set ADF to the script's path, relative to the repository root, if adf.py
+# lives somewhere else.
+
+root=$(git rev-parse --show-toplevel) || exit 1
+adf=${ADF:-knowledge/tools/adf.py}
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "pre-commit: python3 not found; cannot run $adf check." >&2
+    exit 1
+fi
+
+if ! python3 "$root/$adf" check --root "$root"; then
+    echo >&2
+    echo "Commit blocked: fix the errors above." >&2
+    echo "For out-of-date routing tables, run: python3 $adf route" >&2
+    exit 1
+fi

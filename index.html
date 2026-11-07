@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="An archive of interactive web experiments.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:,">
+<title>Lab</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #111;
+    --quiet: #6b6b6b;
+    --rule: #d9d9d9;
+    --paper: #fff;
+    --margin: clamp(16px, 3.2vw, 48px);
+    --date: 7.5rem;
+    --name: minmax(9rem, 2fr);
+    --text: minmax(0, 5fr);
+    --gap: 1.5rem;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    padding: var(--margin);
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 15px/1.45 "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header, li a {
+    display: grid;
+    grid-template-columns: var(--date) var(--name) var(--text);
+    column-gap: var(--gap);
+  }
+  header { padding-bottom: clamp(3rem, 12vh, 7.5rem); }
+  h1, p { margin: 0; font: inherit; }
+  h1 { font-weight: 500; }
+  header p { grid-column: 2 / -1; color: var(--quiet); }
+  ol { margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule); }
+  li { border-top: 1px solid var(--rule); }
+  li a { padding: 0.7rem 0 0.8rem; color: inherit; text-decoration: none; }
+  time { color: var(--quiet); font-variant-numeric: tabular-nums; }
+  .title { font-weight: 500; }
+  .description { color: var(--quiet); max-width: 62ch; text-wrap: pretty; }
+  li a:hover .title, li a:focus-visible .title { text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+  li a:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
+  @media (max-width: 640px) {
+    header, li a { grid-template-columns: minmax(0, 1fr); }
+    header p { grid-column: 1; }
+    time { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Lab</h1>
+    <p>An archive of interactive web experiments.</p>
+  </header>
+  <main>
+    <ol>
+      <!-- prototypes:start (generated, do not edit) -->
+      <li><a href="prototypes/keyhole/index.html"><time datetime="2026-11-04">2026-11-04</time><span class="title">Keyhole</span><span class="description">A black screen with a keyhole you approach by scrolling, until you are looking through it into a video with sound.</span></a></li>
+      <li><a href="prototypes/micro-thoughts/index.html"><time datetime="2026-11-03">2026-11-03</time><span class="title">Micro-thoughts</span><span class="description">A short poem whose layout changes as you move the pointer or blink.</span></a></li>
+      <li><a href="prototypes/pen-pals/index.html"><time datetime="2026-11-03">2026-11-03</time><span class="title">Pen Pals</span><span class="description">Autonomous pens draw on a small DOS-style canvas, and you can draw alongside them.</span></a></li>
+      <!-- prototypes:end -->
+    </ol>
+  </main>
+</body>
+</html>
