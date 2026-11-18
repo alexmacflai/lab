@@ -39,6 +39,14 @@ ln -s ../../tools/pre-commit .git/hooks/pre-commit
 | Check the conventions | `python3 knowledge/tools/adf.py check` |
 | Build, test, lint | None: prototypes have no build step or automated tests. |
 
+## Publishing
+
+The public lab is at <https://alexmacflai.github.io/lab/>.
+
+[Publish lab](../.github/workflows/pages.yml) runs on every push to `main`, including merged pull requests, and can also be run manually from GitHub Actions. It regenerates the index from prototype README metadata, then uploads the root `index.html` and the complete `prototypes/` folder to GitHub Pages. Prototypes need no compilation. Repository guidance and tools are outside the deployed site.
+
+GitHub Pages uses **GitHub Actions** as its publishing source in the repository's **Settings → Pages**. The repository is public so Pages is available on the current GitHub plan. Deployment results and the published URL appear in the `github-pages` environment and the workflow run.
+
 ## Shared resources
 
 - Ports: agents working at the same time each pick a free port. Check first with `lsof -nP -iTCP:<port> -sTCP:LISTEN`.
