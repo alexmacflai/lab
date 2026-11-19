@@ -1,19 +1,10 @@
 import { typesetter } from './layouts.js';
+import { drawHeader } from './brands.js';
 export const money = cents => (cents / 100).toFixed(2);
 
 export function receiptType(ctx, r) {
   const p = typesetter(ctx, r), d = r.design;
-  const header = (subtitle, y = 58) => {
-    const size = Math.min(d.heading === 2 ? 31 : 25, 540 / Math.sqrt(r.title.length * 4));
-    if (d.heading === 1) {
-      p.text(r.title.toUpperCase(), d.inset, y, size, { bold: true });
-      p.text(subtitle, d.inset, y + 27, 11);
-    } else {
-      p.centre(d.heading === 3 ? r.title : r.title.toUpperCase(), y, size, { bold: !d.serif, serif: d.serif });
-      p.centre(subtitle, y + 27, 10);
-    }
-    p.centre(r.address, y + 51, 11); p.rule(y + 70, d.dashed);
-  };
+  const header = (subtitle, y = 58) => drawHeader(ctx, r, subtitle, y);
   const details = (y = 157) => {
     p.row(`18/11/26 ${r.time}`, `NO. ${r.seed}`, y, 11);
     if (d.heading === 2) p.centre('CUSTOMER COPY', y + 22, 10);

@@ -29,7 +29,7 @@ function draw(still = false) {
   $('#counter').textContent = `${String(state.index + 1).padStart(3, '0')} / ${papers.length}`;
   $('#receipt-name').textContent = papers[state.index].name;
   gallery?.highlight(state.index);
-  $('#values').textContent = `${settings.fps} fps · ${settings.delay} ms delay\n${state.queue.length} frames buffered\n${papers[state.index].id}\n${canvas.width} × ${canvas.height} display pixels`;
+  $('#values').textContent = `${settings.fps} fps · ${settings.delay} ms delay\n${state.queue.length} frames buffered\n${papers[state.index].id}\n${papers[state.index].condition} · ${papers[state.index].folds.length} folds\nMark: ${papers[state.index].mark || 'none'}\n${canvas.width} × ${canvas.height} display pixels`;
 }
 
 function select(index) {

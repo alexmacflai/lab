@@ -1,4 +1,5 @@
 import { receiptType, money } from './collection-type.js';
+import { EXTRA_LAYOUTS } from './extra-layouts.js';
 
 function grocer(p, r) {
   p.header('FRESH FOOD / LOCAL STORES'); p.details();
@@ -90,7 +91,7 @@ function deli(p, r) {
   p.total(end + 20); p.centre('Keep refrigerated. Enjoy soon.', Math.min(790, end + 148), 12);
 }
 function pharmacy(p, r) {
-  p.centre('+', 51, 40, { bold: true }); p.header('COMMUNITY PHARMACY', 101);
+  p.header('COMMUNITY PHARMACY', 101);
   p.details(207); p.text('PRODUCT                       PRICE', 29, 251, 11);
   const end = p.items(287, 31);
   p.total(end + 25); p.centre('RETAIL PURCHASE / CUSTOMER COPY', end + 138, 10);
@@ -104,5 +105,5 @@ function florist(p, r) {
   p.centre('Trim stems. Change water often.', Math.min(750, end + 149), 12, { serif: true });
   p.centre('Thank you for choosing us.', 790, 13, { serif: true });
 }
-const DRAW = { grocer, terminal, cafe, restaurant, hardware, coupon, books, bakery, petrol, deli, pharmacy, florist };
+const DRAW = { ...EXTRA_LAYOUTS, grocer, terminal, cafe, restaurant, hardware, coupon, books, bakery, petrol, deli, pharmacy, florist };
 export function drawCollection(ctx, receipt) { DRAW[receipt.family](receiptType(ctx, receipt), receipt); }

@@ -4,7 +4,8 @@ export class ReceiptGallery {
   constructor(papers, sample, onSelect) {
     this.papers = papers; this.sample = sample; this.onSelect = onSelect;
     this.page = 0; this.size = 20; this.selected = 0; this.images = new Map(); this.generation = 0;
-    const canvas = document.createElement('canvas'); canvas.width = 168; canvas.height = 208;
+    const canvas = document.createElement('canvas'); canvas.width = 336; canvas.height = 416;
+    this.thumbnail = document.createElement('canvas'); this.thumbnail.width = 168; this.thumbnail.height = 208;
     this.renderer = new PaperRenderer(canvas, papers, 2);
     document.querySelector('#gallery-previous').addEventListener('click', () => this.show(this.page - 1));
     document.querySelector('#gallery-next').addEventListener('click', () => this.show(this.page + 1));
@@ -34,7 +35,10 @@ export class ReceiptGallery {
       button.append(image, label); button.addEventListener('click', () => this.onSelect(index)); collection.append(button);
       if (!this.images.has(index)) {
         this.renderer.draw(index, this.sample);
-        this.images.set(index, this.renderer.canvas.toDataURL('image/png'));
+        const preview = this.thumbnail.getContext('2d'); preview.imageSmoothingQuality = 'high';
+        preview.clearRect(0, 0, 168, 208);
+        preview.drawImage(this.renderer.canvas, 0, 0, 168, 208);
+        this.images.set(index, this.thumbnail.toDataURL('image/png'));
       }
       image.src = this.images.get(index);
       await new Promise(resolve => setTimeout(resolve, 0));

@@ -1,23 +1,26 @@
+import { EXTRA_MERCHANTS, EXTRA_STOCK, EXTRA_PRODUCTS } from './extra-families.js';
 // Explicit merchant lists keep every receipt addressable and reviewable.
 const MERCHANTS = {
-  grocer: ['Brookside Foods', 'Orchard Stores', 'Elm Road Market', 'Green Basket', 'Corner Provisions', 'Moorland Co-op', 'Riverside Grocers', 'Parkside Pantry'],
-  terminal: ['Stone Street', 'The Old Ferry', 'New Town Garage', 'Market Kiosk', 'Harbour Parking', 'Bridge Antiques', 'West End Laundry', 'Canal Services'],
-  cafe: ['Fern & Cup', 'Early Bird', 'Small Hours', 'The Daily Grind', 'North Window', 'Moss Coffee', 'Common Room', 'The Little Press'],
-  restaurant: ['Copper Table', 'The Salt House', 'Fig & Vine', 'Old Mill Kitchen', 'Juniper Dining', 'The Wharf', 'Field & Fire', 'East Room'],
-  hardware: ['Union Tools', 'Bolt & Brush', 'Station Supplies', 'Oak Lane DIY', 'The Fixing Shop', 'Mason Trade', 'Westbrook Hardware', 'Iron Yard'],
-  coupon: ['Hearth Goods', 'Everyday Finds', 'The Linen Cupboard', 'Willow Home', 'Found & Kept', 'Market House', 'Little Things', 'Sunday Stores'],
-  books: ['Chapter House', 'The Reading Room', 'Paper Lantern Books', 'Margin Notes', 'Second Shelf', 'Foxglove Books', 'The Book Nook', 'Turning Pages'],
-  bakery: ['Flour & Water', 'The Morning Loaf', 'Crumb Bakery', 'Four Seeds', 'The Bread Oven', 'Butter Lane', 'Wild Rye', 'Sunday Bread'],
-  petrol: ['North Road Fuel', 'Mill Lane Service', 'A38 Forecourt', 'Valley Motors', 'Eastgate Fuel', 'Harbour Service', 'Westway Petrol', 'Bypass Services'],
-  deli: ['The Olive Counter', 'Market Deli', 'Salt & Rind', 'The Cheese Room', 'Provisions No. 4', 'Village Larder', 'Pickle & Jar', 'The Good Counter'],
-  pharmacy: ['Abbey Pharmacy', 'Town Hall Chemist', 'Beechwood Health', 'Canal Pharmacy', 'Oakfield Chemist', 'High Street Health', 'Meadow Pharmacy'],
-  florist: ['Stem & Leaf', 'The Flower Stand', 'Wild Bunch', 'Petal House', 'Garden Gate Flowers', 'The Posy Shop', 'Bramble Florist'],
+  grocer: ['Brookside Foods', 'Orchard Stores', 'Elm Road Market', 'Green Basket'],
+  terminal: ['Stone Street', 'The Old Ferry', 'New Town Garage', 'Market Kiosk'],
+  cafe: ['Fern & Cup', 'Early Bird', 'Small Hours', 'The Daily Grind'],
+  restaurant: ['Copper Table', 'The Salt House', 'Fig & Vine', 'Old Mill Kitchen'],
+  hardware: ['Union Tools', 'Bolt & Brush', 'Station Supplies', 'Oak Lane DIY'],
+  coupon: ['Hearth Goods', 'Everyday Finds', 'The Linen Cupboard', 'Willow Home'],
+  books: ['Chapter House', 'The Reading Room', 'Paper Lantern Books', 'Margin Notes'],
+  bakery: ['Flour & Water', 'The Morning Loaf', 'Crumb Bakery', 'Four Seeds'],
+  petrol: ['North Road Fuel', 'Mill Lane Service', 'A38 Forecourt', 'Valley Motors'],
+  deli: ['The Olive Counter', 'Market Deli', 'Salt & Rind', 'The Cheese Room'],
+  pharmacy: ['Abbey Pharmacy', 'Town Hall Chemist', 'Beechwood Health', 'Canal Pharmacy'],
+  florist: ['Stem & Leaf', 'The Flower Stand', 'Wild Bunch', 'Petal House'],
+  ...EXTRA_MERCHANTS,
 };
 const STOCK = {
   grocer: [2.28, [1, .995, .97]], terminal: [2.18, [.985, .992, 1]], cafe: [2.24, [1, .975, .925]],
   restaurant: [2.30, [1, .995, .975]], hardware: [2.20, [.97, .98, .94]], coupon: [2.27, [1, .987, .95]],
   books: [2.25, [1, .99, .975]], bakery: [2.20, [1, .98, .95]], petrol: [2.30, [.985, .99, 1]],
   deli: [2.28, [1, .982, .95]], pharmacy: [2.26, [.99, 1, .985]], florist: [2.22, [1, .985, .965]],
+  ...EXTRA_STOCK,
 };
 const PRODUCTS = {
   grocer: [['WHOLE MILK 2L', 155], ['SOURDOUGH', 285], ['LEMONS', 40], ['GROUND COFFEE', 475], ['ROLLED OATS', 180], ['FREE RANGE EGGS', 240], ['MUSHROOMS', 165], ['APPLES', 60]],
@@ -32,6 +35,7 @@ const PRODUCTS = {
   deli: [['MATURE CHEDDAR', 625], ['MIXED OLIVES', 390], ['ARTICHOKE HEARTS', 425], ['HUMMUS', 350], ['SLICED HAM', 580], ['SOURDOUGH CRACKERS', 295], ['CHUTNEY', 465]],
   pharmacy: [['COTTON PADS', 185], ['TOOTHPASTE', 295], ['HAND SOAP', 225], ['SUN CREAM SPF50', 895], ['PLASTERS 20PK', 245], ['SHAMPOO', 450], ['TISSUES', 125]],
   florist: [['SEASONAL BUNCH', 1800], ['TULIPS 10 STEMS', 1250], ['EUCALYPTUS', 650], ['GIFT WRAP', 200], ['GLASS VASE', 950], ['GREETING CARD', 325], ['RIBBON', 150]],
+  ...EXTRA_PRODUCTS,
 };
 const STREETS = ['Station Road', 'Mill Lane', 'High Street', 'Bridge Street', 'Market Place', 'Church Road', 'North Street', 'Harbour Road'];
 
@@ -44,22 +48,18 @@ function transaction(family, variant) {
   });
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const discount = family === 'coupon' ? 125 : 0;
-  const service = family === 'restaurant' ? Math.round(subtotal * .125) : 0;
+  const service = family === 'restaurant' ? Math.round(subtotal * .125) : family === 'barber' && variant % 2 ? 200 : 0;
   return { items, subtotal, discount, service, total: subtotal - discount + service };
 }
 
 function record(family, merchant, variant, ordinal) {
   const [ratio, tint] = STOCK[family];
   const seed = 271 + ordinal * 101;
-  const folds = Array.from({ length: 1 + variant % 3 }, (_, i) => [
-    .2 + i * .23 + (variant % 4) * .025, ((ordinal + i * 7) % 13 - 6) * .025,
-    .009 + ((ordinal * 3 + i * 5) % 16) * .001, .008 + ((ordinal + i) % 6) * .0015,
-  ]);
   return { id: `${family}-${String(variant).padStart(2, '0')}`, family, name: merchant, title: merchant,
     ratio: Math.max(2.18, Math.min(2.33, ratio + (variant % 5 - 2) * .012)),
     tint: tint.map((v, i) => Math.min(1, v - ((ordinal + i) % 4) * .0015)), seed,
     ink: .77 + (ordinal % 9) * .022, edge: ['cut', 'serrated', 'torn'][(ordinal + variant) % 3],
-    curl: .009 + (ordinal % 17) * .001, folds, variant,
+    variant,
     address: `${12 + ordinal % 79} ${STREETS[ordinal % STREETS.length]}`,
     time: `${String(8 + ordinal % 13).padStart(2, '0')}:${String(ordinal * 7 % 60).padStart(2, '0')}`,
     design: { heading: variant % 4, spacing: 22 + variant % 4 * 3, inset: 24 + variant % 3 * 4,
@@ -70,7 +70,7 @@ function record(family, merchant, variant, ordinal) {
 
 export function expandCatalogue(originals) {
   const receipts = originals.map(p => ({ ...p, family: p.id, original: true }));
-  for (let variant = 1; variant <= 8; variant++) {
+  for (let variant = 1; variant <= 4; variant++) {
     for (const [family, names] of Object.entries(MERCHANTS)) {
       if (names[variant - 1]) receipts.push(record(family, names[variant - 1], variant, receipts.length));
     }
