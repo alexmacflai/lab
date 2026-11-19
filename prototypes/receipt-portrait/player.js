@@ -18,6 +18,7 @@ export class ReceiptPlayer {
 
   async load() {
     [this.papers, this.sample] = await Promise.all([loadPaper(), samplePrint()]);
+    this.index = Math.floor(Math.random() * this.papers.length);
     this.renderer = new (this.hooks.Renderer || PaperRenderer)(this.canvas, this.papers); this.renderer.resize(this.fit);
     new ResizeObserver(() => { this.renderer?.resize(this.fit); this.draw(true); }).observe(this.canvas);
     this.canvas.addEventListener('webglcontextlost', event => {
@@ -61,7 +62,7 @@ export class ReceiptPlayer {
   capture(time) {
     try {
       const frame = this.subject.prepare(this.camera.video, time);
-      if (frame) this.queue.push({ at: time, image: capturePrint(frame.source, this.sequence, frame.crop) });
+      if (frame) this.queue.push({ at: time, image: capturePrint(frame.source, this.sequence, frame.crop, this.camera.mirrored) });
     } catch { this.subjectFailed('Person detection stopped. The full camera frame is still available.'); }
     const first = !this.printed;
     while (this.queue.length && time - this.queue[0].at >= this.settings.delay) this.printed = this.queue.shift().image;
@@ -71,13 +72,14 @@ export class ReceiptPlayer {
 
   tick(time) {
     requestAnimationFrame(this.tick);
-    if (!this.renderer || document.hidden || time - this.last < 1000 / this.settings.fps) return;
-    this.last = time - (time - this.last) % (1000 / this.settings.fps);
-    if (!this.active && !this.loop) return;
+    if (!this.renderer || document.hidden || time - this.last + .5 < 1000 / this.settings.fps) return;
+    if (!this.active && !this.loop) { this.last = time; return; }
+    this.last = time;
     if (this.active && this.camera.video.readyState >= 2) this.capture(time);
     this.sequence++;
     if (this.loop) this.index = (this.index + 1) % this.papers.length;
     this.draw();
+    // One ticket per scheduled frame. Late frames never advance multiple indices.
   }
 
   draw(still = false) {
@@ -89,7 +91,20 @@ export class ReceiptPlayer {
       zoom: this.zoom, inspect: this.inspect, fit: this.fit,
       frame: this.loop && !still ? this.sequence : undefined,
     });
-    this.hooks.draw?.(this);
+    this.hooks.draw?.(this); this.warmNext();
+  }
+
+  warmNext() {
+    if (this.warming || !this.renderer?.prepare) return;
+    const index = this.index, renderer = this.renderer;
+    this.warming = true;
+    const prepare = () => {
+      this.warming = false;
+      if (document.hidden || this.index !== index || this.renderer !== renderer) return;
+      renderer.prepare((index + 1) % this.papers.length);
+    };
+    if (window.requestIdleCallback) requestIdleCallback(prepare, { timeout: 150 });
+    else setTimeout(prepare, 16);
   }
 
   select(index) {

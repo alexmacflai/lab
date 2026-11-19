@@ -6,7 +6,7 @@ capture.height = HEIGHT;
 const context = capture.getContext('2d', { willReadFrequently: true });
 const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
-export function capturePrint(video, sequence, crop = null) {
+export function capturePrint(video, sequence, crop = null, mirrored = true) {
   const aspect = WIDTH / HEIGHT;
   let width = (video.videoWidth || video.width);
   let height = width / aspect;
@@ -21,12 +21,16 @@ export function capturePrint(video, sequence, crop = null) {
     (crop?.y ?? .5) * (video.videoHeight || video.height) - height / 2));
   context.clearRect(0, 0, WIDTH, HEIGHT);
   context.save();
-  context.translate(WIDTH, 0);
-  context.scale(-1, 1);
+  if (mirrored) { context.translate(WIDTH, 0); context.scale(-1, 1); }
   context.drawImage(video, left, top, width, height, 0, 0, WIDTH, HEIGHT);
   context.restore();
+  return rasterise();
+}
+
+function rasterise() {
   const pixels = context.getImageData(0, 0, WIDTH, HEIGHT);
   const ink = pixels.data;
+  const tone = context.createImageData(WIDTH, HEIGHT);
   for (let y = 0; y < HEIGHT; y++) {
     const band = Math.sin(y * 1.9) * .018;
     for (let x = 0; x < WIDTH; x++) {
@@ -35,6 +39,7 @@ export function capturePrint(video, sequence, crop = null) {
       const threshold = (bayer[(y % 4) * 4 + x % 4] + .5) / 16;
       const darkness = Math.max(0, Math.min(.94, (1 - grey - .12) * 1.3 + band));
       const coverage = ink[i + 3] / 255;
+      tone.data[i + 3] = darkness * coverage * 255;
       ink[i] = 0; ink[i + 1] = 0; ink[i + 2] = 0;
       ink[i + 3] = darkness > threshold ? coverage * 255 : 0;
     }
@@ -42,5 +47,8 @@ export function capturePrint(video, sequence, crop = null) {
   const frame = document.createElement('canvas');
   frame.width = WIDTH; frame.height = HEIGHT;
   frame.getContext('2d').putImageData(pixels, 0, 0);
+  frame.tone = document.createElement('canvas');
+  frame.tone.width = WIDTH; frame.tone.height = HEIGHT;
+  frame.tone.getContext('2d').putImageData(tone, 0, 0);
   return frame;
 }

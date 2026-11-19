@@ -1,6 +1,6 @@
 import { ReceiptPlayer } from './player.js';
 import { ReceiptGallery } from './gallery.js';
-import { PrintRenderer, loadPrintMaterial } from './print-material/renderer.js';
+import { PrintRenderer } from './print-material/renderer.js';
 import { PrintProof } from './dev/print-proof/panel.js';
 
 const $ = selector => document.querySelector(selector);
@@ -21,10 +21,28 @@ function select(index) {
   if (gallery.page !== page) gallery.show(page, player.index);
 }
 
+function bindImageControls() {
+  const refresh = () => {
+    const width = Number($('#print-resolution').value), gamma = Number($('#image-gamma').value);
+    const size = [width,Math.round(width*1.25)];
+    $('#print-resolution-value').textContent = `${size[0]} × ${size[1]}`;
+    $('#image-gamma-value').textContent = gamma.toFixed(2);
+    for (const renderer of [player.renderer,proof.renderer]) {
+      renderer.imageSize = size; renderer.imageGamma = gamma;
+    }
+    player.draw(true); proof.rebuild();
+  };
+  for (const id of ['print-resolution','image-gamma']) $(`#${id}`).addEventListener('input',refresh);
+}
+
 function bindControls() {
   $('#previous').addEventListener('click', () => select(player.index - 1));
   $('#next').addEventListener('click', () => select(player.index + 1));
   $('#play').addEventListener('click', () => player.toggleProof());
+  $('#back-camera').addEventListener('change', async () => {
+    await player.camera.setFacing($('#back-camera').checked ? 'environment' : 'user');
+    $('#back-camera').checked = player.camera.facing === 'environment';
+  });
   for (const id of ['subject-mask', 'auto-frame']) $(`#${id}`).addEventListener('change', () => {
     player.configureSubject($('#subject-mask').checked, $('#auto-frame').checked);
   });
@@ -49,9 +67,11 @@ function bindControls() {
 
 async function initialise() {
   try {
-    await loadPrintMaterial();
     player = new ReceiptPlayer($('#portrait'), { draw: update, Renderer: PrintRenderer,
-      camera: active => { $('#sample').disabled = active; if (active) $('#sample').checked = false; },
+      camera: active => {
+        $('#sample').disabled = active; if (active) $('#sample').checked = false;
+        $('#back-camera').checked = player.camera?.facing === 'environment';
+      },
       subjectError: message => {
         $('#subject-mask').checked = false; $('#auto-frame').checked = false;
         $('#subject-status').textContent = message;
@@ -59,10 +79,10 @@ async function initialise() {
       error: message => { $('#start').disabled = true; $('#status').textContent = message; },
     });
     await player.load();
-    gallery = new ReceiptGallery(player.papers, player.sample, select); gallery.show(0, 0);
+    gallery = new ReceiptGallery(player.papers, player.sample, select); gallery.show(Math.floor(player.index / gallery.size), player.index);
     player.attachCamera($('#start'), $('#status'), $('#subject-status'));
     $('#start').disabled = false; $('#start').textContent = 'Start camera'; bindControls();
-    proof = new PrintProof(player);
+    proof = new PrintProof(player); bindImageControls();
   } catch (error) {
     $('#start').textContent = 'Preview unavailable';
     $('#status').textContent = 'The proof could not load. It needs WebGL 2 and its image assets. Refresh to try again.';

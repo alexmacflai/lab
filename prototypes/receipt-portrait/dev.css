@@ -52,3 +52,14 @@ select { background: transparent; font: inherit; color: inherit; border: 1px sol
 .camera-options label { display: inline-flex; gap: 6px; align-items: center; margin: 4px 15px 8px 0; }
 .camera-options input { width: auto; }
 .camera-options p { font-size: 10px; line-height: 1.7; margin-bottom: 0; opacity: .7; }
+
+.camera-options .mobile-camera-option { display: none; }
+@media (max-width: 699px), (max-height: 479px) { .camera-options .mobile-camera-option { display: inline-flex; } }
+
+.print-tuning { margin: 20px 0; padding: 16px; border: 1px solid #7774; font-size: 11px; }
+.print-tuning label { display: flex; justify-content: space-between; gap: 16px; margin: 12px 0 8px; }
+.print-tuning label:first-of-type { margin-top: 0; }
+.print-tuning output { font-variant-numeric: tabular-nums; }
+.print-tuning p { font-size: 10px; line-height: 1.7; margin-bottom: 0; }
+button, select, input { transition: background-color 160ms, color 160ms, border-color 160ms, box-shadow 160ms; }
+@media(prefers-reduced-motion: reduce) { button, select, input { transition: none; } }

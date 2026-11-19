@@ -39,9 +39,9 @@ async function adaptLayout() {
   const token = ++layout, focus = document.activeElement;
   if (drawer.open) await closeDrawer(false);
   if (token !== layout) return;
-  const options = [$('#auto-frame'), $('#subject-mask')];
+  const options = [$('#auto-frame'), $('#subject-mask'), $('#back-camera')];
   (wide.matches ? $('#inline-options') : $('#drawer-options')).append(...options);
-  if (options.includes(focus)) (wide.matches ? focus : opener).focus();
+  if (options.includes(focus)) (wide.matches ? focus.id === 'back-camera' ? $('#start') : focus : opener).focus();
   if (wide.matches) for (const option of options) option.animate([{ transform: 'translateY(4px)' }, { transform: 'translateY(0)' }], { duration: reduced.matches ? 0 : 160 });
 }
 
@@ -60,8 +60,8 @@ export function bindCameraControls(onChange) {
     const rect = drawer.getBoundingClientRect();
     if (event.target === drawer && (event.clientY < rect.top || event.clientX < rect.left || event.clientX > rect.right)) closeDrawer();
   });
-  for (const id of ['auto-frame', 'subject-mask']) $(`#${id}`).addEventListener('click', () => {
-    const button = $(`#${id}`); button.setAttribute('aria-checked', String(button.getAttribute('aria-checked') !== 'true')); onChange();
+  for (const id of ['auto-frame', 'subject-mask', 'back-camera']) $(`#${id}`).addEventListener('click', () => {
+    const button = $(`#${id}`); button.setAttribute('aria-checked', String(button.getAttribute('aria-checked') !== 'true')); onChange(id);
   });
   wide.addEventListener('change', adaptLayout); adaptLayout();
 }
