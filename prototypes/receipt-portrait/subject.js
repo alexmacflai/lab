@@ -31,10 +31,24 @@ export class Subject {
 
   reset() { this.crop = null; this.last = -1; }
 
+  resize(video) {
+    const sourceWidth = video.videoWidth || video.width;
+    const sourceHeight = video.videoHeight || video.height;
+    const scale = Math.min(1, 256 / Math.max(sourceWidth, sourceHeight));
+    const width = Math.max(1, Math.round(sourceWidth * scale));
+    const height = Math.max(1, Math.round(sourceHeight * scale));
+    if (this.input.width === width && this.input.height === height && this.output.width === width && this.output.height === height) return;
+    this.input.width = this.output.width = width;
+    this.input.height = this.output.height = height;
+    this.crop = null;
+  }
+
   prepare(video, time) {
     if (!this.masked && !this.framing) return { source: video };
     if (!this.model) return null;
-    const ctx = this.input.getContext('2d'); ctx.drawImage(video, 0, 0, 256, 192);
+    this.resize(video);
+    const { width, height } = this.input;
+    const ctx = this.input.getContext('2d'); ctx.drawImage(video, 0, 0, width, height);
     // Inference and masking use the same frozen frame, before mirroring or cropping.
     this.model.segmentForVideo(this.input, Math.max(time, this.last + 1), result => {
       this.last = Math.max(time, this.last + 1);
@@ -42,17 +56,16 @@ export class Subject {
       this.updateMask(mask.getAsFloat32Array(), mask.width, mask.height);
     });
     const out = this.output.getContext('2d');
-    out.clearRect(0, 0, 256, 192); out.drawImage(this.input, 0, 0);
+    out.clearRect(0, 0, width, height); out.drawImage(this.input, 0, 0);
     if (this.masked) {
       out.globalCompositeOperation = 'destination-in';
-      out.drawImage(this.mask, 0, 0, 256, 192); out.globalCompositeOperation = 'source-over';
+      out.drawImage(this.mask, 0, 0, width, height); out.globalCompositeOperation = 'source-over';
     }
     return { source: this.output, crop: this.framing ? this.crop : null };
   }
 
   updateMask(values, width, height) {
     this.mask.width = width; this.mask.height = height;
-    this.output.width = 256; this.output.height = 192;
     const data = new ImageData(width, height); let left = width, right = 0, top = height, bottom = 0, count = 0;
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const i = y * width + x, confidence = values[i];
