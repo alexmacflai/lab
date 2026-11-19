@@ -53,3 +53,10 @@ h1 { font-size: 16px; font-weight: 600; margin: 0; }
 
 .mobile-camera-option { display: none; }
 @media (max-width: 699px), (max-height: 479px) { .mobile-camera-option { display: flex; } }
+
+@media (max-width: 699px) {
+  :root { --bar-height: 76px; }
+  #portrait { --paper-view-height: 2.44; max-height: 837px; }
+  .stage { padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left)); }
+  .camera-bar { padding: 8px 20px calc(12px + env(safe-area-inset-bottom)); }
+}
