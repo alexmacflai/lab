@@ -9,6 +9,7 @@ Write in British English.
 - Before creating or editing a Markdown file in `knowledge/` or `.agents/skills/`, follow [knowledge/meta/](knowledge/meta/README.md).
 - Follow [knowledge/agents/](knowledge/agents/README.md): when to act or ask, scope, conflicts, communication, verification, safety and learning.
 - Choose guidance by what the work changes, not how the request is worded: work that changes what users read is copywriting work; work that changes how the interface looks or behaves is design work. Reproducing supplied copy or a supplied design exactly needs no domain guidance.
+- Whenever creating or changing text people read, follow [copywriting/](knowledge/copywriting/README.md) and apply [humanise-copy](.agents/skills/humanise-copy/SKILL.md) before completion. This covers the lab index and every prototype, including copy embedded in code. Preserve exact supplied or approved wording and attributed quotations; leave effective copy unchanged.
 - Before committing, run `python3 knowledge/tools/adf.py check` and fix every error.
 - Follow [prototypes.md](knowledge/product/prototypes.md) when adding or changing a prototype.
 - Several agent sessions often work in this checkout at once. Before switching its branch, check for other running sessions. If there are any, use a separate worktree.
@@ -33,3 +34,4 @@ Write in British English.
 | Changing a prototype                      | [prototypes.md](knowledge/product/prototypes.md), [knowledge/setup.md](knowledge/setup.md) | [verify-work](.agents/skills/verify-work/SKILL.md) |
 | Deciding what a prototype does or how it should feel | [knowledge/product/](knowledge/product/README.md) | —        |
 | Writing or changing code                  | [knowledge/engineering/](knowledge/engineering/README.md) | —        |
+| Writing or changing text people read      | [knowledge/copywriting/](knowledge/copywriting/README.md) | [humanise-copy](.agents/skills/humanise-copy/SKILL.md) |

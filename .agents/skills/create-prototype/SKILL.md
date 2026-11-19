@@ -27,7 +27,7 @@ Turns notes or an idea into a working prototype. It asks what the notes leave op
 3. Show the plan in the message itself: what the prototype is, its name and folder, what will be built, what is deliberately left out, new dependencies or supplied material, and how it will be checked, including what cannot be checked.
 4. Stop and wait for the user's explicit yes to the plan. If they correct it, show the changed plan and wait again.
 5. Create the folder and its README following [prototypes.md](../../../knowledge/product/prototypes.md).
-6. Build what the plan describes. If the work has to go beyond the plan, ask first.
+6. Build what the plan describes. Apply [humanise-copy](../humanise-copy/SKILL.md) to new or changed copy, including README metadata, instructions, accessible labels and strings in code. If the work has to go beyond the plan, ask first.
 7. Run `python3 tools/update-index.py`, then follow [verify-work](../verify-work/SKILL.md) in a browser.
 8. Report what was built and checked. State plainly what could not be checked, especially how it feels and sounds.
 

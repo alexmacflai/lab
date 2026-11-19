@@ -22,6 +22,7 @@ Use this before saying any work is done. It produces evidence for each acceptanc
 1. List the acceptance criteria.
 2. For each, choose the cheapest check that actually proves it, following [verification.md](../../../knowledge/agents/verification.md).
 3. Run each check and keep its evidence.
+   For new or changed copy, confirm [humanise-copy](../humanise-copy/SKILL.md) has been applied and its two passes are attributable. Check functional wording against actual behaviour; preserve the prototype's own tone. If no copy changed, no copy-editing pass is needed.
 4. For subjective criteria, ask a person to review, stating exactly what to look at.
 5. Report back in the order [verification.md](../../../knowledge/agents/verification.md#reporting-back) sets.
 
