@@ -1,6 +1,8 @@
 import { RECEIPTS, seeded } from './receipts.js';
 import { LAYOUTS, typesetter } from './layouts.js';
 import { drawCollection } from './collection-layouts.js';
+import { drawHeader, ORIGINAL_TAGS } from './brands.js';
+import { addMark } from './marks.js';
 
 export async function loadPaper() {
   const material = new Image();
@@ -18,10 +20,15 @@ function makeTexture(material, receipt) {
   const ink = document.createElement('canvas'); ink.width = canvas.width; ink.height = canvas.height;
   const printer = ink.getContext('2d');
   printer.scale(2, canvas.height / 850);
-  if (receipt.original) LAYOUTS[receipt.family](typesetter(printer, receipt));
+  if (receipt.original) {
+    LAYOUTS[receipt.family](typesetter(printer, receipt));
+    printer.save(); printer.globalCompositeOperation = 'destination-out'; printer.fillRect(0, 0, 400, 144); printer.restore();
+    drawHeader(printer, receipt, ORIGINAL_TAGS[receipt.family]);
+  }
   else drawCollection(printer, receipt);
   ageInk(printer, receipt);
   ctx.globalAlpha = receipt.ink; ctx.drawImage(ink, 0, 0);
+  ctx.globalAlpha = 1; addMark(ctx, receipt);
   return canvas;
 }
 

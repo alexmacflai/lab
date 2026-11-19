@@ -6,7 +6,7 @@ Use this guide when editing the 100-receipt collection or preparing future recei
 
 Aim for a collection of individually handled receipts photographed under one light. Paper should feel thin and coated, with small curls, compression folds and uneven thermal printing. Use pale off-white stock with restrained ageing. Strong yellowing should belong to a specific receipt. Fold placement must affect existing receipt lettering, camera ink, lighting and shadow together.
 
-The collection contains the six reference receipts and 94 new entries across 12 design families. Each entry has a stable ID, transaction, layout settings, stock, cutting profile, printer seed and fold configuration. All share one generated unprinted paper material. These are simulated receipts, not real scans. No dataset images or merchant logos are bundled. The sample portrait is an illustration for checking print behaviour; the camera supplies the live portrait.
+The collection contains 100 receipts across 24 design families. Six reference bodies remain, with refreshed header identities; the other 94 entries are distributed across the full set of families. Each entry has a stable ID, transaction, layout settings, stock, cutting profile, printer seed and fold configuration. All share one generated unprinted paper material. These are simulated receipts, not real scans. No dataset images or merchant logos are bundled. The sample portrait is an illustration for checking print behaviour; the camera supplies the live portrait.
 
 ## References and provenance
 
@@ -18,34 +18,69 @@ The collection contains the six reference receipts and 94 new entries across 12 
 
 ## Design families
 
-| Receipt | Distinguishing features | Paper handling |
+| Receipt | Distinguishing features | Typical stock |
 |---|---|---|
-| Supermarket | Dense item list, quantities, savings, VAT and barcode | Two oblique compression folds, modest edge curl |
-| Card terminal | No product list; transaction fields and large approval message | Cool stock, serrated end, strong central fold |
-| Café order | Large serif wordmark, order number, modifiers and loose spacing | Warmer stock, torn end, two crossing fold directions |
-| Restaurant | Table and guests, mixed-case dishes, service charge | Fine cut stock, lifted corner, two folds |
-| Hardware shop | Heavy heading, product codes, unit quantities and VAT breakdown | Slightly grey stock, torn end, three folds |
-| Shop and coupon | Compact purchase list, rewards and large offer block | Serrated end, low curl, folded coupon section |
-| Bookshop | Mixed book and stationery purchases, optional product codes and a quieter footer | Pale stock, one to three folds |
-| Bakery | Prominent order number, quantities and large item spacing | Slightly warm stock, varied cutting profiles |
-| Petrol station | Pump number, litres, price per litre and a VAT summary | Cool stock, printed transaction block and barcode |
-| Deli | Counter items, unit prices and quantities on separate lines | Warm stock with light handling marks |
-| Pharmacy | Cross mark, retail product list and record-keeping footer | Neutral stock with varied curls and folds |
-| Florist | Serif headings, flower purchases and a care message | Pale warm stock with small tears or serrations |
+| Supermarket | Dense item list, quantities, savings, VAT and barcode | Pale off-white stock |
+| Card terminal | No product list; transaction fields and large approval message | Cool stock |
+| Café order | Large serif wordmark, order number, modifiers and loose spacing | Warmer stock |
+| Restaurant | Table and guests, mixed-case dishes, service charge | Fine off-white stock |
+| Hardware shop | Heavy heading, product codes, unit quantities and VAT breakdown | Slightly grey stock |
+| Shop and coupon | Compact purchase list, rewards and large offer block | Cream stock |
+| Bookshop | Mixed book and stationery purchases, optional product codes and a quieter footer | Pale stock |
+| Bakery | Prominent order number, quantities and large item spacing | Slightly warm stock |
+| Petrol station | Pump number, litres, price per litre and a VAT summary | Cool stock |
+| Deli | Counter items, unit prices and quantities on separate lines | Warm stock |
+| Pharmacy | Cross mark, retail product list and record-keeping footer | Neutral stock |
+| Florist | Script wordmarks, flower purchases and a care message | Pale warm stock |
+| Cinema counter | Film-strip symbol, admission and concession purchases, payment-receipt notice | Pale thermal stock |
+| Takeaway | Bowl and chopstick seal, large order number, collection time and packing checks | Pale thermal stock |
+| Pizzeria | Pizza-slice mark, collection order, pizza sizes and order footer | Pale thermal stock |
+| Fishmonger | Fish symbol, counter sale, portion quantities and chilled-storage footer | Pale thermal stock |
+| Record shop | Vinyl mark, catalogue references, formats and condition notes | Pale thermal stock |
+| Garden centre | Sprout mark, plants, pots and nursery footer | Pale thermal stock |
+| Pet shop | Paw seal, product list and loyalty marks | Pale thermal stock |
+| Repair counter | Gear mark, job number, parts/labour and collection stamp | Pale thermal stock |
+| Laundry | Hanger wordmark, bag/tag number and collection instruction | Pale thermal stock |
+| Barber | Scissor seal, barber name, services/products and tip line | Pale thermal stock |
+| Stationer | Nib symbol, product references and quantities | Pale thermal stock |
+| Museum shop | Column mark, editions/objects and shop-only payment notice | Pale thermal stock |
 
-The added families use different item structures, order or pump numbers, product codes, quantities, headings and footers. `catalogue.js` lists merchants explicitly and defines the stable transaction and design variation for each entry. The six reference layouts remain unchanged.
+The added families vary item structures, order and pump numbers, product codes, headings and footers. `catalogue.js` and `extra-families.js` list merchants explicitly and defines the stable transaction and design variation for each entry. The six reference bodies remain, while their headers now use the shared brand system.
 
 Changing a shop name or total does not create a new design family. Vary hierarchy, density, alignment, line spacing, print width, footer structure and printer behaviour. Use coherent prices and arithmetic. Existing text can sit behind the camera print; do not reserve an empty portrait window. Barcodes in this collection are decorative and do not encode the displayed transaction.
 
 ## Asset and geometry contract
 
-- `catalogue.js` defines the 94 new receipt records; `receipts.js` retains the six reference records and the shared geometry. Reference layouts live in `layouts.js`; collection layouts live in `collection-layouts.js`, with typography helpers in `collection-type.js`.
+- `catalogue.js` and `extra-families.js` define the 94 new receipt records; `receipts.js` retains the six reference records and the shared geometry. Reference layouts live in `layouts.js`; collection layouts live in `collection-layouts.js` and `extra-layouts.js`, with typography helpers in `collection-type.js`. Brand headers live in `brands.js` and `brand-marks.js`.
 - Keep height-to-width ratios between 2.18 and 2.33 for this collection. Author layouts for their stock; never stretch type or splice a receipt to force its shape.
 - `paper.js` builds opaque colour textures on demand at 800 pixels wide. Their height follows the stock ratio. Fine grain, streaks and missing printer dots are fixed per receipt, not randomised every frame.
 - `makeMesh()` produces an indexed 64 × 144 cell surface: 9,425 vertices and a shared triangle-index buffer. Compact geometry is retained after first use. The main renderer retains at most eight paper textures; the gallery renderer retains two, and gallery snapshots are cached separately. Evicted full-resolution textures are deleted from the GPU and rebuilt when revisited. The boundary defines the silhouette. The paper interiors are opaque. Antialiasing applies at the boundary. There is no colour threshold or flood-fill mask.
-- Each fold is `[centre, slope, amplitude, width]` in paper coordinates. `heightAt()` supplies vertex height. `surfaceAt()` adds a small crease compression in paper coordinates, and `normalAt()` derives normals from that same surface. Geometry uses paper width as its unit: on 80 mm stock, an amplitude of 0.025 means approximately 2 mm of lift.
+- Each fold is an object with `u`, `v`, `angle`, `amplitude`, `width` and `length`. Its line can be horizontal, vertical or diagonal, with a local length envelope. `heightAt()` supplies vertex height; `surfaceAt()` adds compression along the fold normal. Mesh normals come from neighbouring positions on the same surface. Geometry uses paper width as its unit: on 80 mm stock, an amplitude of 0.025 means approximately 2 mm of lift.
 - Keep large folds in geometry. Do not derive height directly from receipt brightness: dark ink would become a dent, and baked lighting would be counted twice.
 - Retain a source record for future imported scans: creator, URL or original file, permission, capture conditions and pixel dimensions. Prepare colour, silhouette and measured or authored folds separately. Fit geometry to visible folds; do not add unrelated creases over a scan's lighting.
+
+## Headers and physical condition
+
+Receipt-printer references support graphics as well as device fonts: [Star Micronics logo and graphics examples](https://starmicronics.com/help-center/knowledge-base/how-to-store-and-edit-logos-and-other-graphics-using-starprnt/). All marks here are original canvas drawings, not copied merchant logos. Use pictograms, seals, reverse-print panels, framed or stacked wordmarks, script and condensed faces. Keep some terminal slips deliberately plain. Fit lettering within the print area without forcing all brands to the same font or size. Reverse-printed lettering knocks out ink to reveal the paper; it does not add a white rectangle.
+
+Physical condition is fixed per ticket. `conditions.js` ranks stable IDs with an avalanche hash, independently of family and playback order, then assigns this distribution:
+
+| Condition | Tickets | Surface |
+|---|---:|---|
+| Pristine | 24 | No folds, almost flat, slight edge lift |
+| Single fold | 22 | One near-central horizontal fold, with small angle variation |
+| Three folds | 20 | Three independently placed and oriented creases |
+| Five folds | 12 | Five independently placed and oriented creases |
+| Pocket-crumpled | 14 | 12–20 short local creases and seven small height bumps |
+| Lightly handled | 8 | Two broad, subdued folds and modest curl |
+
+Keep normals fixed for each ticket so its damage is the same when it appears again. Do not sort the playback sequence by fold location or interpolate between surfaces. Check that successive tickets change condition without a slow travelling-fold effect.
+
+## Occasional marks
+
+Exactly 18 tickets carry one restrained mark: five coffee rings, three tiny ink spots, three marker strokes, four pencil notes, two pen notes and one small doodle. Assignment uses a separate stable hash, so marks are independent of paper condition and family. Most sit near the top or footer, at low opacity. They are drawn into the paper material with multiply and deform with it. They never float above the receipt, flash randomly, cut holes in its alpha or change when its texture is rebuilt. Most tickets remain unmarked.
+
+Treat these counts as an initial art-direction choice, not a physical statistic. Review at 12 fps: marks should be something to notice occasionally, not a repeating overlay. If they compete with the face, reduce opacity or frequency before adding more kinds.
 
 ## Print, lighting and shadow
 
@@ -70,4 +105,4 @@ Default paper placement varies by at most 0.009 paper widths horizontally, 0.011
 7. Play the proof. Review placement, rotation, first visible print and delay by eye. Keep camera buffering separate from paper changes.
 8. Check a narrow viewport, camera cancellation, stop/restart and console errors. Run the index and repository checks from `knowledge/setup.md`.
 
-Use automated checks for catalogue size, unique IDs and physical profiles, transaction arithmetic, opaque interiors, print containment, multiply behaviour and bounded texture caching. Review contact sheets for all 100 entries; automated checks do not establish visual realism. Human review still decides whether the collection feels sufficiently physical. Future additions should preserve differences beyond names and totals. Record permission and provenance before introducing real scans.
+Use automated checks for catalogue size, unique IDs and physical profiles, transaction arithmetic, opaque interiors, print containment, multiply behaviour and bounded texture caching. Review contact sheets for all 100 entries, including header fit, flat versus crumpled stock, and the sparse mark distribution; automated checks do not establish visual realism. Human review still decides whether the collection feels sufficiently physical. Future additions should preserve differences beyond names and totals. Record permission and provenance before introducing real scans.

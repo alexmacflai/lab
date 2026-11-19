@@ -6,7 +6,7 @@ date: 2026-11-18
 
 # Receipt Portrait
 
-A collection of 100 authored receipts across 12 design families, including the original six reference receipts. Each entry has its own transaction, layout settings, stock, edges and fold configuration. Low-resolution camera ink multiplies into the receipt before the shared surface is lit and rendered, so paper and print bend together. A geometry-derived shadow follows lifted edges. The receipts use authored layouts and a generated paper material rather than real scans. Camera frames remain in memory on your device and are never uploaded or saved.
+A collection of 100 authored receipts across 24 design families, including the original six reference receipts. Headers use original pictograms, seals, reverse-print panels and varied wordmarks. Paper conditions range from pristine to pocket-crumpled, with damage fixed per ticket. Eighteen tickets carry a subtle stain, stroke, note or doodle. Each entry has its own transaction, layout settings, stock and edges. Low-resolution camera ink multiplies into the receipt before the shared surface is lit and rendered, so paper and print bend together. A geometry-derived shadow follows lifted edges. The receipts use authored layouts and a generated paper material rather than real scans. Camera frames remain in memory on your device and are never uploaded or saved.
 
 ## How to use
 
@@ -17,7 +17,7 @@ A collection of 100 authored receipts across 12 design families, including the o
 - Select **Start camera** and allow access. Your mirrored central camera crop appears at 144 × 180 pixels after a 500 ms delay. Centre yourself in the camera; there is no face tracking. Starting the camera also starts receipt cycling.
 - **Cancel** abandons a pending camera request. **Stop camera** releases the camera and keeps the last print; pause the proof as well to hold the paper still. A late permission response after cancellation is released immediately.
 - Use **Close-up**, **Background** and **Surface** to inspect folds, silhouettes and surface normals. The dark and checkerboard backgrounds help reveal edge defects.
-- Press **D** for frame rate, delay and hand-placement controls. Settings reset on reload.
+- Press **D** for frame rate, delay and hand-placement controls. It also names the current condition, fold count and mark. Settings reset on reload.
 - If access is denied, allow the camera in your browser's site settings and try again. Loading or graphics failures show a refresh message.
 
 See the [production guide](production-guide.md) for design references, material provenance, fold parameters, rendering limitations and checks for future edits and additions.
