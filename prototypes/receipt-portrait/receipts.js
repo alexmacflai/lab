@@ -34,7 +34,8 @@ export function heightAt(u, v, receipt) {
   let height = .0015;
   for (const fold of receipt.folds) {
     const f = foldSample(u, v, receipt.ratio, fold);
-    height += fold.amplitude * f.envelope * (f.ridge + .16 * Math.exp(-f.d * f.d / (fold.width * fold.width * 12)));
+    const ridge = receipt.surfaceRefined ? .7 * Math.exp(-f.d * f.d / (2 * fold.width * fold.width * .64)) + .3 * f.ridge : f.ridge;
+    height += fold.amplitude * f.envelope * (ridge + .16 * Math.exp(-f.d * f.d / (fold.width * fold.width * 12)));
   }
   for (const bump of receipt.bumps) {
     const distance = (u - bump.u) ** 2 + ((v - bump.v) * receipt.ratio) ** 2;
@@ -43,7 +44,11 @@ export function heightAt(u, v, receipt) {
   height += receipt.curl * Math.pow(Math.abs(u - .5) * 2, 7)
     * (.35 + .65 * Math.pow(Math.cos(v * 4 + receipt.phase), 2));
   height += receipt.curl * .6 * Math.exp(-Math.pow(v - .025, 2) / .0015) * u * u;
-  height += receipt.micro * Math.sin(u * 19 + v * 27 + receipt.phase) ** 2;
+  if (receipt.surfaceRefined) {
+    // Small, local handling dents rather than a repeating corrugated surface.
+    height += receipt.micro * .18 * Math.exp(-((u - .32) ** 2 * 31 + (v - .61) ** 2 * 73));
+    height += receipt.micro * .11 * Math.exp(-((u - .73) ** 2 * 57 + (v - .26) ** 2 * 41));
+  } else height += receipt.micro * Math.sin(u * 19 + v * 27 + receipt.phase) ** 2;
   return height;
 }
 
@@ -57,16 +62,30 @@ function edgeAt(t, side, receipt) {
   return .0015 * t + fine;
 }
 
+function edgeWeight(distance) {
+  // A compact 3.2 mm perimeter strip on 80 mm stock; zero influence beyond it.
+  const t = Math.max(0, 1 - distance / .04);
+  return t * t * (3 - 2 * t);
+}
+
 function surfaceAt(u, v, receipt) {
   let dx = 0, dy = 0;
   for (const fold of receipt.folds) {
-    const f = foldSample(u, v, receipt.ratio, fold);
-    const compression = fold.amplitude * .12 * Math.tanh(f.d / (fold.width * 2)) * f.envelope;
+    // Compose the sharper creases instead of adding contractions at intersections.
+    const f = foldSample(u + (receipt.creaseSharp ? dx : 0), v - (receipt.creaseSharp ? dy / receipt.ratio : 0), receipt.ratio, fold);
+    const compression = receipt.creaseSharp
+      ? Math.min(fold.amplitude * .9, fold.width * .36) * Math.tanh(f.d / (fold.width * .45)) * f.envelope
+      : fold.amplitude * (receipt.surfaceRefined ? .55 : .12)
+        * Math.tanh(f.d / (fold.width * (receipt.surfaceRefined ? .8 : 2))) * f.envelope;
     dx -= f.c * compression; dy -= f.s * compression;
   }
+  // The old interpolation warped every row and column, including the photograph.
+  // Keep it only for the explicitly labelled dev regression comparison.
+  const edges = receipt.legacyEdgeSpread ? [1 - u, u, 1 - v, v]
+    : [edgeWeight(u), edgeWeight(1 - u), edgeWeight(v * receipt.ratio), edgeWeight((1 - v) * receipt.ratio)];
   return [
-    u - .5 + dx + (1 - u) * edgeAt(v, 0, receipt) + u * edgeAt(v, 1, receipt),
-    (.5 - v) * receipt.ratio + dy + (1 - v) * edgeAt(u, 2, receipt) + v * edgeAt(u, 3, receipt),
+    u - .5 + dx + edges[0] * edgeAt(v, 0, receipt) + edges[1] * edgeAt(v, 1, receipt),
+    (.5 - v) * receipt.ratio + dy + edges[2] * edgeAt(u, 2, receipt) + edges[3] * edgeAt(u, 3, receipt),
     heightAt(u, v, receipt),
   ];
 }

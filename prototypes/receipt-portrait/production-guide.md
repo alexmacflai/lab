@@ -69,12 +69,17 @@ Physical condition is fixed per ticket. `conditions.js` ranks stable IDs with an
 
 | Condition | Tickets | Surface |
 |---|---:|---|
-| Pristine | 24 | No folds, almost flat, slight edge lift |
-| Single fold | 22 | One near-central horizontal fold, with small angle variation |
-| Three folds | 20 | Three independently placed and oriented creases |
-| Five folds | 12 | Five independently placed and oriented creases |
+| Pristine | 20 | No folds, almost flat, slight edge lift |
+| Single fold | 14 | One near-central horizontal fold, with small angle variation |
+| Three folds | 12 | Three independently placed and oriented creases |
+| Five folds | 8 | Five independently placed and oriented creases |
 | Pocket-crumpled | 14 | 12–20 short local creases and seven small height bumps |
 | Lightly handled | 8 | Two broad, subdued folds and modest curl |
+| Neatly folded once | 8 | One straight full-width crease at the centre |
+| Neatly folded twice | 8 | Two straight full-width creases at thirds |
+| Neatly folded three times | 8 | Three straight full-width creases at quarters |
+
+The 24 neat profiles replace four pristine, eight single-fold, eight three-fold and four five-fold profiles, selected by stable ID hashes. The other 76 retain their existing fold configurations. Neat creases use `fullWidth` so the height envelope reaches both paper edges. A shared tilt of at most roughly 2.9° alternates sign between successive creases, keeping two- and three-fold patterns mirrored. Their centre positions remain evenly spaced, with no random position jitter. Neat stock has restrained curl and no crumpling bumps.
 
 Keep normals fixed for each ticket so its damage is the same when it appears again. Do not sort the playback sequence by fold location or interpolate between surfaces. Check that successive tickets change condition without a slow travelling-fold effect.
 
@@ -186,3 +191,23 @@ Measure GPU time and a complete 100-receipt playback cycle after changing these 
 The dev sliders set `PrintRenderer.imageSize` and `imageGamma` on the main renderer and comparison renderer. Resolution changes the source sampling and Bayer grid, not paper textures, transfer-map coordinates or pore size. Gamma transforms source luminance before halftoning and all material effects; it does not multiply the final rendered colour. Zero ink and full black remain endpoints. Public and dev defaults are 96 × 120 for the halftone and gamma 1.20; the camera capture remains 144 × 180.
 
 Use `input` events so held images and camera frames respond while dragging. Keep the current impression seed when tuning or rebuilding comparison cards. The earlier fixed **Current print** comparison retains its original treatment. **Hold heavy bleed** stops camera tracks and receipt playback, keeps the current image, selects the heavy condition and enters close-up; repeated presses create new seeds for inspection.
+
+## Shared production surface
+
+Public and dev prints use `PrintRenderer` with the shared `surface-shader.js`. Production papers set `surfaceRefined` and `creaseSharp`. Crease heights combine a narrow ridge and broad shoulder; shallow local handling dents replace the repeating micro-wave. Mesh size remains 64 × 144 cells, with normals and print-contact maps derived from the same displaced geometry.
+
+Across each crease, compression uses a 0.45-width transition and a 0.9 amplitude multiplier, capped at 0.36 times the fold width. Fold mappings are composed successively rather than added, preventing overlapping contractions from inverting the sampled mesh. The shared lighting uses the approved diffuse treatment and a weak reflection over camera ink. Its reflection gain is 0.050, slightly above the reviewed 0.045. This adds crease highlights to black ink without reducing its opacity. It is an authored approximation, not a measured paper material.
+
+Ink-transfer and bleed kernels, the 96 × 120 halftone default, gamma 1.20 and print-condition probabilities remain unchanged. Initial public loading uses a centred spinner on the existing background. Receipt and controls are hidden and inert until the first receipt renders; a loading failure removes the spinner and shows the existing recovery message. Initial loading remains separate from camera permission and model loading. Controls use neutral `#181818`; the camera-on button shares the pale icon-button fill without a visible border.
+
+### Cut-edge deformation
+
+Cut-edge offsets must not be interpolated across the sheet. `edgeWeight()` confines each offset to a compact perimeter strip, 0.04 paper-width units (3.2 mm on 80 mm stock). The weight is one at the edge, smoothly falls to zero, and is exactly zero further inside. Vertical distances account for ticket ratio so all four strips have the same physical width. Fold compression and height remain independent.
+
+### Dev comparisons
+
+`dev/surface-proof/` lazily renders matched grid, portrait and normal-map cards with the same impression, resolution, gamma and placement. The Small Hours pair explicitly enables `legacyEdgeSpread` on the before side to reproduce the former edge bug. Its fixed side uses the production path. The legacy flag is used only for this regression comparison.
+
+Further **Previous crease** / **Sharper crease** pairs compare the earlier broad compression with the production crease mapping, keeping the height function and shared highlight shader the same. Cases include Noodle House, pristine, single-fold and crumpled receipts, plus each of the three neat-fold patterns. The grid contains solid ink strips to inspect crease reflections. There is no extra animation loop; closing the section cancels unfinished card renders.
+
+Verify all 100 meshes for finite coordinates and correctly oriented normals, check that pristine controls remain flat and full-width creases have evenly spaced centres and mirrored tilts, and run a complete playback cycle after surface changes. Check the portrait for excessive distortion and the grid for unwanted full-sheet waves. The public and dev main previews, print-condition cards and sharper comparison cards share the production renderer.

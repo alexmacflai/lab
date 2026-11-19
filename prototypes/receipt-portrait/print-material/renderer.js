@@ -1,6 +1,6 @@
 import { PaperRenderer } from '../renderer.js';
 import { createImpression } from './impression.js';
-import { PRINT_FRAGMENT } from './shader.js';
+import { SURFACE_FRAGMENT } from './surface-shader.js';
 import { responseMap } from './response.js';
 import { transferFilm } from './material.js';
 
@@ -14,9 +14,10 @@ function mapTexture(gl, source) {
 }
 
 export class PrintRenderer extends PaperRenderer {
-  constructor(canvas, papers, limit = 8) {
-    super(canvas, papers, limit, PRINT_FRAGMENT);
+  constructor(canvas, papers, limit = 8, fragment = SURFACE_FRAGMENT) {
+    super(canvas, papers, limit, fragment);
     const gl = this.gl; this.profile = -2; this.impression = null; this.proofView = 0; this.responses = new Map();
+    this.surfaceUniform = gl.getUniformLocation(this.program, 'uSurfaceRefined');
     this.imageSize = [96,120]; this.imageGamma = 1.2;
     this.imageUniforms = { size:gl.getUniformLocation(this.program,'uImageSize'), gamma:gl.getUniformLocation(this.program,'uImageGamma') };
     this.proofUniforms = {};
@@ -57,6 +58,7 @@ export class PrintRenderer extends PaperRenderer {
     }
     const gl = this.gl, u = this.proofUniforms, profile = this.impression.profile >= 0 ? this.impression : null;
     gl.useProgram(this.program);
+    gl.uniform1i(this.surfaceUniform, this.papers[index].surfaceRefined ? 1 : 0);
     gl.uniform2fv(this.imageUniforms.size,this.imageSize); gl.uniform1f(this.imageUniforms.gamma,this.imageGamma);
     gl.uniform1i(u.On,profile ? 1 : 0); gl.uniform1i(u.View,this.proofView);
     if (profile) {
