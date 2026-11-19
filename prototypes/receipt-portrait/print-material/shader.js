@@ -53,13 +53,45 @@ float proofSource(vec2 uv) {
   vec4 source=texture(uPrint,sourceUV);
   float tone=source.a*(1.-dot(source.rgb,vec3(.299,.587,.114)));
   if(uContinuousTone) tone=1.-pow(max(0.,1.-tone),1./uImageGamma);
-  if(uProofRare>.5) tone=1.-pow(1.-tone,1.+proofWet*.9);
   if(!uContinuousTone) return tone*(1.-loss)*contact;
   vec2 cell=floor(uv*vec2(600.,750.));
   float fine=materialHash(cell+vec2(19,71));
   float image=smoothstep(printerThreshold(uv,fine)-.018,printerThreshold(uv,fine)+.018,tone);
   float retained=smoothstep(fine-.018,fine+.018,(1.-loss)*contact);
   return image*retained*step(.002,tone);
+}
+float heavyEdge(vec2 uv) {
+  if(any(lessThan(uv,vec2(0))) || any(greaterThan(uv,vec2(1)))) return 0.;
+  vec2 sourceUV=uContinuousTone ? (floor(uv*uImageSize)+.5)/uImageSize : uv;
+  vec4 source=texture(uPrint,sourceUV);
+  float tone=source.a*(1.-dot(source.rgb,vec3(.299,.587,.114)));
+  if(uContinuousTone) tone=1.-pow(max(0.,1.-tone),1./uImageGamma);
+  if(!uContinuousTone) return tone;
+  float fine=materialHash(floor(uv*vec2(600.,750.))+vec2(19,71));
+  return smoothstep(printerThreshold(uv,fine)-.018,printerThreshold(uv,fine)+.018,tone)*step(.002,tone);
+}
+float heavyBleed(vec2 uv,vec2 mm,float radius,float base) {
+  vec2 pitch=vec2(75.2,94.)/uImageSize,position=uv*vec2(75.2,94.);
+  vec2 cell=floor(uv*uImageSize);
+  // Grow only narrow exterior edges; never fill a halftone cell from its centre.
+  float fibre=texture(uTransferFilm,mm/8.+vec2(fract(uProofSeed*.137),fract(uProofSeed*.719))).r;
+  float reach=min(radius*.14,.12*min(pitch.x,pitch.y))*mix(.72,1.,fibre);
+  float aa=min(max(length(dFdx(position)),length(dFdy(position)))*.65,.15*min(pitch.x,pitch.y));
+  proofRadius=radius>.12 ? reach : 0.;
+  if(radius<=.12) return base;
+  float ink=base;
+  vec2 side=step(vec2(.5),fract(uv*uImageSize))*2.-1.;
+  for(int i=0;i<3;i++) {
+    vec2 offset=i==0 ? vec2(side.x,0.) : i==1 ? vec2(0.,side.y) : side;
+    vec2 donor=cell+offset;
+    vec2 q=abs(position-(donor+.5)*pitch)-pitch*.5;
+    float distance=length(max(q,0.));
+    if(distance>reach+aa) continue;
+    vec2 edge=clamp(position,(donor+.02)*pitch,(donor+.98)*pitch);
+    float deposit=heavyEdge(edge/vec2(75.2,94.));
+    ink=max(ink,deposit*(1.-smoothstep(reach-aa,reach+aa,distance)));
+  }
+  return mix(base,ink,smoothstep(.12,.24,radius));
 }
 float proofInk(vec2 uv) {
   vec2 mm=vec2(vUV.x,vUV.y*uRatio)*80.;
@@ -74,7 +106,8 @@ float proofInk(vec2 uv) {
   proofRadius=radius;
   float ink=base;
   // Fibre-led growth of the deposited ink, not a low-opacity blur of the whole photograph.
-  if(radius>.12) for(int i=0;i<6;i++) {
+  if(uProofRare>.5) ink=heavyBleed(uv,mm,radius,base);
+  else if(radius>.12) for(int i=0;i<6;i++) {
     float a=float(i)*1.047198+uProofSeed;
     vec2 fibre=vec2(cos(a),sin(a))*vec2(1.,.72);
     float wick=proofNoise((mm+vec2(uProofSeed,float(i)*17.))*vec2(6.,28.));
@@ -94,7 +127,7 @@ float proofInk(vec2 uv) {
     ink=mix(ink,max(retained,deposited),moved);
   }
   float grit=proofHash(floor(mm*14.));
-  float pores=mix(1.,mix(.14,1.,smoothstep(.025,.085,grit)),uProofGrain);
+  float pores=uProofRare>.5 ? 1. : mix(1.,mix(.14,1.,smoothstep(.025,.085,grit)),uProofGrain);
   proofMask=uProofInk.y>0. ? proofBlotch(mm)*uProofInk.y*(1.-proofWet*.8) : 0.;
   return clamp(ink*pores,0.,1.);
 }
