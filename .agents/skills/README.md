@@ -8,7 +8,7 @@ Step-by-step procedures for common tasks, one folder each. Agent tools list them
 |---|---|
 | Kick-off | [set-up-project](set-up-project/SKILL.md), which runs the other `set-up-` skills |
 | Starting work | [start-task](start-task/SKILL.md), [write-spec](write-spec/SKILL.md) |
-| Doing the work | [create-prototype](create-prototype/SKILL.md), [investigate-problem](investigate-problem/SKILL.md), [document-pattern](document-pattern/SKILL.md), [maintain-structure](maintain-structure/SKILL.md) |
+| Doing the work | [create-prototype](create-prototype/SKILL.md), [humanise-copy](humanise-copy/SKILL.md), [investigate-problem](investigate-problem/SKILL.md), [document-pattern](document-pattern/SKILL.md), [maintain-structure](maintain-structure/SKILL.md) |
 | Checking | [verify-work](verify-work/SKILL.md), [review-change](review-change/SKILL.md) |
 | Handing over | [hand-off](hand-off/SKILL.md) |
 
@@ -20,6 +20,7 @@ Step-by-step procedures for common tasks, one folder each. Agent tools list them
 | [create-prototype/](create-prototype/SKILL.md) | Build a new prototype from notes, with the plan approved first. |
 | [document-pattern/](document-pattern/SKILL.md) | Record how a recurring change is done here. |
 | [hand-off/](hand-off/SKILL.md) | Write a handoff report for unfinished work. |
+| [humanise-copy/](humanise-copy/SKILL.md) | Review new or changed copy for clarity, meaning and local tone. |
 | [investigate-problem/](investigate-problem/SKILL.md) | Find the cause of a failure from evidence. |
 | [maintain-structure/](maintain-structure/SKILL.md) | Add, move or remove files and keep routing correct. |
 | [review-change/](review-change/SKILL.md) | Review a change against its request and guidance. |

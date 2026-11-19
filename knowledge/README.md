@@ -7,6 +7,7 @@ This project's guidance and documents, for people and agents: how files here are
 |---|---|---|
 | [setup.md](setup.md) | How to set up, build, test and run the project, the shared resources agents use, and known setup problems. | testing |
 | [agents/](agents/README.md) | How agents work on any task in this project: when to act or ask, scope, approvals, conflicts, communication, verification, parallel work, safety and learning. | testing |
+| [copywriting/](copywriting/README.md) | Shared copy standards for the lab index and every prototype, with room for each piece's own tone. |  |
 | [engineering/](engineering/README.md) | How the project is built and the rules its code follows. | testing |
 | [meta/](meta/README.md) | How files in `knowledge/` and `.agents/skills/` are organised and written, and the principles behind these conventions. | principles, routing, structure, tagging |
 | [product/](product/README.md) | What the product is, who it is for and how it works. | principles, structure |

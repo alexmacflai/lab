@@ -356,7 +356,7 @@ def read_registry(texts):
 def expected_kind(path):
     if is_skill_asset(path):
         return None, None
-    if path.startswith(SKILLS):
+    if is_skill_file(path):
         return SKILLS, "skill"
     parts = path.split("/")
     if len(parts) > 2 and parts[1] in KIND_FOLDERS:
