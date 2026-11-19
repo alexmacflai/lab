@@ -30,6 +30,12 @@ async function configureControl(id) {
   $('#back-camera').setAttribute('aria-checked', String(player.camera.facing === 'environment'));
 }
 
+function finishLoading() {
+  document.body.dataset.loading = 'false';
+  $('#page-loading').setAttribute('aria-hidden', 'true');
+  document.querySelectorAll('[inert]').forEach(element => { element.inert = false; });
+}
+
 async function initialise() {
   bindCameraControls(configureControl);
   try {
@@ -51,11 +57,12 @@ async function initialise() {
     start.addEventListener('click', () => { start.dataset.active = String(player.active || player.camera.pending); });
     player.configureSubject(enabled('subject-mask'), enabled('auto-frame'));
     start.disabled = false; start.textContent = 'Start camera'; status.textContent = 'Camera off.';
+    finishLoading();
     new MutationObserver(() => {
       if (/access is off|unavailable|HTTPS/.test(status.textContent)) showError(status.textContent);
     }).observe(status, { childList: true });
   } catch (error) {
-    start.textContent = 'Unavailable'; showError('The receipt could not load. Refresh to try again.'); console.error(error);
+    finishLoading(); start.textContent = 'Unavailable'; showError('The receipt could not load. Refresh to try again.'); console.error(error);
   }
 }
 initialise();

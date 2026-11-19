@@ -7,12 +7,13 @@
   <title>Receipt Portrait</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <main class="stage"><canvas id="portrait" width="840" height="1040" aria-label="A delayed camera print on a paper receipt"></canvas></main>
+<body data-loading="true">
+  <div id="page-loading" class="page-loading" role="status"><span class="page-spinner" aria-hidden="true"></span><span class="sr-only">Loading receipt…</span></div>
+  <main class="stage" inert><canvas id="portrait" width="840" height="1040" aria-label="A delayed camera print on a paper receipt"></canvas></main>
   <p id="status" role="status" class="sr-only">Loading paper…</p>
   <p id="subject-status" role="status" class="sr-only"></p>
   <p id="notice" class="notice" role="alert" hidden></p>
-  <footer class="camera-bar">
+  <footer class="camera-bar" inert>
     <div class="camera-actions">
       <button id="start" class="camera-button" disabled>Loading…</button>
       <div id="inline-options" class="inline-options" role="group" aria-label="Camera options"></div>

@@ -7,9 +7,18 @@
 #proof-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
 #proof-cards button { padding: 0 0 16px; border-color: #7774; text-align: left; white-space: normal; transition: border-color .15s, background .15s; }
 #proof-cards button:hover { background: #eae5da; color: inherit; }
-#proof-cards button[aria-pressed="true"] { border-color: #403e36; box-shadow: 0 0 0 1px #403e36; }
+#proof-cards button[aria-pressed="true"] { border-color: #181818; box-shadow: 0 0 0 1px #181818; }
 #proof-cards img { display: block; width: 100%; height: auto; }
 #proof-cards strong, #proof-cards span { display: block; padding: 0 14px; }
 #proof-cards strong { margin: 12px 0 6px; font-size: 12px; }
 #proof-cards span { font-size: 11px; line-height: 1.6; }
 @media(max-width:440px) { #proof-cards { grid-template-columns: 1fr; } }
+
+#surface-proof { margin: 28px 0; border-top: 1px solid #7774; padding-top: 24px; }
+#surface-proof summary { cursor: pointer; font-size: 16px; }
+#surface-proof p { font-size: 11px; line-height: 1.7; }
+#surface-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+#surface-cards figure { margin: 0; border: 1px solid #7774; }
+#surface-cards img { display: block; width: 100%; height: auto; }
+#surface-cards figcaption { padding: 12px; font-size: 12px; }
+@media (min-width: 760px) { #surface-proof { width: min(1100px, calc(100vw - 48px)); position: relative; left: 50%; transform: translateX(-50%); } }

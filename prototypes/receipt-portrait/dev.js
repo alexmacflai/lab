@@ -2,9 +2,10 @@ import { ReceiptPlayer } from './player.js';
 import { ReceiptGallery } from './gallery.js';
 import { PrintRenderer } from './print-material/renderer.js';
 import { PrintProof } from './dev/print-proof/panel.js';
+import { SurfaceProof } from './dev/surface-proof/panel.js';
 
 const $ = selector => document.querySelector(selector);
-let player, gallery, proof;
+let player, gallery, proof, surfaces;
 
 function update(p) {
   $('#counter').textContent = `${String(p.index + 1).padStart(3, '0')} / ${p.papers.length}`;
@@ -31,6 +32,7 @@ function bindImageControls() {
       renderer.imageSize = size; renderer.imageGamma = gamma;
     }
     player.draw(true); proof.rebuild();
+    if (surfaces?.root.open) surfaces.rebuild();
   };
   for (const id of ['print-resolution','image-gamma']) $(`#${id}`).addEventListener('input',refresh);
 }
@@ -82,7 +84,7 @@ async function initialise() {
     gallery = new ReceiptGallery(player.papers, player.sample, select); gallery.show(Math.floor(player.index / gallery.size), player.index);
     player.attachCamera($('#start'), $('#status'), $('#subject-status'));
     $('#start').disabled = false; $('#start').textContent = 'Start camera'; bindControls();
-    proof = new PrintProof(player); bindImageControls();
+    proof = new PrintProof(player); surfaces = new SurfaceProof(player); bindImageControls();
   } catch (error) {
     $('#start').textContent = 'Preview unavailable';
     $('#status').textContent = 'The proof could not load. It needs WebGL 2 and its image assets. Refresh to try again.';
