@@ -81,20 +81,21 @@ export class PaperRenderer {
     return image;
   }
 
-  resize() {
+  resize(fill = false) {
     const bounds = this.canvas.getBoundingClientRect();
     const scale = Math.min(bounds.width / 840, bounds.height / 1040);
     const density = Math.min(window.devicePixelRatio || 1, 3);
-    this.canvas.width = Math.round(840 * scale * density);
-    this.canvas.height = Math.round(1040 * scale * density);
+    this.canvas.width = Math.round((fill ? bounds.width : 840 * scale) * density);
+    this.canvas.height = Math.round((fill ? bounds.height : 1040 * scale) * density);
   }
 
   draw(index, printed, options = {}) {
     const gl = this.gl, u = this.uniforms, surface = this.surface(index);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(this.program); gl.bindVertexArray(surface.vao);
-    const viewHeight = options.zoom ? 1.48 : 2.75;
-    gl.uniform2f(u.View, viewHeight * 840 / 1040, viewHeight);
+    const aspect = options.fit ? this.canvas.width / this.canvas.height : 840 / 1040;
+    const viewHeight = options.zoom ? 1.48 : options.fit ? Math.max(2.48, 1.16 / aspect) : 2.75;
+    gl.uniform2f(u.View, viewHeight * aspect, viewHeight);
     gl.uniform3fv(u.Pose, options.pose || [0, 0, 0]);
     gl.uniform3fv(u.PrintPose, options.printPose || [0, 0, 0]);
     gl.uniform3fv(u.Tint, this.papers[index].tint); gl.uniform1f(u.Ratio, this.papers[index].ratio);

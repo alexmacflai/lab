@@ -10,16 +10,21 @@ A collection of 100 authored receipts across 24 design families, including the o
 
 ## How to use
 
-- Serve the lab locally and open this folder through localhost, or use HTTPS. The collection needs WebGL 2; it has no build step. Optional person detection loads MediaPipe from a CDN.
-- Select a comparison thumbnail, use the arrow buttons or press Left/Right to hold one receipt still. The arrow controls wrap through all 100 receipts. Use **Previous 20** and **Next 20** to browse five gallery pages.
-- Select **Play proof** to cycle the papers at 12 fps. Select **Pause proof** to hold the current receipt.
-- **Sample print** shows your supplied photograph through the print filter without camera permission. Disable it to inspect the paper alone.
-- Select **Start camera** and allow access. Your mirrored central camera crop appears at 144 × 180 pixels after a 500 ms delay. The default crop stays centred. Receipt cycling starts with the first delayed camera print.
-- Enable **Keep me in frame** for smooth digital framing around detected people, or **Remove background** to leave the paper visible around them. Both are off by default and apply to camera prints, not the sample photograph. First use downloads MediaPipe Tasks Vision 1.2.3 and its Selfie Segmenter model. Detection runs on your device. These options target people, not arbitrary objects, and can miss hair, hands or held items. If loading fails, both switches turn off and the full camera frame remains available.
-- On supported Apple devices, native **Center Stage** is available through the system camera menu. The prototype does not toggle it. Avoid combining it with digital framing if the result moves too much.
-- **Cancel** abandons a pending camera request. **Stop camera** releases the camera and keeps the last print; receipt cycling pauses too. A late permission response after cancellation is released immediately.
-- Use **Close-up**, **Background** and **Surface** to inspect folds, silhouettes and surface normals. The dark and checkerboard backgrounds help reveal edge defects.
-- Press **D** for frame rate, delay and hand-placement controls. It also names the current condition, fold count and mark. Settings reset on reload.
-- If access is denied, allow the camera in your browser's site settings and try again. Loading or graphics failures show a refresh message.
+- Open the main page on localhost or HTTPS. The receipt fits the space above the camera bar, up to approximately 800 CSS pixels tall. Your supplied photograph appears through the print filter before camera use.
+- Select **Start camera** and allow access. The current receipt stays still until the first delayed camera print is ready, then cycles at 12 fps. **Stop camera** releases the camera and holds the last receipt and print. **Cancel** abandons a pending camera request.
+- On phones and short windows, open **Camera options** using the icon beside the camera button. Wider tablet and desktop layouts show both toggles beside a smaller camera button. **Keep me in frame** starts on; **Remove background** starts off. Both use toggles. The opaque drawer slides up from below the screen without shrinking the receipt; closing it also animates. Close it with its close button, Escape or by tapping outside it.
+- Person detection downloads when you first start the camera with either option enabled. Camera images stay on your device. The options target people and may miss hair, hands or held items. A detection failure turns both options off and shows a message; the full camera frame remains available.
+- Native Apple **Center Stage**, where supported, remains in the system camera menu. Avoid combining it with digital framing if the result moves too much.
+- If camera access is denied, allow it in your browser's site settings and try again. Loading and graphics failures show a refresh message. The page needs WebGL 2 and has no build step.
 
-See the [production guide](production-guide.md) for design references, material provenance, fold parameters, rendering limitations and checks for future edits and additions.
+## Development view
+
+Open [the development page](dev/) for inspection controls. It shares the public page's `player.js`, renderer, camera processing and receipt assets; both pages use one collection.
+
+- Select a thumbnail, use the arrow buttons or press Left/Right to hold a receipt. **Previous 20** and **Next 20** browse all five gallery pages.
+- **Play proof** cycles receipts without the camera; **Pause proof** holds one. Proof playback cannot skip the initial camera-buffer wait.
+- **Sample print** shows the filtered photograph. Disable it to inspect paper alone. Development camera options start off so an unprocessed camera feed is available for comparison.
+- Use **Close-up**, **Background** and **Surface** to inspect folds, silhouettes, normals and edge defects.
+- Press **D** for frame rate, delay and hand-placement controls, plus live condition, fold, mark and buffer values. Settings reset on reload.
+
+See the [production guide](production-guide.md) for material provenance, physical dimensions, rendering limits and verification criteria.

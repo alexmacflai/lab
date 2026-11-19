@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="../">
+  <title>Receipt Portrait · development</title>
+  <link rel="stylesheet" href="dev.css">
+</head>
+<body>
+  <header><a href="../../">LAB / 004</a><span>AN EXPERIMENT IN THERMAL MEMORY</span></header>
+  <main>
+    <div class="caption"><span>RECEIPT PORTRAIT</span><span id="counter">001 / 100</span></div>
+    <div class="stage" data-background="table"><canvas id="portrait" width="840" height="1040" aria-label="A delayed camera print on a folded paper receipt"></canvas></div>
+    <div class="receipt-nav"><button id="previous" aria-label="Previous receipt">←</button><span id="receipt-name">100-receipt collection</span><button id="next" aria-label="Next receipt">→</button></div>
+    <div class="controls"><p id="status" role="status">Sample print · camera off.</p><button id="start" disabled>Loading paper…</button></div>
+    <p class="privacy">Your camera stays on this device. Nothing is saved.</p>
+    <fieldset class="camera-options"><legend>Camera print</legend>
+      <label><input id="auto-frame" type="checkbox"> Keep me in frame</label>
+      <label><input id="subject-mask" type="checkbox"> Remove background</label>
+      <p id="subject-status" role="status">For people. Detection downloads on first use; camera images stay on your device. Supported Apple devices also offer Center Stage in the system camera controls.</p>
+    </fieldset>
+    <section class="inspection" aria-label="Proof controls">
+      <button id="play">Play proof</button>
+      <label><input id="sample" type="checkbox" checked> Sample print</label>
+      <label><input id="zoom" type="checkbox"> Close-up</label>
+      <label>Background <select id="background"><option value="table">Tabletop</option><option value="dark">Dark</option><option value="checker">Checkerboard</option></select></label>
+      <label>Surface <select id="surface"><option value="0">Paper and ink</option><option value="1">Silhouette</option><option value="2">Surface normals</option></select></label>
+    </section>
+    <nav class="gallery-nav" aria-label="Receipt gallery pages"><button id="gallery-previous">Previous 20</button><span id="gallery-range">1–20 of 100</span><button id="gallery-next">Next 20</button></nav>
+    <section id="receipts" aria-label="Compare the receipts"></section>
+    <p class="proof-note"><a href="./">Public view</a> · 100 authored receipts. Select one to hold it still, or play them at 12 frames per second. <a href="production-guide.md">Production guide</a></p>
+  </main>
+  <footer><span>100 PIECES OF PAPER</span><span>12 FRAMES / SECOND · ½ SECOND LATE</span></footer>
+  <aside id="debug" hidden><strong>PRINT DESK · D TO CLOSE</strong><label>Frames / second <input id="fps" type="range" min="4" max="18" value="12"></label><label>Delay / ms <input id="delay" type="range" min="0" max="1500" step="50" value="500"></label><label>Hand placement <input id="jitter" type="range" min="0" max="2" step="0.1" value="1"></label><pre id="values"></pre></aside>
+  <script type="module" src="dev.js"></script>
+</body>
+</html>

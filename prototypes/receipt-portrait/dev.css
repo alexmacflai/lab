@@ -1,0 +1,54 @@
+:root { color-scheme: light; font-family: 'Courier New', monospace; color: #403e36; background: #d8d5cb; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; background: radial-gradient(ellipse at 48% 40%, #e5e1d7, #cfcdc3); }
+header, footer { display: flex; justify-content: space-between; gap: 20px; padding: 26px 32px; font-size: 10px; letter-spacing: .12em; }
+header a { color: inherit; text-decoration: none; }
+header > span, footer { opacity: .62; }
+main { margin: auto; width: min(500px, 100%); padding: 10px 24px 24px; }
+.caption { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .13em; margin: 0 20px; }
+.stage { height: min(65svh, 650px); display: flex; justify-content: center; }
+canvas { width: 100%; height: 100%; object-fit: contain; }
+.controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#status { font-size: 12px; max-width: 260px; line-height: 1.6; }
+button { border: 1px solid #555248; background: transparent; color: inherit; padding: 12px 16px; font: inherit; font-size: 11px; cursor: pointer; white-space: nowrap; }
+button:hover { background: #403e36; color: #eee9df; }
+button:disabled { opacity: .5; cursor: wait; }
+button:focus-visible, a:focus-visible { outline: 2px solid #403e36; outline-offset: 4px; }
+.privacy { font-size: 10px; opacity: .58; margin-top: 16px; }
+aside { position: fixed; right: 20px; top: 70px; width: 280px; padding: 20px; background: #f1ecdf; border: 1px solid #999489; box-shadow: 0 8px 32px #0002; font-size: 11px; }
+aside[hidden] { display: none; }
+label { display: grid; gap: 8px; margin-top: 20px; }
+input { width: 100%; accent-color: #514b40; }
+pre { line-height: 1.8; }
+@media (max-width: 540px) { header, footer { padding: 20px; font-size: 8px; } header > span { max-width: 150px; text-align: right; } .controls { padding: 0 8px; } footer span:last-child { text-align: right; } }
+main { width: min(760px, 100%); }
+.caption, .controls, .privacy, .receipt-nav { max-width: 460px; margin-left: auto; margin-right: auto; }
+.stage { height: min(68svh, 660px); border-radius: 3px; }
+.stage[data-background="dark"] { background: #292c2b; }
+.stage[data-background="checker"] { background: repeating-conic-gradient(#b8b8b3 0% 25%, #eee 0% 50%) 0 / 24px 24px; }
+.receipt-nav { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.receipt-nav button { padding: 5px 12px; border-color: transparent; font-size: 18px; }
+.inspection { display: flex; gap: 12px 20px; flex-wrap: wrap; justify-content: center; align-items: center; padding: 20px 0; margin-top: 18px; border-top: 1px solid #7773; font-size: 10px; }
+.inspection label { display: flex; align-items: center; gap: 5px; margin: 0; }
+.inspection input { width: auto; }
+select { background: transparent; font: inherit; color: inherit; border: 1px solid #7776; padding: 6px; }
+#receipts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+#receipts button { padding: 2px 2px 10px; border-color: transparent; white-space: normal; font-size: 9px; line-height: 1.5; }
+#receipts button[aria-pressed="true"] { border-color: #686457; }
+#receipts button img { display: block; width: 100%; height: 150px; object-fit: contain; }
+.proof-note { font-size: 10px; line-height: 1.8; text-align: center; opacity: .7; }
+.proof-note a { color: inherit; }
+@media (max-width: 540px) { #receipts { grid-template-columns: repeat(3, 1fr); } #receipts button img { height: 130px; } }
+
+.gallery-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 20px; font-size: 11px; }
+#receipts { grid-template-columns: repeat(5, 1fr); }
+#receipts button img { height: 180px; }
+@media (max-width: 540px) { #receipts { grid-template-columns: repeat(3, 1fr); } #receipts button img { height: 140px; } .gallery-nav button { padding: 9px; font-size: 10px; } }
+
+.gallery-nav button:disabled { cursor: default; opacity: .35; }
+
+.camera-options { max-width: 460px; margin: 22px auto 0; border: 1px solid #7774; padding: 14px; font-size: 11px; }
+.camera-options legend { padding: 0 6px; }
+.camera-options label { display: inline-flex; gap: 6px; align-items: center; margin: 4px 15px 8px 0; }
+.camera-options input { width: auto; }
+.camera-options p { font-size: 10px; line-height: 1.7; margin-bottom: 0; opacity: .7; }
