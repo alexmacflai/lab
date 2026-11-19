@@ -11,7 +11,7 @@ function randomFor(id) {
     t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 const MIX = [['pristine', 24], ['single-fold', 22], ['three-fold', 20], ['five-fold', 12], ['crumpled', 14], ['handled', 8]];
-const MARKS = [['coffee', 5], ['ink', 3], ['marker', 3], ['pencil', 4], ['pen-note', 2], ['doodle', 1]];
+const MARKS = [['coffee', 7], ['ink', 3], ['marker', 3], ['pencil', 6], ['pen-note', 6], ['doodle', 8]];
 
 function profile(id, condition) {
   const random = randomFor(id + '/surface');

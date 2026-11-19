@@ -14,6 +14,11 @@
     <div class="receipt-nav"><button id="previous" aria-label="Previous receipt">←</button><span id="receipt-name">100-receipt collection</span><button id="next" aria-label="Next receipt">→</button></div>
     <div class="controls"><p id="status" role="status">Sample print · camera off.</p><button id="start" disabled>Loading paper…</button></div>
     <p class="privacy">Your camera stays on this device. Nothing is saved.</p>
+    <fieldset class="camera-options"><legend>Camera print</legend>
+      <label><input id="auto-frame" type="checkbox"> Keep me in frame</label>
+      <label><input id="subject-mask" type="checkbox"> Remove background</label>
+      <p id="subject-status" role="status">For people. Detection downloads on first use; camera images stay on your device. Supported Apple devices also offer Center Stage in the system camera controls.</p>
+    </fieldset>
     <section class="inspection" aria-label="Proof controls">
       <button id="play">Play proof</button>
       <label><input id="sample" type="checkbox" checked> Sample print</label>

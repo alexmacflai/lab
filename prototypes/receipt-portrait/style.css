@@ -46,3 +46,9 @@ select { background: transparent; font: inherit; color: inherit; border: 1px sol
 @media (max-width: 540px) { #receipts { grid-template-columns: repeat(3, 1fr); } #receipts button img { height: 140px; } .gallery-nav button { padding: 9px; font-size: 10px; } }
 
 .gallery-nav button:disabled { cursor: default; opacity: .35; }
+
+.camera-options { max-width: 460px; margin: 22px auto 0; border: 1px solid #7774; padding: 14px; font-size: 11px; }
+.camera-options legend { padding: 0 6px; }
+.camera-options label { display: inline-flex; gap: 6px; align-items: center; margin: 4px 15px 8px 0; }
+.camera-options input { width: auto; }
+.camera-options p { font-size: 10px; line-height: 1.7; margin-bottom: 0; opacity: .7; }
