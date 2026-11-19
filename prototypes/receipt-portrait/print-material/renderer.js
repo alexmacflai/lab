@@ -2,6 +2,7 @@ import { PaperRenderer } from '../renderer.js';
 import { createImpression } from './impression.js';
 import { PRINT_FRAGMENT } from './shader.js';
 import { responseMap } from './response.js';
+import { transferFilm } from './material.js';
 
 function mapTexture(gl, source) {
   const texture = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -20,6 +21,12 @@ export class PrintRenderer extends PaperRenderer {
     for (const name of ['On','View','Ink','Grain','Seed','Rare']) this.proofUniforms[name] = gl.getUniformLocation(this.program, `uProof${name}`);
     gl.uniform1i(gl.getUniformLocation(this.program,'uResponse'),3);
     gl.activeTexture(gl.TEXTURE3); this.neutralResponse = mapTexture(gl, new ImageData(new Uint8ClampedArray([224,0,0,255]),1,1));
+    gl.uniform1i(gl.getUniformLocation(this.program,'uTransferFilm'),4);
+    gl.activeTexture(gl.TEXTURE4); this.film = mapTexture(gl, transferFilm);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+    gl.generateMipmap(gl.TEXTURE_2D);
   }
 
   response(index) {
@@ -54,6 +61,11 @@ export class PrintRenderer extends PaperRenderer {
       gl.uniform1f(u.Rare,profile.rare ? 1 : 0);
       gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D,this.response(index));
     }
-    super.draw(index,printed,options);
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D,this.film);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,this.print);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,profile && printed?.tone ? gl.LINEAR : gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,profile && printed?.tone ? gl.LINEAR : gl.NEAREST);
+    gl.uniform1i(gl.getUniformLocation(this.program,'uContinuousTone'),profile && printed?.tone ? 1 : 0);
+    super.draw(index,profile ? printed?.tone || printed : printed,options);
   }
 }

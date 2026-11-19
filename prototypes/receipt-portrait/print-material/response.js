@@ -12,7 +12,7 @@ export function responseMap(receipt) {
     // Divergence of the surface normal: convex ridges versus concave recesses.
     const curvature = (normal(right,y,0) - normal(left,y,0)) / ((right-left)*sx)
       - (normal(x,bottom,1) - normal(x,top,1)) / ((bottom-top)*sy);
-    const ridge = clamp(curvature * 2), valley = clamp(-curvature * 2.2);
+    const ridge = clamp((curvature - .008) * 7), valley = clamp((-curvature - .008) * 9);
     const i = (y * width + x) * 4;
     pixels.data[i] = 255 * clamp(.88 + ridge * .12 - valley * .74);
     pixels.data[i + 1] = 255 * ridge;

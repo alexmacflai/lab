@@ -11,59 +11,88 @@ uniform float uProofRare;
 uniform sampler2D uResponse;
 float proofRadius;
 float proofMask;
+float proofWet;
 vec3 proofResponse;
 float proofHash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7)) + uProofSeed) * 43758.5453); }
-float proofNoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
-  return mix(mix(proofHash(i),proofHash(i+vec2(1,0)),f.x),mix(proofHash(i+vec2(0,1)),proofHash(i+vec2(1)),f.x),f.y);
+float materialHash(vec2 p) {
+  uvec2 q=uvec2(ivec2(floor(p)));
+  uint h=q.x*0x8da6b343u ^ q.y*0xd8163841u ^ uint(uProofSeed*4096.);
+  h^=h>>16; h*=0x7feb352du; h^=h>>15; h*=0x846ca68bu; h^=h>>16;
+  return float(h>>8)*(1./16777216.);
 }
-float proofFbm(vec2 p) { return .55*proofNoise(p)+.28*proofNoise(p*2.07+3.)+.17*proofNoise(p*4.13+7.); }
-float proofSource(vec2 p) {
-  if (any(lessThan(p,vec2(0))) || any(greaterThan(p,vec2(1)))) return 0.;
-  vec4 s=texture(uPrint,p); return s.a*(1.-dot(s.rgb,vec3(.299,.587,.114)));
+float proofNoise(vec2 p) {
+  vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(materialHash(i),materialHash(i+vec2(1,0)),f.x),
+    mix(materialHash(i+vec2(0,1)),materialHash(i+vec2(1)),f.x),f.y);
+}
+float printerThreshold(vec2 uv,float fine) {
+  const float bayer[16]=float[16](0.,8.,2.,10.,12.,4.,14.,6.,3.,11.,1.,9.,15.,7.,13.,5.);
+  ivec2 pixel=ivec2(floor(uv*vec2(144.,180.)));
+  float ordered=(bayer[(pixel.y%4)*4+pixel.x%4]+.5)/16.;
+  // Keep the cheap printer's ordered dots; only a little finer deposit variation.
+  return clamp(ordered+(fine-.5)*.28,.015,.985);
 }
 ${TRANSFER}
+uniform bool uContinuousTone;
+vec2 proofPaper(vec2 uv) {
+  float c=cos(uPrintPose.z),s=sin(uPrintPose.z);
+  vec2 p=mat2(c,s,-s,c)*((uv-.5)*vec2(.94,1.175))+uPrintPose.xy;
+  return vec2(p.x,p.y/uRatio)+.5;
+}
+float proofSource(vec2 uv) {
+  if(any(lessThan(uv,vec2(0))) || any(greaterThan(uv,vec2(1)))) return 0.;
+  vec2 paperUV=proofPaper(uv),mm=paperUV*vec2(80.,80.*uRatio);
+  vec3 response=texture(uResponse,(paperUV*vec2(64.,144.)+.5)/vec2(65.,145.)).rgb;
+  float weak=uProofInk.y>0. ? proofBlotch(mm) : 0.;
+  float loss=weak*uProofInk.y*(1.-proofWet*.8);
+  float contact=1.-response.b*uProofInk.z*.96;
+  vec2 sourceUV=uContinuousTone ? (floor(uv*vec2(144.,180.))+.5)/vec2(144.,180.) : uv;
+  vec4 source=texture(uPrint,sourceUV);
+  float tone=source.a*(1.-dot(source.rgb,vec3(.299,.587,.114)));
+  if(uProofRare>.5) tone=1.-pow(1.-tone,1.+proofWet*.9);
+  if(!uContinuousTone) return tone*(1.-loss)*contact;
+  vec2 cell=floor(uv*vec2(600.,750.));
+  float fine=materialHash(cell+vec2(19,71));
+  float image=smoothstep(printerThreshold(uv,fine)-.018,printerThreshold(uv,fine)+.018,tone);
+  float retained=smoothstep(fine-.018,fine+.018,(1.-loss)*contact);
+  return image*retained*step(.002,tone);
+}
 float proofInk(vec2 uv) {
   vec2 mm=vec2(vUV.x,vUV.y*uRatio)*80.;
   proofResponse=texture(uResponse,(vUV*vec2(64.,144.)+.5)/vec2(65.,145.)).rgb;
-  float ridge=proofResponse.g, valley=proofResponse.b;
-  vec2 warp=vec2(proofNoise(mm/13.),proofNoise(mm/13.+39.))*1.2;
-  float base=proofSource(uv),weak=0.;
-  if(uProofInk.y>0.) {
-    vec2 dotSize=vec2(1./144.,1./180.);
-    float load=(base+proofSource(uv+vec2(dotSize.x,0))+proofSource(uv-vec2(dotSize.x,0))
-      +proofSource(uv+vec2(0,dotSize.y))+proofSource(uv-vec2(0,dotSize.y)))/5.;
-    weak=proofBlotch(mm,load);
-  }
-  float absorb=proofFbm(mm*.8+warp);
-  float burst=smoothstep(.50,.66,proofFbm(mm/12.+vec2(17,3)));
-  float radius=mix(uProofInk.x,mix(.08,uProofInk.x,burst),uProofRare);
-  radius*=mix(.45,1.35,absorb)*(1.+valley*uProofInk.z*.8)*(1.-ridge*uProofInk.z*.7);
+  float ridge=proofResponse.g,valley=proofResponse.b;
+  float absorb=proofNoise(mm*1.8);
+  float burst=smoothstep(.43,.66,proofNoise(mm/7.+vec2(17,3)));
+  proofWet=burst*uProofRare;
+  float base=proofSource(uv);
+  float radius=mix(uProofInk.x,mix(.025,uProofInk.x,burst),uProofRare);
+  radius*=mix(.55,1.3,absorb)*(1.+valley*uProofInk.z*.8)*(1.-ridge*uProofInk.z*.65);
   proofRadius=radius;
-  float spread=0.;
-  float angle=.22+uProofSeed*.01;
-  mat2 direction=mat2(cos(angle),sin(angle),-sin(angle),cos(angle));
-  float wick=proofNoise(direction*mm*vec2(5.,26.));
-  if(radius>.05) for(int i=0;i<12;i++) {
-    float a=float(i)*.5235988;
-    float r=mod(float(i),2.)==0. ? .38 : 1.;
-    vec2 offset=direction*(vec2(cos(a),sin(a))*vec2(1.25,.65))*radius*r;
+  float ink=base;
+  // Fibre-led growth of the deposited ink, not a low-opacity blur of the whole photograph.
+  if(radius>.12) for(int i=0;i<6;i++) {
+    float a=float(i)*1.047198+uProofSeed;
+    vec2 fibre=vec2(cos(a),sin(a))*vec2(1.,.72);
+    float wick=proofNoise((mm+vec2(uProofSeed,float(i)*17.))*vec2(6.,28.));
+    vec2 offset=fibre*radius*mix(.25,1.,wick);
     float deposit=proofSource(uv+offset/vec2(75.2,94.));
-    spread=max(spread,deposit*exp(-r*r*1.6)*mix(.22,1.,wick));
+    float flooding=smoothstep(.25,.7,radius);
+    float adhesion=smoothstep(mix(.66,.36,flooding),mix(.82,.60,flooding),wick);
+    ink=max(ink,deposit*adhesion*.97);
   }
-  float ink=max(base,spread*.95);
   if(uProofInk.w>0.) {
-    float dragged=max(proofSource(uv+vec2(0,.6/94.)),proofSource(uv+vec2(0,1.5/94.)));
-    ink=max(ink,dragged*ridge*uProofInk.w*.85);
+    float drag=max(proofSource(uv-vec2(0,.45/94.))*.93,
+      max(proofSource(uv-vec2(0,.95/94.))*.74,proofSource(uv-vec2(0,1.65/94.))*.38));
+    float pressure=ridge*uProofInk.w;
+    float moved=step(proofHash(floor(uv*vec2(600.,750.))+113.),pressure);
+    float retained=ink*step(proofHash(floor(uv*vec2(600.,750.))+67.),.55);
+    float deposited=step(proofHash(floor(uv*vec2(600.,750.))+251.),drag)*step(.001,drag);
+    ink=mix(ink,max(retained,deposited),moved);
   }
   float grit=proofHash(floor(mm*14.));
   float pores=mix(1.,mix(.14,1.,smoothstep(.025,.085,grit)),uProofGrain);
-  float transfer=1.-valley*uProofInk.z*.76;
-  float loss=mix(uProofInk.y,1.-pow(1.-uProofInk.y,4.),smoothstep(.15,.6,uProofInk.y));
-  loss*=mix(1.,.94,smoothstep(.15,.6,uProofInk.y));
-  proofMask=loss*weak;
-  float density=(1.-loss*weak)*transfer*mix(.985,1.,proofFbm(mm*1.8));
-  return clamp(ink*density*pores,0.,1.);
+  proofMask=uProofInk.y>0. ? proofBlotch(mm)*uProofInk.y*(1.-proofWet*.8) : 0.;
+  return clamp(ink*pores,0.,1.);
 }
 `;
 
@@ -83,4 +112,5 @@ const diagnostic = `
 export const PRINT_FRAGMENT = (FRAGMENT.slice(0,start)+branch+FRAGMENT.slice(end))
   .replace('precision highp float;', 'precision highp float;\nprecision highp int;')
   .replace('void main() {',declarations+'\nvoid main() {')
+  .replace('  // Linear-light reflectance multiplication:', '  if(uProofOn==1) inside=1.;\n  // Linear-light reflectance multiplication:')
   .replace('  // Linear-light reflectance multiplication:',diagnostic+'\n  // Linear-light reflectance multiplication:');
