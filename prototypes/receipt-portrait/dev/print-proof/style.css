@@ -1,0 +1,15 @@
+#print-proof { margin: 28px 0; padding-top: 24px; border-top: 1px solid #7774; }
+#print-proof h2 { font-size: 16px; font-weight: 500; }
+#print-proof p { font-size: 11px; line-height: 1.7; }
+.proof-controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 11px; }
+.proof-controls label { display: flex; align-items: center; gap: 6px; margin: 0; }
+.proof-controls input { width: auto; }
+#proof-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+#proof-cards button { padding: 0 0 16px; border-color: #7774; text-align: left; white-space: normal; transition: border-color .15s, background .15s; }
+#proof-cards button:hover { background: #eae5da; color: inherit; }
+#proof-cards button[aria-pressed="true"] { border-color: #403e36; box-shadow: 0 0 0 1px #403e36; }
+#proof-cards img { display: block; width: 100%; height: auto; }
+#proof-cards strong, #proof-cards span { display: block; padding: 0 14px; }
+#proof-cards strong { margin: 12px 0 6px; font-size: 12px; }
+#proof-cards span { font-size: 11px; line-height: 1.6; }
+@media(max-width:440px) { #proof-cards { grid-template-columns: 1fr; } }

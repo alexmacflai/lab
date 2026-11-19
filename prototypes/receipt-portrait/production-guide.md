@@ -108,7 +108,7 @@ The renderer draws ink only as part of the paper mesh. Never draw the portrait a
 
 Shadow uses sixteen projections of the displaced mesh across a broad light. Softness and displacement grow with local paper height. Surface shading uses the same fold normals. This approximates an area-light cast shadow; it is not ray tracing and does not model fold-to-fold self-shadowing, paper thickness, translucency or fibre-scale geometry. They remain possible later refinements.
 
-Default paper placement varies by at most 0.009 paper widths horizontally, 0.011 vertically and about 0.52 degrees. Print registration varies by at most 0.011 widths horizontally, 0.014 vertically and about 0.63 degrees. This gives the print slightly more independent movement than the paper. Inspect still frames before increasing these values: movement should suggest careful placement, not shaking.
+Default paper placement varies by at most 0.0095625 paper widths horizontally, 0.0116875 vertically and about 0.55 degrees. Print registration varies by at most 0.01375 widths horizontally, 0.0175 vertically and about 0.79 degrees. Receipt translation and rotation are 85% of the previous 1.25× setting, or 1.0625× the original ranges. Independent print registration is also 1.25× its original range. Inspect still frames before increasing these values: movement should suggest careful placement, not shaking.
 
 ## Acceptance when changing the collection
 
@@ -122,3 +122,39 @@ Default paper placement varies by at most 0.009 paper widths horizontally, 0.011
 8. Check a narrow viewport, camera cancellation, stop/restart and console errors. Run the index and repository checks from `knowledge/setup.md`.
 
 Use automated checks for catalogue size, unique IDs and physical profiles, transaction arithmetic, opaque interiors, print containment, multiply behaviour and bounded texture caching. Review contact sheets for all 100 entries, including header fit, flat versus crumpled stock, and the sparse mark distribution; automated checks do not establish visual realism. Human review still decides whether the collection feels sufficiently physical. Future additions should preserve differences beyond names and totals. Record permission and provenance before introducing real scans.
+
+## Public and development views
+
+`index.html` is the public experience: the receipt and camera controls. Phones use a settings drawer; at widths of at least 700 px and heights of at least 480 px, smaller controls show both toggles inline. On both mobile and desktop, Start camera has a dark fill. The button transitions to an outline as soon as camera start is requested and returns to a fill on stop, cancellation or failure. `dev/index.html` keeps the gallery, surface/background selectors, sample switch, proof playback and debug panel. Its base URL points to the prototype root so assets stay local to this piece. The lab index lists only the public view.
+
+`player.js` owns the shared receipt state, rendering, camera processing and timestamp buffer. Both views use the same startup, capture and playback loop. Public auto-framing starts on; background removal starts off. Download person detection only when an active camera needs it. Hold the current print and paper until the first buffered frame is ready; stop playback when the camera stops. Rebuffer after changing subject options.
+
+The public canvas uses the available viewport above a fixed-height camera bar, with safe-area padding. Its fit projection accounts for the actual canvas aspect ratio; it caps the paper at approximately 800 CSS pixels tall, including the small placement range. The modal drawer sits above the page and does not change the stage dimensions. `camera-controls.js` slides the fully opaque panel from below the screen over 320 ms and slides it fully below the screen over 240 ms. The panel never fades; only the backdrop dims. The dialog stays open until the exit animation finishes, including when closed with Escape or a backdrop tap. Interrupted animations continue from the current visual position. Reduced-motion mode skips panel travel and keeps it opaque. Toggle thumbs, hover, press, focus and disabled states also transition. These transitions apply to controls and panels; receipt frames remain discrete. Switching layout moves the same toggle elements, preserving their values and camera settings. Check drawer-open versus drawer-closed canvas bounds at phone, landscape and desktop sizes. Keep keyboard focus inside the open drawer and return it to the settings button on close. The public page shows no captions or debug values. Failures can show a concise message with a recovery step.
+
+
+## Print conditions
+
+Both views use the eight conditions in `print-material/`. The regular view uses **Random each frame** throughout the collection; the dev view defaults to the same mode and can also select individual conditions or **Current print**, which runs the earlier fixed ink block. The comparison panel remains in `dev/print-proof/`. Camera capture, delay, frame rate and placement ranges are unchanged.
+
+| Condition | Nominal bleed radius | Weak-transfer strength | Fold response | Ridge smear |
+|---|---:|---:|---:|---:|
+| Well printed | 0.025 mm | 0 | 0 | 0 |
+| Ordinary | 0.10 mm | 0.08 | 0.10 | 0 |
+| Weak transfer | 0.06 mm | 0.88 | 0.05 | 0 |
+| Moderate bleed | 0.28 mm | 0.08 | 0.10 | 0 |
+| Rare heavy bleed | Up to 0.75 mm locally | 0.15 | 0.12 | 0 |
+| Weak transfer + bleed | 0.32 mm | 0.88 | 0.12 | 0 |
+| Fold-related transfer | 0.08 mm | 0.08 | 0.95 | 0 |
+| Ridge smear | 0.12 mm | 0.10 | 0.25 | 0.85 |
+
+Radii use an 80 mm paper width and a 75.2 × 94 mm print. Fibre absorption and contact modulate them locally; they are simulation parameters, not measurements from a real printer. The heavy-bleed condition restricts its larger radii to seeded patches. Its larger radii occur only within local patches; this condition has a 3% chance on each new frame.
+
+`ink-transfer-v1.png` is a generated monochrome transfer texture, not a scan or a supplied reference image. Its lighter pores and cloudy patches reduce ink coverage in combination with seeded noise. It never overlays white paint or darkens bare paper. Clean printing uses less fine dropout; weak transfer adds broad low-density patches. Bleed samples neighbouring source ink along a paper-fibre direction. Ridge smear uses short feed-direction offsets. All conditions multiply neutral-black ink into the paper before lighting. Each new impression gets a fresh random seed, transfer-map rotation, scale and offset, fine-grain pattern and bounded strength variation. A paused impression keeps those values through resizing and inspection changes.
+
+`response.js` derives contact from the exact 65 × 145 vertex mesh normals used by the renderer. Their divergence identifies ridges and recesses. All folds, bumps, curl and microstructure come from the rendered receipt, with no flattened alternative or omitted folds. Recesses reduce transfer and increase spreading; raised creases reduce spreading and can drag ink. The response remains an approximation of ink transfer, rather than a simulation of printer mechanics. Maps stay in paper coordinates and are independent of light, camera pose and animation time. The displayed normals and print response describe the same receipt surface.
+
+In random mode, independent weighted draws use 50% well printed, 35% ordinary, 3% weak transfer, 3% moderate bleed, 3% local heavy bleed, 2% weak transfer with bleed, 3% fold-related transfer and 1% ridge smear. These are probabilities, not quotas, a fixed sequence or an assignment to receipt IDs. Repeats are allowed. Named conditions still randomise their detail on each new frame. Fold locations remain attached to the current receipt; only their ink response strength varies.
+
+Compare all eight conditions on the same selected paper and photograph before judging them on different receipts. Use full receipts for scale, detail crops for dots and fibres, and the coverage, bleed-radius and contact views to check causes. In the contact view, red is contact, green is ridge and blue is recess. The bleed view shifts from blue to red as the local radius approaches 0.8 mm. The main preview can use a live camera; comparison cards remain on the photograph.
+
+When changing the print material, check that clean blacks stay dense, weak patches have varied shapes, heavy bleed remains local and faces remain readable. White or transparent source pixels must add no ink by themselves, paper interiors must remain opaque, displaced prints must remain inside the paper mesh and repeated renders must preserve the same material pattern. Use **Current print** as the earlier-treatment baseline and check that both views use the same material renderer. Visual realism still needs review; diagnostic maps alone do not establish it.
