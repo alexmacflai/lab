@@ -1,4 +1,5 @@
 import { ReceiptPlayer } from './player.js';
+import { PrintRenderer, loadPrintMaterial } from './print-material/renderer.js';
 import { bindCameraControls } from './camera-controls.js';
 
 const $ = selector => document.querySelector(selector);
@@ -25,7 +26,9 @@ async function hideError() {
 async function initialise() {
   bindCameraControls(() => player?.configureSubject(enabled('subject-mask'), enabled('auto-frame')));
   try {
+    await loadPrintMaterial();
     player = new ReceiptPlayer($('#portrait'), {
+      Renderer: PrintRenderer,
       draw: p => { start.setAttribute('aria-busy', String(p.active && !p.printed)); },
       camera: active => { start.dataset.active = String(active); if (active) hideError(); },
       subjectError: message => {

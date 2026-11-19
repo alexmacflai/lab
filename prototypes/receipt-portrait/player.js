@@ -18,7 +18,7 @@ export class ReceiptPlayer {
 
   async load() {
     [this.papers, this.sample] = await Promise.all([loadPaper(), samplePrint()]);
-    this.renderer = new PaperRenderer(this.canvas, this.papers); this.renderer.resize(this.fit);
+    this.renderer = new (this.hooks.Renderer || PaperRenderer)(this.canvas, this.papers); this.renderer.resize(this.fit);
     new ResizeObserver(() => { this.renderer?.resize(this.fit); this.draw(true); }).observe(this.canvas);
     this.canvas.addEventListener('webglcontextlost', event => {
       event.preventDefault(); this.camera?.stop(); this.loop = false; this.renderer = null;
@@ -87,6 +87,7 @@ export class ReceiptPlayer {
       pose: [random(.019125) * amount, random(.023375) * amount, random(.019125) * amount],
       printPose: [random(.0275) * amount, random(.035) * amount, random(.0275) * amount],
       zoom: this.zoom, inspect: this.inspect, fit: this.fit,
+      frame: this.loop && !still ? this.sequence : undefined,
     });
     this.hooks.draw?.(this);
   }

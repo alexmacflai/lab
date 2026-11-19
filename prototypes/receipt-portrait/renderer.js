@@ -7,10 +7,10 @@ function compile(gl, type, code) {
   return shader;
 }
 
-function program(gl) {
+function program(gl, fragmentSource = FRAGMENT) {
   const p = gl.createProgram();
   const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
-  const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
+  const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
   gl.attachShader(p, vertex); gl.attachShader(p, fragment); gl.linkProgram(p);
   gl.deleteShader(vertex); gl.deleteShader(fragment);
   if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
@@ -30,12 +30,12 @@ function texture(gl, source, nearest = false) {
 }
 
 export class PaperRenderer {
-  constructor(canvas, papers, cacheLimit = 8) {
+  constructor(canvas, papers, cacheLimit = 8, fragment = FRAGMENT) {
     this.canvas = canvas;
     this.gl = canvas.getContext('webgl2', { alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
     if (!this.gl) throw new Error('WebGL 2 is unavailable');
     const gl = this.gl;
-    this.program = program(gl); this.uniforms = {};
+    this.program = program(gl, fragment); this.uniforms = {};
     for (const name of ['View', 'Pose', 'Light', 'Shadow', 'Paper', 'Print', 'Tint', 'PrintPose', 'Ratio', 'PrintOn', 'Inspect']) {
       this.uniforms[name] = gl.getUniformLocation(this.program, `u${name}`);
     }
