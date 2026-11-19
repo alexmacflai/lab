@@ -3,11 +3,12 @@ import { LAYOUTS, typesetter } from './layouts.js';
 import { drawCollection } from './collection-layouts.js';
 import { drawHeader, ORIGINAL_TAGS } from './brands.js';
 import { addMark } from './marks.js';
+import { loadMarkAssets } from './mark-assets.js';
 
 export async function loadPaper() {
   const material = new Image();
   material.src = 'thermal-paper.png';
-  await material.decode();
+  await Promise.all([material.decode(), loadMarkAssets(RECEIPTS)]);
   return RECEIPTS.map(receipt => ({ ...receipt, makeTexture: () => makeTexture(material, receipt) }));
 }
 

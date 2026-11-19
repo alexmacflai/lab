@@ -42,6 +42,12 @@ uniform float uPrintOn;
 uniform bool uShadow;
 uniform int uInspect;
 out vec4 outColor;
+float grain(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float inkCoverage(vec2 uv) {
+  return texture(uPrint, clamp(uv, 0., 1.)).a;
+}
 void main() {
   if (uShadow) { outColor = vec4(.17, .15, .11, .027); return; }
   // Geometry supplies the silhouette. Interior alpha is always one.
@@ -54,6 +60,19 @@ void main() {
   float c = cos(uPrintPose.z), s = sin(uPrintPose.z);
   vec2 printUV = mat2(c, -s, s, c) * local / vec2(.94, 1.175) + .5;
   vec4 ink = texture(uPrint, clamp(printUV, 0., 1.));
+  // Imperfections live in paper coordinates, so ink follows its folds and never swims.
+  vec2 fibre = floor(vUV * vec2(800., 1800.));
+  float grit = grain(fibre);
+  float cloud = grain(floor(vUV * vec2(37., 73.)));
+  float feed = .985 + .015 * sin(floor(printUV.y * 180.) * 1.71);
+  float dropout = mix(.14, 1., smoothstep(.025, .085, grit));
+  float density = mix(.965, 1., cloud) * feed * dropout;
+  float missingLine = mix(.62, 1., step(.018, grain(vec2(floor(printUV.y * 180.), 4.))));
+  // Sub-dot feathering into neighbouring fibres, rather than blurring the portrait.
+  vec2 bleed = vec2(.0018, .0014);
+  float fringe = max(max(inkCoverage(printUV + vec2(bleed.x, 0.)), inkCoverage(printUV - vec2(bleed.x, 0.))),
+    max(inkCoverage(printUV + vec2(0., bleed.y)), inkCoverage(printUV - vec2(0., bleed.y))));
+  ink.a = max(ink.a, fringe * .2 * grit) * density * missingLine;
   float inside = step(0., printUV.x) * step(printUV.x, 1.) * step(0., printUV.y) * step(printUV.y, 1.);
   // Linear-light reflectance multiplication: unprinted pixels add no white.
   vec3 reflectance = pow(paper, vec3(2.2));

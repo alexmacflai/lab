@@ -3,15 +3,15 @@ import { PaperRenderer } from './renderer.js';
 import { capturePrint } from './print.js';
 import { samplePrint } from './sample.js';
 import { Camera } from './camera.js';
+import { Subject } from './subject.js';
 import { ReceiptGallery } from './gallery.js';
 
 const $ = selector => document.querySelector(selector);
 const canvas = $('#portrait'), status = $('#status'), start = $('#start');
 const settings = { fps: 12, delay: 500, jitter: 1 };
 const state = { index: 0, sequence: 0, loop: false, queue: [], printed: null, last: 0, camera: false };
-let renderer, papers, camera, gallery;
+let renderer, papers, camera, gallery, subject, sample;
 const random = amount => (Math.random() - .5) * amount;
-const sample = samplePrint();
 
 function options(still = false) {
   const amount = still || !state.loop ? 0 : settings.jitter;
@@ -41,9 +41,10 @@ function select(index) {
 function updatePlay() { $('#play').textContent = state.loop ? 'Pause proof' : 'Play proof'; }
 
 function cameraChanged(active) {
-  state.camera = active; state.queue = [];
+  state.camera = active; state.queue = []; subject.reset();
   $('#sample').disabled = active;
-  if (active) { state.printed = null; state.loop = true; $('#sample').checked = false; }
+  state.loop = false;
+  if (active) { state.printed = null; $('#sample').checked = false; }
   updatePlay(); draw();
 }
 
@@ -53,8 +54,18 @@ function tick(time) {
   state.last = time - (time - state.last) % (1000 / settings.fps);
   if (!state.camera && !state.loop) return;
   if (state.camera && camera.video.readyState >= 2) {
-    state.queue.push({ at: time, image: capturePrint(camera.video, state.sequence) });
+    try {
+      const frame = subject.prepare(camera.video, time);
+      if (frame) state.queue.push({ at: time, image: capturePrint(frame.source, state.sequence, frame.crop) });
+    } catch (error) {
+      $('#subject-mask').checked = false; $('#auto-frame').checked = false;
+      subject.masked = false; subject.framing = false; state.queue = [];
+      $('#subject-status').textContent = 'Person detection stopped. The full camera frame is still available.';
+      console.error(error);
+    }
+    const firstPrint = !state.printed;
     while (state.queue.length && time - state.queue[0].at >= settings.delay) state.printed = state.queue.shift().image;
+    if (firstPrint && state.printed) { state.loop = true; updatePlay(); }
     if (state.printed) status.textContent = 'You, a moment ago.';
   }
   state.sequence++;
@@ -64,9 +75,22 @@ function tick(time) {
 
 
 function bindControls() {
+  for (const id of ['subject-mask', 'auto-frame']) $(`#${id}`).addEventListener('change', async () => {
+    state.queue = []; state.printed = null;
+    try {
+      await subject.configure($('#subject-mask').checked, $('#auto-frame').checked);
+    } catch {
+      $('#subject-mask').checked = false; $('#auto-frame').checked = false;
+      subject.masked = false; subject.framing = false;
+      $('#subject-status').textContent = 'Person detection could not load. Check your connection and try again.';
+    }
+  });
   $('#previous').addEventListener('click', () => select(state.index - 1));
   $('#next').addEventListener('click', () => select(state.index + 1));
-  $('#play').addEventListener('click', () => { state.loop = !state.loop; updatePlay(); });
+  $('#play').addEventListener('click', () => {
+    if (state.camera && !state.printed) return;
+    state.loop = !state.loop; updatePlay();
+  });
   for (const id of ['sample', 'zoom', 'surface']) $( `#${id}`).addEventListener('change', () => {
     if (id === 'sample') {
       state.printed = null; status.textContent = $('#sample').checked ? 'Sample print · camera off.' : 'Camera off.';
@@ -88,8 +112,9 @@ function bindControls() {
 
 async function initialise() {
   try {
-    papers = await loadPaper(); renderer = new PaperRenderer(canvas, papers); renderer.resize();
+    [papers, sample] = await Promise.all([loadPaper(), samplePrint()]); renderer = new PaperRenderer(canvas, papers); renderer.resize();
     gallery = new ReceiptGallery(papers, sample, select); gallery.show(0, 0); draw(true);
+    subject = new Subject($('#subject-status'));
     camera = new Camera(start, status, cameraChanged); start.disabled = false; start.textContent = 'Start camera';
     bindControls();
     new ResizeObserver(() => { renderer.resize(); draw(true); }).observe(canvas);
@@ -101,7 +126,7 @@ async function initialise() {
     requestAnimationFrame(tick);
   } catch (error) {
     start.textContent = 'Preview unavailable';
-    status.textContent = 'The proof could not load. It needs WebGL 2 and the paper texture. Refresh to try again.';
+    status.textContent = 'The proof could not load. It needs WebGL 2 and its image assets. Refresh to try again.';
     console.error(error);
   }
 }
