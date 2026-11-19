@@ -17,6 +17,8 @@ export class PrintRenderer extends PaperRenderer {
   constructor(canvas, papers, limit = 8) {
     super(canvas, papers, limit, PRINT_FRAGMENT);
     const gl = this.gl; this.profile = -2; this.impression = null; this.proofView = 0; this.responses = new Map();
+    this.imageSize = [96,120]; this.imageGamma = 1.2;
+    this.imageUniforms = { size:gl.getUniformLocation(this.program,'uImageSize'), gamma:gl.getUniformLocation(this.program,'uImageGamma') };
     this.proofUniforms = {};
     for (const name of ['On','View','Ink','Grain','Seed','Rare']) this.proofUniforms[name] = gl.getUniformLocation(this.program, `uProof${name}`);
     gl.uniform1i(gl.getUniformLocation(this.program,'uResponse'),3);
@@ -54,7 +56,9 @@ export class PrintRenderer extends PaperRenderer {
       this.lastIndex = index; if (options.frame !== undefined) this.lastFrame = options.frame;
     }
     const gl = this.gl, u = this.proofUniforms, profile = this.impression.profile >= 0 ? this.impression : null;
-    gl.useProgram(this.program); gl.uniform1i(u.On,profile ? 1 : 0); gl.uniform1i(u.View,this.proofView);
+    gl.useProgram(this.program);
+    gl.uniform2fv(this.imageUniforms.size,this.imageSize); gl.uniform1f(this.imageUniforms.gamma,this.imageGamma);
+    gl.uniform1i(u.On,profile ? 1 : 0); gl.uniform1i(u.View,this.proofView);
     if (profile) {
       gl.uniform4fv(u.Ink,profile.ink); gl.uniform1f(u.Grain,profile.grain);
       gl.uniform1f(u.Seed,profile.seed);

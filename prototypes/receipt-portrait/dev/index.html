@@ -29,6 +29,13 @@
       <label>Background <select id="background"><option value="table">Tabletop</option><option value="dark">Dark</option><option value="checker">Checkerboard</option></select></label>
       <label>Surface <select id="surface"><option value="0">Paper and ink</option><option value="1">Silhouette</option><option value="2">Surface normals</option></select></label>
     </section>
+    <fieldset class="print-tuning"><legend>Print image</legend>
+      <label for="print-resolution">Print resolution <output id="print-resolution-value" for="print-resolution">96 × 120</output></label>
+      <input id="print-resolution" type="range" min="48" max="288" step="8" value="96">
+      <label for="image-gamma">Image gamma <output id="image-gamma-value" for="image-gamma">1.20</output></label>
+      <input id="image-gamma" type="range" min="0.5" max="2.5" step="0.05" value="1.2">
+      <p>Live on the eight print conditions, including the held image and camera. Resolution changes the halftone, not the paper or ink texture. Higher gamma brightens the source image before printing.</p>
+    </fieldset>
     <section id="print-proof" aria-label="Experimental print comparison"></section>
     <nav class="gallery-nav" aria-label="Receipt gallery pages"><button id="gallery-previous">Previous 20</button><span id="gallery-range">1–20 of 100</span><button id="gallery-next">Next 20</button></nav>
     <section id="receipts" aria-label="Compare the receipts"></section>

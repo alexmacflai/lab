@@ -21,6 +21,20 @@ function select(index) {
   if (gallery.page !== page) gallery.show(page, player.index);
 }
 
+function bindImageControls() {
+  const refresh = () => {
+    const width = Number($('#print-resolution').value), gamma = Number($('#image-gamma').value);
+    const size = [width,Math.round(width*1.25)];
+    $('#print-resolution-value').textContent = `${size[0]} × ${size[1]}`;
+    $('#image-gamma-value').textContent = gamma.toFixed(2);
+    for (const renderer of [player.renderer,proof.renderer]) {
+      renderer.imageSize = size; renderer.imageGamma = gamma;
+    }
+    player.draw(true); proof.rebuild();
+  };
+  for (const id of ['print-resolution','image-gamma']) $(`#${id}`).addEventListener('input',refresh);
+}
+
 function bindControls() {
   $('#previous').addEventListener('click', () => select(player.index - 1));
   $('#next').addEventListener('click', () => select(player.index + 1));
@@ -68,7 +82,7 @@ async function initialise() {
     gallery = new ReceiptGallery(player.papers, player.sample, select); gallery.show(Math.floor(player.index / gallery.size), player.index);
     player.attachCamera($('#start'), $('#status'), $('#subject-status'));
     $('#start').disabled = false; $('#start').textContent = 'Start camera'; bindControls();
-    proof = new PrintProof(player);
+    proof = new PrintProof(player); bindImageControls();
   } catch (error) {
     $('#start').textContent = 'Preview unavailable';
     $('#status').textContent = 'The proof could not load. It needs WebGL 2 and its image assets. Refresh to try again.';

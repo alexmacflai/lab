@@ -9,6 +9,9 @@ uniform float uProofGrain;
 uniform float uProofSeed;
 uniform float uProofRare;
 uniform sampler2D uResponse;
+uniform bool uContinuousTone;
+uniform vec2 uImageSize;
+uniform float uImageGamma;
 float proofRadius;
 float proofMask;
 float proofWet;
@@ -27,13 +30,13 @@ float proofNoise(vec2 p) {
 }
 float printerThreshold(vec2 uv,float fine) {
   const float bayer[16]=float[16](0.,8.,2.,10.,12.,4.,14.,6.,3.,11.,1.,9.,15.,7.,13.,5.);
-  ivec2 pixel=ivec2(floor(uv*vec2(144.,180.)));
+  ivec2 pixel=ivec2(floor(uv*uImageSize));
   float ordered=(bayer[(pixel.y%4)*4+pixel.x%4]+.5)/16.;
   // Keep the cheap printer's ordered dots; only a little finer deposit variation.
   return clamp(ordered+(fine-.5)*.28,.015,.985);
 }
 ${TRANSFER}
-uniform bool uContinuousTone;
+
 vec2 proofPaper(vec2 uv) {
   float c=cos(uPrintPose.z),s=sin(uPrintPose.z);
   vec2 p=mat2(c,s,-s,c)*((uv-.5)*vec2(.94,1.175))+uPrintPose.xy;
@@ -45,10 +48,11 @@ float proofSource(vec2 uv) {
   vec3 response=texture(uResponse,(paperUV*vec2(64.,144.)+.5)/vec2(65.,145.)).rgb;
   float weak=uProofInk.y>0. ? proofBlotch(mm) : 0.;
   float loss=weak*uProofInk.y*(1.-proofWet*.8);
-  float contact=1.-response.b*uProofInk.z*.96;
-  vec2 sourceUV=uContinuousTone ? (floor(uv*vec2(144.,180.))+.5)/vec2(144.,180.) : uv;
+  float contact=1.-response.b*uProofInk.z*.36;
+  vec2 sourceUV=uContinuousTone ? (floor(uv*uImageSize)+.5)/uImageSize : uv;
   vec4 source=texture(uPrint,sourceUV);
   float tone=source.a*(1.-dot(source.rgb,vec3(.299,.587,.114)));
+  if(uContinuousTone) tone=1.-pow(max(0.,1.-tone),1./uImageGamma);
   if(uProofRare>.5) tone=1.-pow(1.-tone,1.+proofWet*.9);
   if(!uContinuousTone) return tone*(1.-loss)*contact;
   vec2 cell=floor(uv*vec2(600.,750.));
