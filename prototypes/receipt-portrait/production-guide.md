@@ -108,7 +108,7 @@ The renderer draws ink only as part of the paper mesh. Never draw the portrait a
 
 Shadow uses sixteen projections of the displaced mesh across a broad light. Softness and displacement grow with local paper height. Surface shading uses the same fold normals. This approximates an area-light cast shadow; it is not ray tracing and does not model fold-to-fold self-shadowing, paper thickness, translucency or fibre-scale geometry. They remain possible later refinements.
 
-Default paper placement varies by at most 0.009 paper widths horizontally, 0.011 vertically and about 0.52 degrees. Print registration varies by at most 0.011 widths horizontally, 0.014 vertically and about 0.63 degrees. This gives the print slightly more independent movement than the paper. Inspect still frames before increasing these values: movement should suggest careful placement, not shaking.
+Default paper placement varies by at most 0.0095625 paper widths horizontally, 0.0116875 vertically and about 0.55 degrees. Print registration varies by at most 0.01375 widths horizontally, 0.0175 vertically and about 0.79 degrees. Receipt translation and rotation are 85% of the previous 1.25× setting, or 1.0625× the original ranges. Independent print registration is also 1.25× its original range. Inspect still frames before increasing these values: movement should suggest careful placement, not shaking.
 
 ## Acceptance when changing the collection
 
@@ -125,7 +125,7 @@ Use automated checks for catalogue size, unique IDs and physical profiles, trans
 
 ## Public and development views
 
-`index.html` is the public experience: the receipt and camera controls. Phones use a settings drawer; at widths of at least 700 px and heights of at least 480 px, smaller controls show both toggles inline. The desktop Start camera button has a dark fill; Stop camera uses the quieter active-camera style. `dev/index.html` keeps the gallery, surface/background selectors, sample switch, proof playback and debug panel. Its base URL points to the prototype root so assets stay local to this piece. The lab index lists only the public view.
+`index.html` is the public experience: the receipt and camera controls. Phones use a settings drawer; at widths of at least 700 px and heights of at least 480 px, smaller controls show both toggles inline. On both mobile and desktop, Start camera has a dark fill. The button transitions to an outline as soon as camera start is requested and returns to a fill on stop, cancellation or failure. `dev/index.html` keeps the gallery, surface/background selectors, sample switch, proof playback and debug panel. Its base URL points to the prototype root so assets stay local to this piece. The lab index lists only the public view.
 
 `player.js` owns the shared receipt state, rendering, camera processing and timestamp buffer. Both views use the same startup, capture and playback loop. Public auto-framing starts on; background removal starts off. Download person detection only when an active camera needs it. Hold the current print and paper until the first buffered frame is ready; stop playback when the camera stops. Rebuffer after changing subject options.
 

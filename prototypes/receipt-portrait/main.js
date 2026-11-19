@@ -35,6 +35,7 @@ async function initialise() {
       error: message => { start.disabled = true; showError(message); },
     }, true);
     await player.load(); player.attachCamera(start, status, $('#subject-status'));
+    start.addEventListener('click', () => { start.dataset.active = String(player.active || player.camera.pending); });
     player.configureSubject(enabled('subject-mask'), enabled('auto-frame'));
     start.disabled = false; start.textContent = 'Start camera'; status.textContent = 'Camera off.';
     new MutationObserver(() => {

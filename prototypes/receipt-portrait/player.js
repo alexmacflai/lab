@@ -84,8 +84,8 @@ export class ReceiptPlayer {
     if (!this.renderer) return;
     const amount = still || !this.loop ? 0 : this.settings.jitter;
     this.renderer.draw(this.index, this.printed || this.hold || (this.sampleOn ? this.sample : null), {
-      pose: [random(.018) * amount, random(.022) * amount, random(.018) * amount],
-      printPose: [random(.022) * amount, random(.028) * amount, random(.022) * amount],
+      pose: [random(.019125) * amount, random(.023375) * amount, random(.019125) * amount],
+      printPose: [random(.0275) * amount, random(.035) * amount, random(.0275) * amount],
       zoom: this.zoom, inspect: this.inspect, fit: this.fit,
     });
     this.hooks.draw?.(this);
