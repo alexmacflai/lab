@@ -81,6 +81,8 @@ export class PaperRenderer {
     return image;
   }
 
+  prepare(index) { this.surface(index); this.paperTexture(index); }
+
   resize(fill = false) {
     const bounds = this.canvas.getBoundingClientRect();
     const scale = Math.min(bounds.width / 840, bounds.height / 1040);

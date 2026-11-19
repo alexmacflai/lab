@@ -1,6 +1,6 @@
 import { ReceiptPlayer } from './player.js';
 import { ReceiptGallery } from './gallery.js';
-import { PrintRenderer, loadPrintMaterial } from './print-material/renderer.js';
+import { PrintRenderer } from './print-material/renderer.js';
 import { PrintProof } from './dev/print-proof/panel.js';
 
 const $ = selector => document.querySelector(selector);
@@ -25,6 +25,10 @@ function bindControls() {
   $('#previous').addEventListener('click', () => select(player.index - 1));
   $('#next').addEventListener('click', () => select(player.index + 1));
   $('#play').addEventListener('click', () => player.toggleProof());
+  $('#back-camera').addEventListener('change', async () => {
+    await player.camera.setFacing($('#back-camera').checked ? 'environment' : 'user');
+    $('#back-camera').checked = player.camera.facing === 'environment';
+  });
   for (const id of ['subject-mask', 'auto-frame']) $(`#${id}`).addEventListener('change', () => {
     player.configureSubject($('#subject-mask').checked, $('#auto-frame').checked);
   });
@@ -49,9 +53,11 @@ function bindControls() {
 
 async function initialise() {
   try {
-    await loadPrintMaterial();
     player = new ReceiptPlayer($('#portrait'), { draw: update, Renderer: PrintRenderer,
-      camera: active => { $('#sample').disabled = active; if (active) $('#sample').checked = false; },
+      camera: active => {
+        $('#sample').disabled = active; if (active) $('#sample').checked = false;
+        $('#back-camera').checked = player.camera?.facing === 'environment';
+      },
       subjectError: message => {
         $('#subject-mask').checked = false; $('#auto-frame').checked = false;
         $('#subject-status').textContent = message;
@@ -59,7 +65,7 @@ async function initialise() {
       error: message => { $('#start').disabled = true; $('#status').textContent = message; },
     });
     await player.load();
-    gallery = new ReceiptGallery(player.papers, player.sample, select); gallery.show(0, 0);
+    gallery = new ReceiptGallery(player.papers, player.sample, select); gallery.show(Math.floor(player.index / gallery.size), player.index);
     player.attachCamera($('#start'), $('#status'), $('#subject-status'));
     $('#start').disabled = false; $('#start').textContent = 'Start camera'; bindControls();
     proof = new PrintProof(player);

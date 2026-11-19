@@ -50,3 +50,6 @@ h1 { font-size: 16px; font-weight: 600; margin: 0; }
   .inline-options .switch-track::after { width: 16px; height: 16px; }
   .inline-options [aria-checked="true"] { --thumb-x: 14px; }
 }
+
+.mobile-camera-option { display: none; }
+@media (max-width: 699px), (max-height: 479px) { .mobile-camera-option { display: flex; } }

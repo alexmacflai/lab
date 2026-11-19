@@ -6,7 +6,7 @@ capture.height = HEIGHT;
 const context = capture.getContext('2d', { willReadFrequently: true });
 const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
-export function capturePrint(video, sequence, crop = null) {
+export function capturePrint(video, sequence, crop = null, mirrored = true) {
   const aspect = WIDTH / HEIGHT;
   let width = (video.videoWidth || video.width);
   let height = width / aspect;
@@ -21,8 +21,7 @@ export function capturePrint(video, sequence, crop = null) {
     (crop?.y ?? .5) * (video.videoHeight || video.height) - height / 2));
   context.clearRect(0, 0, WIDTH, HEIGHT);
   context.save();
-  context.translate(WIDTH, 0);
-  context.scale(-1, 1);
+  if (mirrored) { context.translate(WIDTH, 0); context.scale(-1, 1); }
   context.drawImage(video, left, top, width, height, 0, 0, WIDTH, HEIGHT);
   context.restore();
   const pixels = context.getImageData(0, 0, WIDTH, HEIGHT);

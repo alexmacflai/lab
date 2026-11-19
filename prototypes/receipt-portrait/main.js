@@ -1,5 +1,5 @@
 import { ReceiptPlayer } from './player.js';
-import { PrintRenderer, loadPrintMaterial } from './print-material/renderer.js';
+import { PrintRenderer } from './print-material/renderer.js';
 import { bindCameraControls } from './camera-controls.js';
 
 const $ = selector => document.querySelector(selector);
@@ -23,14 +23,23 @@ async function hideError() {
   if (token === noticeToken) { notice.hidden = true; noticeAnimation.cancel(); }
 }
 
+async function configureControl(id) {
+  if (id !== 'back-camera') return player?.configureSubject(enabled('subject-mask'), enabled('auto-frame'));
+  if (!player?.camera) return;
+  await player.camera.setFacing(enabled(id) ? 'environment' : 'user');
+  $('#back-camera').setAttribute('aria-checked', String(player.camera.facing === 'environment'));
+}
+
 async function initialise() {
-  bindCameraControls(() => player?.configureSubject(enabled('subject-mask'), enabled('auto-frame')));
+  bindCameraControls(configureControl);
   try {
-    await loadPrintMaterial();
     player = new ReceiptPlayer($('#portrait'), {
       Renderer: PrintRenderer,
       draw: p => { start.setAttribute('aria-busy', String(p.active && !p.printed)); },
-      camera: active => { start.dataset.active = String(active); if (active) hideError(); },
+      camera: active => {
+        start.dataset.active = String(active); if (active) hideError();
+        $('#back-camera').setAttribute('aria-checked', String(player.camera?.facing === 'environment'));
+      },
       subjectError: message => {
         $('#auto-frame').setAttribute('aria-checked', 'false'); $('#subject-mask').setAttribute('aria-checked', 'false');
         showError(message);
@@ -38,6 +47,7 @@ async function initialise() {
       error: message => { start.disabled = true; showError(message); },
     }, true);
     await player.load(); player.attachCamera(start, status, $('#subject-status'));
+    player.camera.setFacing(enabled('back-camera') ? 'environment' : 'user');
     start.addEventListener('click', () => { start.dataset.active = String(player.active || player.camera.pending); });
     player.configureSubject(enabled('subject-mask'), enabled('auto-frame'));
     start.disabled = false; start.textContent = 'Start camera'; status.textContent = 'Camera off.';

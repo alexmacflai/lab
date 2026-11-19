@@ -3,17 +3,31 @@ import { PrintRenderer } from '../../print-material/renderer.js';
 
 export class PrintProof {
   constructor(player) {
-    this.player = player; this.index = 1; this.generation = 0; this.cycling = false;
+    this.player = player; this.index = player.index; this.generation = 0; this.cycling = false;
     this.root = document.querySelector('#print-proof');
     this.root.innerHTML = `<h2>Eight print conditions</h2>
       <p>Dev only. Random each frame varies the condition and ink details in the main preview. Choose a named condition to isolate it. Cards hold still for comparison.</p>
       <div class="proof-controls"><label>Main print <select id="proof-profile"><option value="-2">Random each frame</option><option value="-1">Current print</option>${PROFILES.map((p,i)=>`<option value="${i}">${p.name}</option>`).join('')}</select></label>
-      <label>Print view <select id="proof-view"><option value="0">Paper and ink</option><option value="1">Ink coverage</option><option value="2">Bleed radius</option><option value="3">Print-time contact</option></select></label>
+      <label>Print view <select id="proof-view"><option value="0">Paper and ink</option><option value="1">Ink coverage</option><option value="2">Bleed radius</option><option value="3">Print-time contact</option><option value="4">Transfer mask</option></select></label>
       <label><input id="proof-detail" type="checkbox" checked> Detail crops</label><button id="proof-cycle">Randomise prints</button></div>
       <p id="proof-live"></p><p id="proof-source"></p><div id="proof-cards"></div>`;
     const canvas = document.createElement('canvas'); canvas.width = 672; canvas.height = 832;
     this.renderer = new PrintRenderer(canvas,player.papers,2); this.cardImpressions = new Map();
+    this.resizeCards();
+    const resize = () => { if (this.resizeCards()) this.rebuild(); };
+    this.resizeObserver = new ResizeObserver(resize); this.resizeObserver.observe(document.querySelector('#proof-cards'));
+    window.addEventListener('resize', resize);
     this.bind(); player.select(this.index); this.rebuild();
+  }
+
+  resizeCards() {
+    const grid = document.querySelector('#proof-cards'), style = getComputedStyle(grid);
+    const columns = style.gridTemplateColumns.split(' ').length;
+    const cell = (grid.clientWidth - parseFloat(style.columnGap) * (columns - 1)) / columns;
+    const width = Math.max(672, Math.ceil(cell * Math.min(devicePixelRatio || 1, 3)));
+    if (this.renderer.canvas.width === width) return false;
+    this.renderer.canvas.width = width; this.renderer.canvas.height = Math.round(width * 832 / 672);
+    return true;
   }
 
   bind() {

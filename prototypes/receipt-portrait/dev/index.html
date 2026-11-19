@@ -19,6 +19,7 @@
     <fieldset class="camera-options"><legend>Camera print</legend>
       <label><input id="auto-frame" type="checkbox"> Keep me in frame</label>
       <label><input id="subject-mask" type="checkbox"> Remove background</label>
+      <label class="mobile-camera-option"><input id="back-camera" type="checkbox"> Back camera</label>
       <p id="subject-status" role="status">For people. Detection downloads on first use; camera images stay on your device. Supported Apple devices also offer Center Stage in the system camera controls.</p>
     </fieldset>
     <section class="inspection" aria-label="Proof controls">
@@ -31,9 +32,9 @@
     <section id="print-proof" aria-label="Experimental print comparison"></section>
     <nav class="gallery-nav" aria-label="Receipt gallery pages"><button id="gallery-previous">Previous 20</button><span id="gallery-range">1–20 of 100</span><button id="gallery-next">Next 20</button></nav>
     <section id="receipts" aria-label="Compare the receipts"></section>
-    <p class="proof-note"><a href="./">Public view</a> · 100 authored receipts. Select one to hold it still, or play them at 12 frames per second. <a href="production-guide.md">Production guide</a></p>
+    <p class="proof-note"><a href="./">Public view</a> · 100 authored receipts. Select one to hold it still, or play them at up to 12 frames per second. <a href="production-guide.md">Production guide</a></p>
   </main>
-  <footer><span>100 PIECES OF PAPER</span><span>12 FRAMES / SECOND · ½ SECOND LATE</span></footer>
+  <footer><span>100 PIECES OF PAPER</span><span>UP TO 12 FRAMES / SECOND · ½ SECOND LATE</span></footer>
   <aside id="debug" hidden><strong>PRINT DESK · D TO CLOSE</strong><label>Frames / second <input id="fps" type="range" min="4" max="18" value="12"></label><label>Delay / ms <input id="delay" type="range" min="0" max="1500" step="50" value="500"></label><label>Hand placement <input id="jitter" type="range" min="0" max="2" step="0.1" value="1"></label><pre id="values"></pre></aside>
   <script type="module" src="dev.js"></script>
 </body>
