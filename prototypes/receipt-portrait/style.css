@@ -41,7 +41,7 @@ h1 { font-size: 16px; font-weight: 600; margin: 0; }
 @media (min-width: 700px) and (min-height: 480px) {
   :root { --bar-height: 80px; }
   .camera-bar { padding: 16px 24px calc(20px + env(safe-area-inset-bottom)); }
-  .camera-actions { width: min(660px, 100%); gap: 8px; align-items: center; justify-content: center; }
+  .camera-actions { width: min(760px, 100%); gap: 8px; align-items: center; justify-content: center; }
   .camera-button { flex: 0 0 144px; min-height: 44px; border-radius: 12px; font-size: 13px; }
   #open-settings { display: none; }
   .inline-options { display: flex; gap: 24px; align-items: center; }
@@ -71,4 +71,6 @@ body[data-loading="false"] .page-spinner { animation: none; }
 .paper-choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; border-top: 1px solid #18181819; font-size: 15px; }
 .paper-choice select { font: inherit; color: inherit; background: #fff5; border: 1px solid #18181825; border-radius: 8px; padding: 8px; max-width: 72%; transition: background .18s,border-color .18s; }
 .paper-choice select:focus-visible { outline: 2px solid #181818; outline-offset: 3px; }
-@media(min-width:700px) and (min-height:480px) { .inline-options { gap: 16px; } .inline-options .paper-choice { min-height: 44px; border: 0; gap: 6px; font-size: 13px; } .inline-options .paper-choice select { max-width: 95px; padding: 6px; } }
+@media(min-width:700px) and (min-height:480px) { .inline-options { gap: 16px; } .inline-options .paper-choice { min-height: 44px; border: 0; gap: 6px; font-size: 13px; } .inline-options .paper-choice select { max-width: 132px; padding: 6px; } }
+
+@media (min-width:700px) and (max-width:780px) and (min-height:480px) { .inline-options { gap: 6px; } }

@@ -6,9 +6,12 @@ import { PrintProof } from './dev/print-proof/panel.js';
 import { SurfaceProof } from './dev/surface-proof/panel.js';
 import { paperType, fillPaperSelector } from './paper-types.js';
 import { bindDisclosures } from './dev/disclosures.js';
+import { libraryMaterial } from './library-cards/material.js';
+import { libraryComparison } from './dev/library-material.js';
 
 const $ = selector => document.querySelector(selector);
 let player, gallery, proof, surfaces, tuning;
+let libraryBase;
 
 function update(p) {
   $('#counter').textContent = `${String(p.index + 1).padStart(3, '0')} / ${p.papers.length}`;
@@ -26,20 +29,33 @@ function select(index) {
   if (gallery.page !== page) gallery.show(page, player.index);
 }
 
-async function changeCollection() {
+async function changeCollection(materialOnly = false) {
   const selector = $('#dev-paper-type'), type = paperType(selector.value); selector.disabled = true;
+  const heldIndex = player.index, heldLoop = player.loop, impression = player.renderer.impression;
+  $('#card-material').disabled = true;
   for (const id of ['previous','next','play']) $(`#${id}`).disabled = true;
   for (const id of ['receipts','ink-panel','surface-proof']) $(`#${id}`).inert = true;
   $('#collection-status').textContent = `Loading ${type.count} ${type.label.toLowerCase()}…`;
   gallery?.dispose(); proof?.dispose(); surfaces?.dispose(); gallery = proof = surfaces = null;
   try {
-    await player.changePaper(type.load); rebuildInspection(type);
+    await player.changePaper(async () => {
+      const papers = materialOnly ? libraryBase : await type.load();
+      libraryBase = type.id === 'library-cards' ? papers.map(p => p.originalMaterial || p) : null;
+      return libraryBase ? $('#card-material').value === 'approved' ? libraryBase.map(libraryMaterial) : libraryBase : papers;
+    });
+    if (materialOnly) {
+      player.index = heldIndex; player.loop = heldLoop;
+      Object.assign(player.renderer, { impression, appliedProfile: player.renderer.profile, lastIndex: heldIndex });
+      player.draw(true);
+    }
+    rebuildInspection(type);
     $('#collection-status').textContent = `${type.count} ${type.label.toLowerCase()}${type.public ? '' : ' · review batch'}`;
   } catch (error) {
     selector.value = player.papers[0].paperType || 'receipts'; rebuildInspection(paperType(selector.value));
     $('#collection-status').textContent = 'The paper could not load. Try again.'; console.error(error);
   } finally {
     selector.disabled = false;
+    $('#card-material').disabled = false;
     for (const id of ['previous','next','play']) $(`#${id}`).disabled = false;
     for (const id of ['receipts','ink-panel','surface-proof']) $(`#${id}`).inert = false;
   }
@@ -47,8 +63,10 @@ async function changeCollection() {
 
 function rebuildInspection(type) {
   gallery = new ReceiptGallery(player.papers, type.id === 'library-cards' ? null : player.sample, select); gallery.show(Math.floor(player.index / gallery.size), player.index);
-  $('#surface-proof').hidden = type.id !== 'receipts';
-  if (type.id === 'receipts') surfaces = new SurfaceProof(player);
+  $('#card-material-control').hidden = type.id !== 'library-cards';
+  $('#surface-proof').hidden = false;
+  surfaces = new SurfaceProof(player, type.id === 'library-cards' ? libraryComparison(libraryBase) : null);
+  if (surfaces.root.open) surfaces.rebuild();
   $('#print-proof').replaceChildren();
   if ($('#ink-panel').open) createProof();
   update(player);
@@ -62,7 +80,8 @@ function createProof() {
 function bindControls() {
   bindDisclosures();
   fillPaperSelector($('#dev-paper-type'), true);
-  $('#dev-paper-type').addEventListener('change', changeCollection);
+  $('#dev-paper-type').addEventListener('change', () => changeCollection());
+  $('#card-material').addEventListener('change', () => changeCollection(true));
   $('#ink-panel').addEventListener('toggle', () => { if ($('#ink-panel').open && !proof) { createProof(); } });
   $('#previous').addEventListener('click', () => select(player.index - 1));
   $('#next').addEventListener('click', () => select(player.index + 1));

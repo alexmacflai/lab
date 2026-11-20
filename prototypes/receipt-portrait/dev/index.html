@@ -25,6 +25,7 @@
         <label><input id="zoom" type="checkbox"> Close-up</label>
         <label>Background <select id="background"><option value="table">Tabletop</option><option value="dark">Dark</option><option value="checker">Checkerboard</option></select></label>
         <label>Surface <select id="surface"><option value="0">Paper and ink</option><option value="1">Silhouette</option><option value="2">Surface normals</option></select></label>
+        <label id="card-material-control" hidden>Card material <select id="card-material"><option value="approved">Approved · subtle wear and bends</option><option value="original">Original</option></select></label>
       </section></details>
       <details><summary>Camera</summary><div class="camera-options">
         <label><input id="auto-frame" type="checkbox"> Keep me in frame</label>
@@ -66,7 +67,7 @@
     <details open><summary>Collection</summary><nav class="gallery-nav" aria-label="Collection pages"><button id="gallery-previous">Previous 20</button><span id="gallery-range">1–20 of 100</span><button id="gallery-next">Next 20</button></nav><section id="receipts" aria-label="Paper collection"></section></details>
     <details id="ink-panel"><summary>Print conditions</summary><section id="print-proof" aria-label="Print comparison"></section></details>
     <details id="surface-proof"></details>
-    <p class="proof-note">Select a paper to hold it still. Arrow keys step through the collection; D opens timing controls. <a href="production-guide.md">Receipt guide</a> · <a href="library-cards/production-guide.md">Library card guide</a></p>
+    <p class="proof-note">Select a paper to hold it still. Arrow keys step through the collection; D opens timing controls. <a href="production-guide.md">Receipt guide</a> · <a href="library-cards/production-guide.md">Library card guide</a> · <a href="dev/compression/">Compression review</a></p>
   </section>
   <script type="module" src="dev.js"></script>
 </body>

@@ -26,8 +26,8 @@ export const SETTINGS = {
         },
         "values": {
           "resolution": 96,
-          "gamma": 1,
-          "brightness": 0.5,
+          "gamma": 0.9,
+          "brightness": 0.65,
           "aspect": 0.75,
           "size": 0.6
         }

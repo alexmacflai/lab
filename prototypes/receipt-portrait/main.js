@@ -2,6 +2,7 @@ import { ReceiptPlayer } from './player.js';
 import { PrintRenderer } from './print-material/renderer.js';
 import { bindCameraControls } from './camera-controls.js';
 import { fillPaperSelector, paperType } from './paper-types.js';
+import { configurePaperPrint } from './paper-print-settings.js';
 
 const $ = selector => document.querySelector(selector);
 const start = $('#start'), status = $('#status');
@@ -28,7 +29,11 @@ async function configureControl(id) {
   if (id === 'paper-type') {
     const type = paperType($('#paper-type').value);
     if (!type.public) { $('#paper-type').value = 'receipts'; return; }
-    try { await player.changePaper(type.load); } catch { showError('The paper could not load. Try again.'); }
+    const selector = $('#paper-type'), previous = player.papers[0].paperType || 'receipts';
+    selector.disabled = true;
+    try { await player.changePaper(type.load); }
+    catch { selector.value = previous; showError('The paper could not load. Try again.'); }
+    finally { selector.disabled = false; }
     return;
   }
   if (id !== 'back-camera') return player?.configureSubject(enabled('subject-mask'), enabled('auto-frame'));
@@ -47,7 +52,7 @@ async function initialise() {
   fillPaperSelector($('#paper-type')); bindCameraControls(configureControl);
   try {
     player = new ReceiptPlayer($('#portrait'), {
-      Renderer: PrintRenderer,
+      Renderer: PrintRenderer, configure: configurePaperPrint,
       draw: p => { start.setAttribute('aria-busy', String(p.active && !p.printed)); },
       camera: active => {
         start.dataset.active = String(active); if (active) hideError();
