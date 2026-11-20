@@ -21,7 +21,7 @@ A collection of 100 authored receipts across 24 design families, including the o
 
 ## Development view
 
-Open [the development page](dev/) for inspection controls and the eight-condition print comparison. It shares the public page's `player.js`, renderer, camera processing and receipt assets; both pages use one collection.
+Open [the development page](dev/) for a sticky viewer, grouped controls, collection selection and the eight-condition print comparison. It shares the public page's `player.js`, renderer, camera processing and receipt assets; both pages use one collection.
 
 - Select a thumbnail, use the arrow buttons or press Left/Right to hold a receipt. **Previous 20** and **Next 20** browse all five gallery pages.
 - **Play proof** cycles receipts without the camera; **Pause proof** holds one. Proof playback cannot skip the initial camera-buffer wait.
@@ -31,8 +31,16 @@ Open [the development page](dev/) for inspection controls and the eight-conditio
 - **Hold heavy bleed** stops the camera and receipt, selects rare heavy bleed and enables close-up. Press it again for a fresh impression. The frame label shows its seed alongside the condition, so you can identify the example when sharing feedback.
 - **Eight print conditions** compares clean printing, ordinary printing, weak transfer, moderate bleed, local heavy bleed, weak transfer with bleed, fold-related transfer and ridge smear. Cards use one receipt and the same photograph. Select a card or **Main print** to try it in the main preview, including with the camera. **Current print** restores the earlier fixed treatment for comparison.
 - **Detail crops** changes the comparison cards only. **Print view** shows ink coverage, bleed radius, print-time contact or the transfer mask itself. Cards render at the screen’s pixel density, up to 3×. **Random each frame** independently chooses a condition for each new animation frame, with clean prints most common and heavy bleed rare. Texture position, orientation, grain and strength also vary. The coverage material uses a fixed 0.5× physical scale. **Randomise prints** previews fresh impressions on one held receipt at the selected frame rate; a named condition keeps that condition while randomising its details. Pause to hold one impression. Camera use stops this held-receipt preview; new camera frames still receive fresh impressions. Receipt thumbnails retain the existing print treatment.
-- Press **D** for frame rate, delay and hand-placement controls, plus live condition, fold, mark and buffer values. Settings reset on reload.
+- Open **Timing and movement**, or press **D**, for frame rate, delay and hand-placement controls, plus live condition, fold, mark and buffer values. Settings reset on reload.
 
 See the [production guide](production-guide.md) for material provenance, physical dimensions, rendering limits and verification criteria.
 
 The expandable **Surface comparisons** section starts with Small Hours before and after the edge fix, holding folds, lighting and the ink impression constant. Cut-edge deformation is confined to the perimeter in the public and dev renderers. Further pairs compare **Previous crease** and **Sharper crease** on Noodle House, tidy, folded and crumpled surfaces, keeping the height and highlight shader the same. Switch to **Grid and solid ink** to inspect bending and crease highlights, or **Surface normals** to inspect geometry. The sharper crease mapping and highlights are also used in the public view. The comparison includes all three neat-fold patterns.
+
+## Library card review
+
+Dev includes a separate batch of **20 library borrowing cards**, selected under **Paper**. Each has an individually generated face based on book circulation forms, with author/title fields, ruled loan records, date stamps and handwriting. Their 3 × 5 inch proportions, rounded corners and restrained stiff-card bends differ from receipts. The collection thumbnails show the unprinted records; the viewer supports the same camera, sample print and inspection controls. Turn off **Sample print** to inspect a full card face.
+
+The public options include a **Paper** selector, with receipts enabled and library cards marked **in review** and disabled. Card assets load only when selected in dev. This is a review batch, not a promotion of the new collection. See the [library card production guide](library-cards/production-guide.md) for research, asset provenance and review criteria.
+
+On desktop, the viewer stays to the left of the grouped controls; on smaller screens they stack. Collection thumbnails and expandable comparisons sit below. Control sections animate open and closed, respecting reduced-motion preferences. Changing paper keeps the camera stream and print settings, and releases old collection renderers.

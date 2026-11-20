@@ -50,6 +50,11 @@ export class PrintRenderer extends PaperRenderer {
 
   reroll() { this.impression = null; }
 
+  dispose(releaseContext = false) {
+    for (const texture of this.responses.values()) this.gl.deleteTexture(texture);
+    this.gl.deleteTexture(this.neutralResponse); this.gl.deleteTexture(this.film); super.dispose(releaseContext);
+  }
+
   draw(index, printed, options = {}) {
     if (!this.impression || this.appliedProfile !== this.profile || this.lastIndex !== index
       || (options.frame !== undefined && options.frame !== this.lastFrame)) {

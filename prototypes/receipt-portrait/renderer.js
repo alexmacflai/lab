@@ -97,7 +97,7 @@ export class PaperRenderer {
     gl.viewport(0, 0, this.canvas.width, this.canvas.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(this.program); gl.bindVertexArray(surface.vao);
     const aspect = options.fit ? this.canvas.width / this.canvas.height : 840 / 1040;
-    const viewHeight = options.zoom ? 1.48 : options.fit ? Math.max(this.fitHeight || 2.48, 1.16 / aspect) : 2.75;
+    const viewHeight = options.zoom ? 1.48 : options.fit ? Math.max(this.papers[index].viewHeight || this.fitHeight || 2.48, 1.16 / aspect) : 2.75;
     gl.uniform2f(u.View, viewHeight * aspect, viewHeight);
     gl.uniform3fv(u.Pose, options.pose || [0, 0, 0]);
     gl.uniform3fv(u.PrintPose, options.printPose || [0, 0, 0]);
@@ -129,5 +129,13 @@ export class PaperRenderer {
       gl.uniform3f(u.Light, -.65 + Math.cos(angle) * radius, .8 + Math.sin(angle) * radius, 1.5);
       gl.drawElements(gl.TRIANGLES, surface.count, gl.UNSIGNED_SHORT, 0);
     }
+  }
+
+  dispose(releaseContext = false) {
+    const gl = this.gl;
+    for (const texture of this.textures.values()) gl.deleteTexture(texture);
+    for (const surface of this.surfaces.values()) { gl.deleteVertexArray(surface.vao); gl.deleteBuffer(surface.buffer); }
+    gl.deleteTexture(this.print); gl.deleteBuffer(this.indices); gl.deleteProgram(this.program);
+    if (releaseContext) gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
 }

@@ -56,6 +56,7 @@ function edgeAt(t, side, receipt) {
   const seed = receipt.seed + side * 31;
   const ragged = Math.sin(t * 437 + seed) * Math.sin(t * 179 + seed * 2);
   const fine = .0008 * ragged;
+  if (receipt.edge === 'card') return fine * .12;
   if (side < 2) return fine + .001 * Math.sin(t * 23 + seed);
   if (receipt.edge === 'serrated') return .003 * Math.abs(Math.sin(t * 180)) + fine;
   if (receipt.edge === 'torn') return .005 * Math.sin(t * 29 + seed) + fine * 2;
@@ -83,8 +84,10 @@ function surfaceAt(u, v, receipt) {
   // Keep it only for the explicitly labelled dev regression comparison.
   const edges = receipt.legacyEdgeSpread ? [1 - u, u, 1 - v, v]
     : [edgeWeight(u), edgeWeight(1 - u), edgeWeight(v * receipt.ratio), edgeWeight((1 - v) * receipt.ratio)];
+  const radius = receipt.cornerRadius || 0, end = Math.min(v, 1 - v) * receipt.ratio;
+  const corner = end < radius ? radius - Math.sqrt(Math.max(0, radius * radius - (radius - end) ** 2)) : 0;
   return [
-    u - .5 + dx + edges[0] * edgeAt(v, 0, receipt) + edges[1] * edgeAt(v, 1, receipt),
+    (u - .5) * (1 - corner * 2) + dx + edges[0] * edgeAt(v, 0, receipt) + edges[1] * edgeAt(v, 1, receipt),
     (.5 - v) * receipt.ratio + dy + edges[2] * edgeAt(u, 2, receipt) + edges[3] * edgeAt(u, 3, receipt),
     heightAt(u, v, receipt),
   ];
