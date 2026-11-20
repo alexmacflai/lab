@@ -1,0 +1,92 @@
+[
+  {
+    "number": 1,
+    "file": "card-01-baseline.webp",
+    "bytes": 224396,
+    "width": 800,
+    "height": 1333,
+    "variants": [
+      {
+        "id": "webp75",
+        "file": "card-01-webp75.webp",
+        "bytes": 75248,
+        "width": 800,
+        "height": 1333
+      },
+      {
+        "id": "webp640",
+        "file": "card-01-webp640.webp",
+        "bytes": 122130,
+        "width": 640,
+        "height": 1067
+      },
+      {
+        "id": "jpeg80",
+        "file": "card-01-jpeg80.jpg",
+        "bytes": 176144,
+        "width": 800,
+        "height": 1333
+      }
+    ]
+  },
+  {
+    "number": 7,
+    "file": "card-07-baseline.webp",
+    "bytes": 218094,
+    "width": 800,
+    "height": 1333,
+    "variants": [
+      {
+        "id": "webp75",
+        "file": "card-07-webp75.webp",
+        "bytes": 67590,
+        "width": 800,
+        "height": 1333
+      },
+      {
+        "id": "webp640",
+        "file": "card-07-webp640.webp",
+        "bytes": 115312,
+        "width": 640,
+        "height": 1067
+      },
+      {
+        "id": "jpeg80",
+        "file": "card-07-jpeg80.jpg",
+        "bytes": 167901,
+        "width": 800,
+        "height": 1333
+      }
+    ]
+  },
+  {
+    "number": 12,
+    "file": "card-12-baseline.webp",
+    "bytes": 253382,
+    "width": 800,
+    "height": 1333,
+    "variants": [
+      {
+        "id": "webp75",
+        "file": "card-12-webp75.webp",
+        "bytes": 97358,
+        "width": 800,
+        "height": 1333
+      },
+      {
+        "id": "webp640",
+        "file": "card-12-webp640.webp",
+        "bytes": 149266,
+        "width": 640,
+        "height": 1067
+      },
+      {
+        "id": "jpeg80",
+        "file": "card-12-jpeg80.jpg",
+        "bytes": 205865,
+        "width": 800,
+        "height": 1333
+      }
+    ]
+  }
+]

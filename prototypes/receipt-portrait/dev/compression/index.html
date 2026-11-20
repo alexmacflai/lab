@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en-GB">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Library card compression comparison</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><a href="../">← Development</a><span>Library cards / compression review</span></header>
+<main>
+  <h1>Library card compression</h1>
+  <p class="intro">Three cards, three compression strategies. Option A is approved and applied to all 40 cards. These reference files retain the original comparison.</p>
+  <nav class="samples" aria-label="Comparison card">
+    <button data-card="1" aria-pressed="true">01 · Cream stock</button>
+    <button data-card="7" aria-pressed="false">07 · Blue ruling</button>
+    <button data-card="12" aria-pressed="false">12 · Dense records</button>
+  </nav>
+  <section class="controls" aria-label="Comparison controls">
+    <label>Candidate <select id="method"><option value="webp75">A · WebP 75 — same dimensions</option><option value="webp640">B · WebP 90 — smaller dimensions</option><option value="jpeg80">C · JPEG 80 — same dimensions</option></select></label>
+    <div class="modes" role="group" aria-label="Image scale"><button data-mode="fit" aria-pressed="true">Fit card</button><button data-mode="detail" aria-pressed="false">Detail · 100%</button><button data-mode="actual" aria-pressed="false">Full image · 100%</button></div>
+  </section>
+  <p id="description"></p>
+  <section class="pair" data-mode="fit" aria-label="Before and after">
+    <figure><figcaption><strong>Before · WebP 90 reference</strong><span id="before-size"></span></figcaption><div class="image-window"><img id="before" alt="WebP 90 reference card"></div><a id="before-link" target="_blank" rel="noopener">Open reference image</a></figure>
+    <figure><figcaption><strong id="after-title">After · candidate A</strong><span id="after-size"></span></figcaption><div class="image-window"><img id="after" alt="Compressed library card"></div><a id="after-link" target="_blank" rel="noopener">Open candidate image</a></figure>
+  </section>
+  <p class="scale-note">Detail shows the same writing area at one image pixel per CSS pixel. The smaller candidate is enlarged to the same display size. Full-image scrolling stays aligned between panels.</p>
+  <section aria-labelledby="sizes-title"><h2 id="sizes-title">All file sizes</h2><div class="table-wrap"><table><thead><tr><th>Card</th><th>Reference · WebP 90<br>800 × 1333</th><th>A · WebP 75<br>800 × 1333</th><th>B · WebP 90<br>640 × 1067</th><th>C · JPEG 80<br>800 × 1333</th></tr></thead><tbody id="sizes"></tbody></table></div><p class="footnote">Decimal kB. Percentages compare file bytes with the quality-90 reference. Candidates are encoded from those same reference assets, not regenerated artwork.</p></section>
+  <p id="error" role="status"></p>
+</main>
+<script type="module" src="compare.js"></script>
+</body></html>

@@ -86,11 +86,12 @@ function surfaceAt(u, v, receipt) {
     : [edgeWeight(u), edgeWeight(1 - u), edgeWeight(v * receipt.ratio), edgeWeight((1 - v) * receipt.ratio)];
   const radius = receipt.cornerRadius || 0, end = Math.min(v, 1 - v) * receipt.ratio;
   const corner = end < radius ? radius - Math.sqrt(Math.max(0, radius * radius - (radius - end) ** 2)) : 0;
-  return [
+  const point = [
     (u - .5) * (1 - corner * 2) + dx + edges[0] * edgeAt(v, 0, receipt) + edges[1] * edgeAt(v, 1, receipt),
     (.5 - v) * receipt.ratio + dy + edges[2] * edgeAt(u, 2, receipt) + edges[3] * edgeAt(u, 3, receipt),
     heightAt(u, v, receipt),
   ];
+  return receipt.surfacePoint ? receipt.surfacePoint(u, v, point) : point;
 }
 
 export function makeMesh(receipt, columns = 64, rows = 144) {
