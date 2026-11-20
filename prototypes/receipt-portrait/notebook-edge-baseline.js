@@ -1,65 +1,102 @@
 import { seeded } from './receipts.js';
 
-// The existing mesh remains the outer envelope. Only its right and bottom
-// perimeter become a feathered fringe; factory edges and opaque interiors stay intact.
 export function scaledCornerTexture(source, seed, factory = [true, false, true, false], widthMm = 64) {
   const canvas = document.createElement('canvas'); canvas.width = source.width * 2; canvas.height = source.height * 2;
   const ctx = canvas.getContext('2d'); ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-  const mm = canvas.width / widthMm, random = seeded(seed + 519);
+  const mm = canvas.width / widthMm, random = seeded(seed + 723);
   for (const [sideIndex, side] of ['left', 'right', 'top', 'bottom'].entries()) {
     if (factory[sideIndex]) continue;
     ctx.save();
     if (side === 'right') { ctx.translate(canvas.width, 0); ctx.rotate(Math.PI / 2); }
     else if (side === 'bottom') { ctx.translate(0, canvas.height); ctx.scale(1, -1); }
     else if (side === 'left') { ctx.translate(0, canvas.height); ctx.rotate(-Math.PI / 2); }
-    feather(ctx, side === 'right' || side === 'left' ? canvas.height : canvas.width, mm, random, side === 'right');
+    const length = side === 'right' || side === 'left' ? canvas.height : canvas.width;
+    dryTear(ctx, length, mm, random, sideIndex < 2);
     ctx.restore();
   }
   return canvas;
 }
 
-function feather(ctx, length, mm, random, acrossGrain) {
-  // Art-directed edge scale for a handheld 64 mm scrap, judged at normal size.
-  // Scale fracture depth, peel and fibre length together; retain fine strand widths.
-  const strandMm = mm;
-  mm *= 2.8;
-  const samples = Math.ceil(length / 2), front = [];
-  // Unequal, overlapping fracture fronts: a pale exposed interior, then sparse fibres.
-  for (let i = 0; i <= samples; i++) {
-    const x = i * length / samples;
-    const wander = .5 + .25 * Math.sin(x / (mm * 1.7)) + .18 * Math.sin(x / (mm * .43) + 2);
-    front.push((acrossGrain ? .22 + .55 * wander : .12 + .28 * wander) * mm);
+function field(length, pitch, random) {
+  const values = Array.from({ length: Math.ceil(length / pitch) + 2 }, random);
+  return x => {
+    const p = Math.max(0, x / pitch), i = Math.min(values.length - 2, Math.floor(p));
+    const t = p - i, f = t * t * (3 - 2 * t);
+    return values[i] * (1 - f) + values[i + 1] * f;
+  };
+}
+
+function ribbon(ctx, length, outer, inner) {
+  const count = Math.ceil(length / 1.5);
+  ctx.beginPath();
+  for (let i = 0; i <= count; i++) {
+    const x = i * length / count;
+    if (!i) ctx.moveTo(x, outer(x)); else ctx.lineTo(x, outer(x));
   }
-  ctx.beginPath(); ctx.moveTo(0, 0);
-  front.forEach((depth, i) => ctx.lineTo(i * length / samples, depth));
-  ctx.lineTo(length, 0); ctx.closePath();
-  ctx.save(); ctx.clip();
-  // Erase the solid face at the perimeter, then deposit a broken fibre network.
-  ctx.clearRect(0, 0, length, mm * 1.2);
-  for (let i = 0; i < length * 2; i++) {
-    const x = random() * length, depth = front[Math.min(samples, Math.floor(x / length * samples))];
-    const tip = random() * depth * .6, spread = (random() - .5) * mm * .7;
-    ctx.strokeStyle = i % 7 ? `rgba(249,246,233,${.25 + random() * .65})` : '#b7ac9055';
-    ctx.lineWidth = (.018 + random() * .035) * strandMm;
-    ctx.beginPath(); ctx.moveTo(x, depth + .08 * mm);
-    ctx.quadraticCurveTo(x + spread * .3, depth * .55, x + spread, tip); ctx.stroke();
+  for (let i = count; i >= 0; i--) {
+    const x = i * length / count; ctx.lineTo(x, inner(x));
+  }
+  ctx.closePath();
+}
+
+function dryTear(ctx, length, mm, random, acrossGrain) {
+  mm *= 1.8; // Retain the approved visible tear scale at full-scrap viewing size.
+  const broad = field(length, mm * 2.8, random), clumps = field(length, mm * .55, random);
+  const fine = field(length, mm * .075, random), split = field(length, mm * 1.1, random);
+  const scale = acrossGrain ? 1 : .82;
+  const root = x => mm * scale * (.15 + broad(x) * .37 + clumps(x) * .3 + fine(x) * .12);
+  const core = x => root(x) + mm * (.18 + split(x) ** 2 * 1.05 + fine(x) * .12);
+  // Actual voids and solid fibrous pulp; no faded perimeter or shaded frame.
+  ribbon(ctx, length, () => 0, core);
+  ctx.save(); ctx.clip(); ctx.clearRect(0, 0, length, mm * 3); ctx.restore();
+  ribbon(ctx, length, root, core); ctx.fillStyle = '#eee9d8'; ctx.fill();
+  pulp(ctx, length, mm, random, root, core);
+  bundles(ctx, length, mm, random, root, core, clumps);
+  flakes(ctx, length, mm, random, root, core);
+}
+
+function pulp(ctx, length, mm, random, root, core) {
+  ctx.save(); ribbon(ctx, length, root, core); ctx.clip();
+  // Fine fibres inside the exposed fracture, following differing local pull directions.
+  for (let i = 0; i < length * 4; i++) {
+    const x = random() * length, y = root(x) + random() * (core(x) - root(x));
+    ctx.strokeStyle = i % 5 ? '#fffdf0a0' : '#ad9f7d39';
+    ctx.lineWidth = mm * (.008 + random() * .022);
+    ctx.beginPath(); ctx.moveTo(x, y);
+    ctx.lineTo(x + (random() - .5) * mm * .65, y + (random() - .5) * mm * .3); ctx.stroke();
   }
   ctx.restore();
-  // Thin surface peel of changing width: expose stock beneath the tint and ruling.
-  ctx.beginPath(); front.forEach((depth, i) => {
-    const x = i * length / samples;
-    if (!i) ctx.moveTo(x, depth); else ctx.lineTo(x, depth);
-  });
-  for (let i = samples; i >= 0; i--) {
-    const x = i * length / samples;
-    ctx.lineTo(x, front[i] + mm * (.12 + .18 * (1 + Math.sin(x / (mm * .8))) / 2));
+}
+
+function bundles(ctx, length, mm, random, root, core, density) {
+  for (let i = 0; i < length * 1.2; i++) {
+    const x = random() * length;
+    if (random() > .16 + density(x) * .8) continue;
+    const start = root(x) + mm * (.04 + random() * .13), end = Math.max(.015 * mm, root(x) - mm * (.08 + random() ** 2 * .7));
+    const lean = (random() - .5) * mm * .75;
+    const strands = 2 + Math.floor(random() * 6);
+    for (let j = 0; j < strands; j++) {
+      const spread = (random() - .5) * mm * .09;
+      ctx.strokeStyle = j % 4 ? '#f9f5e6e0' : '#e3ddc9bd';
+      ctx.lineWidth = mm * (.012 + random() * .024);
+      ctx.beginPath(); ctx.moveTo(x + spread, start);
+      ctx.bezierCurveTo(x + spread + lean * .15, root(x), x + lean * .6, end + mm * .12,
+        x + lean + spread, end + random() * mm * .12); ctx.stroke();
+    }
   }
-  ctx.closePath(); ctx.fillStyle = '#f7f3e4d9'; ctx.fill();
-  // A very weak lip shadow, interrupted rather than a continuous dark outline.
-  for (let i = 0; i < samples; i++) {
-    if (random() > .3) continue;
-    ctx.strokeStyle = '#91897822'; ctx.lineWidth = .025 * mm;
-    ctx.beginPath(); ctx.moveTo(i * length / samples, front[i] + .2 * mm);
-    ctx.lineTo((i + 1) * length / samples, front[i + 1] + .2 * mm); ctx.stroke();
+}
+
+function flakes(ctx, length, mm, random, root, core) {
+  // Short asymmetric lifted fibre tongues, separated by untouched fracture sections.
+  for (let x = mm; x < length - mm; x += mm * (2.5 + random() * 5.8)) {
+    if (random() > .24) continue;
+    const width = mm * (.1 + random() * .22), start = core(x);
+    const tip = Math.max(mm * .03, root(x) - mm * (.08 + random() * .26));
+    ctx.beginPath(); ctx.moveTo(x - width * .5, start);
+    ctx.lineTo(x - width * .3, root(x)); ctx.lineTo(x + width * .15, tip);
+    ctx.lineTo(x + width * .35, root(x + width)); ctx.lineTo(x + width * .6, start);
+    ctx.closePath(); ctx.fillStyle = '#f8f3e3'; ctx.fill();
+    ctx.strokeStyle = '#9e90751c'; ctx.lineWidth = mm * .02;
+    ctx.beginPath(); ctx.moveTo(x - width * .4, start); ctx.lineTo(x + width * .5, start); ctx.stroke();
   }
 }
