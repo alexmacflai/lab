@@ -1,3 +1,4 @@
+import { replacePilotLogoInk, logoRegion } from './logo-pilot.js';
 import { RECEIPTS, seeded } from './receipts.js';
 import { LAYOUTS, typesetter } from './layouts.js';
 import { drawCollection } from './collection-layouts.js';
@@ -12,7 +13,7 @@ export async function loadPaper() {
   return RECEIPTS.map(receipt => ({ ...receipt, makeTexture: () => makeTexture(material, receipt) }));
 }
 
-function makeTexture(material, receipt) {
+function makeTexture(material, receipt, replacement = false) {
   const canvas = document.createElement('canvas');
   canvas.width = 800; canvas.height = Math.round(800 * receipt.ratio);
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -27,9 +28,20 @@ function makeTexture(material, receipt) {
     drawHeader(printer, receipt, ORIGINAL_TAGS[receipt.family]);
   }
   else drawCollection(printer, receipt);
+  if (replacement) replacePilotLogoInk(printer, receipt);
   ageInk(printer, receipt);
   ctx.globalAlpha = receipt.ink; ctx.drawImage(ink, 0, 0);
   ctx.globalAlpha = 1; addMark(ctx, receipt);
+  const region = !replacement && logoRegion(receipt);
+  if (region) {
+    // Retain the completed original texture byte-for-byte outside the logo.
+    // The alternate pass includes the same paper, ageing and physical marks.
+    const revised = makeTexture(material, receipt, true).getContext('2d');
+    const x = region.x * 2, y = Math.floor(region.y * canvas.height / 850);
+    const width = region.width * 2;
+    const height = Math.ceil((region.y + region.height) * canvas.height / 850) - y;
+    ctx.putImageData(revised.getImageData(x, y, width, height), x, y);
+  }
   return canvas;
 }
 
