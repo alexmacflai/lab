@@ -1,4 +1,5 @@
 import { seeded } from './receipts.js';
+import { tornCornerTexture } from './notebook-edge-proof.js';
 import { scrapTexture } from './notebook-texture.js';
 import { scrapShape, scrapFolds } from './notebook-shapes.js';
 
@@ -11,14 +12,18 @@ function scrap(index, stock, handwriting) {
   const ratio = [1.22, 1.28, 1.18, 1.3, 1.15, 1.25][index];
   const seed = 6301 + index * 137;
   return { id: `notebook-${index + 1}`, name: NAMES[index],
-    paperType: 'notebook-scraps', widthMm, ratio, seed, edge: 'card', tint: [1, 1, 1],
+    edgeAlpha: index === 0, paperType: 'notebook-scraps', widthMm, ratio, seed, edge: 'card', tint: [1, 1, 1],
     viewHeight: Math.max(1.8, ratio + .25), surfaceRefined: true, creaseSharp: true,
     condition: NAMES[index],
     folds: scrapFolds(index, random),
     bumps: [{ u: .82, v: .87, radius: .065, amplitude: .00065 }],
     curl: .0007 + index % 3 * .0002, micro: .0001, phase: index,
     surfacePoint: scrapShape(index, seed, ratio),
-    makeTexture: () => scrapTexture(stock, handwriting, index, widthMm, ratio, seed) };
+    originalEdgeTexture: () => scrapTexture(stock, handwriting, index, widthMm, ratio, seed),
+    makeTexture: () => {
+      const texture = scrapTexture(stock, handwriting, index, widthMm, ratio, seed);
+      return index === 0 ? tornCornerTexture(texture, seed) : texture;
+    } };
 }
 
 export async function loadScraps() {
