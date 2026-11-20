@@ -39,7 +39,7 @@ function tornFibres(ctx, index, mm, width, height, random) {
 
 export function scrapTexture(stock, handwriting, index, widthMm, ratio, seed, family = index % 5, annotations) {
   const canvas = document.createElement('canvas'); canvas.width = 800; canvas.height = Math.round(800 * ratio);
-  const ctx = canvas.getContext('2d'), random = seeded(seed), mm = 800 / widthMm;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }), random = seeded(seed), mm = 800 / widthMm;
   ctx.drawImage(stock, 0, 0, canvas.width, canvas.height);
   ctx.fillStyle = ['#ead09d55', '#c1dbe52b', '#e8c78840', '#ffffff09', '#d7d3bb40'][index % 5];
   ctx.fillRect(0, 0, canvas.width, canvas.height);

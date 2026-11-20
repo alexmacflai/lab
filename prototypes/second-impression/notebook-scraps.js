@@ -24,7 +24,8 @@ function scrap(index, stock, handwriting, annotations) {
     originalEdgeTexture: () => scrapTexture(stock, atlas, index, widthMm, ratio, seed, record.family, annotations),
     makeTexture: () => {
       const texture = scrapTexture(stock, atlas, index, widthMm, ratio, seed, record.family, annotations);
-      return tornCornerTexture(texture, seed, FACTORY_EDGES[index], widthMm);
+      const finished = tornCornerTexture(texture, seed, FACTORY_EDGES[index], widthMm);
+      texture.width = texture.height = 1; return finished;
     } };
 }
 
@@ -35,5 +36,12 @@ export async function loadScraps() {
   });
   const annotations = new Image(); annotations.src = new URL('notebook-annotations.png', import.meta.url);
   await Promise.all([annotations.decode(), stock.decode(), ...handwriting.map(image => image.decode())]);
-  return NOTEBOOK_RECORDS.map((_, index) => scrap(index, stock, handwriting, annotations));
+  const papers = NOTEBOOK_RECORDS.map((_, index) => scrap(index, stock, handwriting, annotations));
+  // Bake only narrow edge strips during collection loading. Playback retains its
+  // bounded GPU cache and does not re-rasterise thousands of fibres every frame.
+  for (const paper of papers) {
+    const prepared = paper.makeTexture(); prepared.width = prepared.height = 1;
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+  return papers;
 }

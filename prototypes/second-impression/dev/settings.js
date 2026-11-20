@@ -62,6 +62,18 @@ export const SETTINGS = {
           "aspect": 1.3333333333333333,
           "size": 0.64
         }
+      },
+      "timing": {
+        "enabled": {
+          "paperJitter": true,
+          "printJitter": true
+        },
+        "values": {
+          "fps": 12,
+          "delay": 500,
+          "paperJitter": 0,
+          "printJitter": 1.4
+        }
       }
     }
   }

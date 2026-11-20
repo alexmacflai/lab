@@ -1,9 +1,22 @@
 import { seeded } from './receipts.js';
 
+const edgeCache = new Map();
+let cachedBytes = 0;
+const CACHE_BYTES = 96 * 1024 * 1024;
+
 export function tornCornerTexture(source, seed, factory = [true, false, true, false], widthMm = 64) {
   const canvas = document.createElement('canvas'); canvas.width = source.width * 2; canvas.height = source.height * 2;
-  const ctx = canvas.getContext('2d'); ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }); ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
   const mm = canvas.width / widthMm, random = seeded(seed + 723);
+  const key = `${seed}/${source.width}/${source.height}/${widthMm}/${factory.join()}`;
+  const cached = edgeCache.get(key);
+  if (cached) {
+    edgeCache.delete(key); edgeCache.set(key, cached);
+    for (const { image, x, y } of cached.strips) {
+      ctx.clearRect(x, y, image.width, image.height); ctx.drawImage(image, x, y);
+    }
+    return canvas;
+  }
   for (const [sideIndex, side] of ['left', 'right', 'top', 'bottom'].entries()) {
     if (factory[sideIndex]) continue;
     ctx.save();
@@ -14,6 +27,7 @@ export function tornCornerTexture(source, seed, factory = [true, false, true, fa
     dryTear(ctx, length, mm, random, sideIndex < 2);
     ctx.restore();
   }
+  cacheEdges(key, canvas, factory, Math.ceil(mm * 3.4));
   return canvas;
 }
 
@@ -116,5 +130,24 @@ function splitLips(ctx, length, mm, random, root, core) {
     ctx.fillStyle = random() > .35 ? '#faf6e4aa' : '#c5bba12b'; ctx.fill();
     ctx.strokeStyle = '#a99e821b'; ctx.lineWidth = mm * .012;
     ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + width * .28, y - depth * .16); ctx.stroke();
+  }
+}
+
+function cacheEdges(key, canvas, factory, depth) {
+  const { width, height } = canvas;
+  const rectangles = [[0,0,depth,height], [width-depth,0,depth,height],
+    [0,0,width,depth], [0,height-depth,width,depth]];
+  let bytes = 0;
+  const strips = rectangles.flatMap(([x,y,w,h], side) => {
+    if (factory[side]) return [];
+    const image = document.createElement('canvas'); image.width = w; image.height = h;
+    image.getContext('2d', { willReadFrequently: true }).drawImage(canvas,x,y,w,h,0,0,w,h);
+    bytes += w * h * 4; return [{image,x,y}];
+  });
+  edgeCache.set(key, { strips, bytes }); cachedBytes += bytes;
+  while (cachedBytes > CACHE_BYTES) {
+    const oldest = edgeCache.keys().next().value, entry = edgeCache.get(oldest);
+    cachedBytes -= entry.bytes; edgeCache.delete(oldest);
+    entry.strips.forEach(({image}) => { image.width = image.height = 1; });
   }
 }
