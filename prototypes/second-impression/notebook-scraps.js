@@ -30,11 +30,11 @@ function scrap(index, stock, handwriting, annotations) {
 }
 
 export async function loadScraps() {
-  const stock = new Image(); stock.src = new URL('notebook-stock.png', import.meta.url);
-  const handwriting = ['notebook-handwriting.png', 'notebook-handwriting-2.png'].map(path => {
+  const stock = new Image(); stock.src = new URL('notebook-stock.webp', import.meta.url);
+  const handwriting = ['notebook-handwriting.webp', 'notebook-handwriting-2.webp'].map(path => {
     const image = new Image(); image.src = new URL(path, import.meta.url); return image;
   });
-  const annotations = new Image(); annotations.src = new URL('notebook-annotations.png', import.meta.url);
+  const annotations = new Image(); annotations.src = new URL('notebook-annotations.webp', import.meta.url);
   await Promise.all([annotations.decode(), stock.decode(), ...handwriting.map(image => image.decode())]);
   const papers = NOTEBOOK_RECORDS.map((_, index) => scrap(index, stock, handwriting, annotations));
   // Bake only narrow edge strips during collection loading. Playback retains its

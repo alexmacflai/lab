@@ -5,7 +5,7 @@
 <header><a href="../">← Development</a><span>Notebook paper / compression review</span></header>
 <main>
   <h1>Notebook paper compression</h1>
-  <p class="intro">Five paper families, four compression options. Compare the original PNG sources with compressed candidates before choosing. Production still uses the originals.</p>
+  <p class="intro">Five paper families, four compression options. Option B, WebP quality 65 at the original dimensions, is approved and applied to all 40 scraps. These panels retain the original comparison.</p>
   <nav class="samples" aria-label="Comparison paper">
     <button data-sample="0" aria-pressed="true">Ruled · note and diagram</button>
     <button data-sample="26" aria-pressed="false">Squared · layered notes</button>
@@ -14,7 +14,7 @@
     <button data-sample="4" aria-pressed="false">Graph · diagram</button>
   </nav>
   <section class="controls" aria-label="Comparison controls">
-    <label>Candidate <select id="method"><option value="webp85">A · WebP 85 — original dimensions</option><option value="webp65">B · WebP 65 — original dimensions</option><option value="webp-small">C · WebP 85 — half width and height</option><option value="jpeg80">D · JPEG 80 — original dimensions</option></select></label>
+    <label>Candidate <select id="method"><option value="webp85">A · WebP 85 — original dimensions</option><option value="webp65" selected>B · WebP 65 — original dimensions</option><option value="webp-small">C · WebP 85 — half width and height</option><option value="jpeg80">D · JPEG 80 — original dimensions</option></select></label>
     <div class="modes" role="group" aria-label="Image scale"><button data-mode="fit" aria-pressed="true">Fit paper</button><button data-mode="detail" aria-pressed="false">Detail · 100%</button><button data-mode="actual" aria-pressed="false">Full surface · 100%</button></div>
   </section>
   <p id="description"></p>
