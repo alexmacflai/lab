@@ -17,14 +17,15 @@ function program(gl, fragmentSource = FRAGMENT) {
   gl.useProgram(p); return p;
 }
 
-function texture(gl, source, nearest = false) {
+function texture(gl, source, nearest = false, premultiplied = false) {
   const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, nearest ? gl.NEAREST : gl.LINEAR_MIPMAP_LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, nearest ? gl.NEAREST : gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premultiplied);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
   if (!nearest) gl.generateMipmap(gl.TEXTURE_2D);
   return t;
 }
@@ -36,7 +37,7 @@ export class PaperRenderer {
     if (!this.gl) throw new Error('WebGL 2 is unavailable');
     const gl = this.gl;
     this.program = program(gl, fragment); this.uniforms = {};
-    for (const name of ['View', 'Pose', 'Light', 'Shadow', 'Paper', 'Print', 'Tint', 'PrintPose', 'Ratio', 'PrintSize', 'PrintOn', 'Inspect']) {
+    for (const name of ['View', 'Pose', 'Light', 'Shadow', 'Paper', 'Print', 'Tint', 'PrintPose', 'Ratio', 'PrintSize', 'PrintOn', 'Inspect', 'EdgeAlpha']) {
       this.uniforms[name] = gl.getUniformLocation(this.program, `u${name}`);
     }
     this.papers = papers;
@@ -72,7 +73,7 @@ export class PaperRenderer {
       this.textures.delete(index); this.textures.set(index, cached); return cached;
     }
     gl.activeTexture(gl.TEXTURE0);
-    const image = texture(gl, this.papers[index].makeTexture());
+    const image = texture(gl, this.papers[index].makeTexture(), false, !!this.papers[index].edgeAlpha);
     this.textures.set(index, image);
     if (this.textures.size > this.cacheLimit) {
       const oldest = this.textures.keys().next().value;
@@ -104,6 +105,7 @@ export class PaperRenderer {
     gl.uniform2fv(u.PrintSize, this.printSize || [.94, 1.175]);
     gl.uniform3fv(u.Tint, this.papers[index].tint); gl.uniform1f(u.Ratio, this.papers[index].ratio);
     gl.uniform1i(u.Inspect, options.inspect || 0);
+    gl.uniform1i(u.EdgeAlpha, this.papers[index].edgeAlpha ? 1 : 0);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.paperTexture(index));
     this.uploadPrint(printed);
     gl.uniform1f(u.PrintOn, printed ? 1 : 0);

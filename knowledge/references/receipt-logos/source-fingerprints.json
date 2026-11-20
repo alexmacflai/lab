@@ -3,291 +3,291 @@
   "algorithm": "SHA-256",
   "files": [
     {
-      "path": "prototypes/receipt-portrait/README.md",
+      "path": "prototypes/second-impression/README.md",
       "sha256": "5611a14623f09c065f408fa3a9315f1f14ea7d7d1f367fe7ad8d0c8fefde5b32"
     },
     {
-      "path": "prototypes/receipt-portrait/aged-coffee.js",
+      "path": "prototypes/second-impression/aged-coffee.js",
       "sha256": "84d14548bfa70775083dc7aa23f3489f2b27021c053548fa1d7fcda254c3f237"
     },
     {
-      "path": "prototypes/receipt-portrait/brand-marks.js",
+      "path": "prototypes/second-impression/brand-marks.js",
       "sha256": "059763341acb5d3544de027bb76b01d01cad6fdf66a40ea93df07954134c2f25"
     },
     {
-      "path": "prototypes/receipt-portrait/brands.js",
+      "path": "prototypes/second-impression/brands.js",
       "sha256": "d43c29bb188aa05748012b0566621523d365d7c3e483d031c851e6514ab67645"
     },
     {
-      "path": "prototypes/receipt-portrait/camera-controls.js",
+      "path": "prototypes/second-impression/camera-controls.js",
       "sha256": "1822ec21c1b975fa855ec984ea545bb8d97a29690cbc8796f482fbaab0bc6526"
     },
     {
-      "path": "prototypes/receipt-portrait/camera.js",
+      "path": "prototypes/second-impression/camera.js",
       "sha256": "26aff59b051d0c6185bde394f4bafa919c5685514a65370a1177156dc235f80e"
     },
     {
-      "path": "prototypes/receipt-portrait/catalogue.js",
+      "path": "prototypes/second-impression/catalogue.js",
       "sha256": "a04a1d67a646e34651ac7af28ff7df4fe42648fadaea5258ade75693346f8df8"
     },
     {
-      "path": "prototypes/receipt-portrait/collection-layouts.js",
+      "path": "prototypes/second-impression/collection-layouts.js",
       "sha256": "c033b59c973849c0c3d0c1a860a3a307c31c69ea16bf988de9ea8b5c43f1eca2"
     },
     {
-      "path": "prototypes/receipt-portrait/collection-type.js",
+      "path": "prototypes/second-impression/collection-type.js",
       "sha256": "75a78a85720fd05f8ecbb701d438874fdbc14ac8d1e4ebe4f23899b429045272"
     },
     {
-      "path": "prototypes/receipt-portrait/conditions.js",
+      "path": "prototypes/second-impression/conditions.js",
       "sha256": "f95c0b2f3f4a1a381e7a3a0d52e76a6925c4e8a2ffce4d64c55bfc30064ea8ea"
     },
     {
-      "path": "prototypes/receipt-portrait/dev.css",
+      "path": "prototypes/second-impression/dev.css",
       "sha256": "3587397d74b6f5e1cc45b3ae220889822b0e1fa225e121d2f169da0cbbc0955b"
     },
     {
-      "path": "prototypes/receipt-portrait/dev.js",
+      "path": "prototypes/second-impression/dev.js",
       "sha256": "2836613b8fb612cf099700e83ec39c119efe342cc43b6fe8b85e507268202ea4"
     },
     {
-      "path": "prototypes/receipt-portrait/dev/disclosures.js",
+      "path": "prototypes/second-impression/dev/disclosures.js",
       "sha256": "bcb5154bdfc7e27ea57814f01712b2bf8171dacd40e8e6431992293dc714e570"
     },
     {
-      "path": "prototypes/receipt-portrait/dev/index.html",
+      "path": "prototypes/second-impression/dev/index.html",
       "sha256": "29e957e48c5460c8337b55911cf198c8e8bfa561050b8b314393da6fc6960dc3"
     },
     {
-      "path": "prototypes/receipt-portrait/dev/print-proof/panel.js",
+      "path": "prototypes/second-impression/dev/print-proof/panel.js",
       "sha256": "fc9ac6604a6507c2a0f29ee85f1905f27ff524ca5d422fa96091393e7defa7b0"
     },
     {
-      "path": "prototypes/receipt-portrait/dev/print-proof/style.css",
+      "path": "prototypes/second-impression/dev/print-proof/style.css",
       "sha256": "061d5c1d3ca7ef0868c4f2c104532439e5ad9a1e2f3a96517ed20481bef315ea"
     },
     {
-      "path": "prototypes/receipt-portrait/dev/surface-proof/panel.js",
+      "path": "prototypes/second-impression/dev/surface-proof/panel.js",
       "sha256": "d33684cd7e15e6bdcac7a3501ad708a38af5fcd96f6b7c04b632263ce595effd"
     },
     {
-      "path": "prototypes/receipt-portrait/doodle-marks-v1.png",
+      "path": "prototypes/second-impression/doodle-marks-v1.png",
       "sha256": "44db272686fcc0dae40ec85651597a2285f2d7b7b44e572182d38252f22f0496"
     },
     {
-      "path": "prototypes/receipt-portrait/extra-families.js",
+      "path": "prototypes/second-impression/extra-families.js",
       "sha256": "9865d838bda89a15dc74f176646beb23598e72b58f9ce0b1e095f519cd758029"
     },
     {
-      "path": "prototypes/receipt-portrait/extra-layouts.js",
+      "path": "prototypes/second-impression/extra-layouts.js",
       "sha256": "bded67bdd27600a64bafc96c5c35f6a279713d450f1476965304b1ea8c40a042"
     },
     {
-      "path": "prototypes/receipt-portrait/gallery.js",
+      "path": "prototypes/second-impression/second-impression-gallery.js",
       "sha256": "bb3e8f35cd4262fb2b03387c0d14337f65bbd3b59bc6fa337cd7e726be03869f"
     },
     {
-      "path": "prototypes/receipt-portrait/index.html",
+      "path": "prototypes/second-impression/index.html",
       "sha256": "6d3c392de316e1bf9adb9641e49d98e7ea94d8a9292a994ef80fe75461edcb50"
     },
     {
-      "path": "prototypes/receipt-portrait/layouts.js",
+      "path": "prototypes/second-impression/layouts.js",
       "sha256": "68fca34bf8ac7bdbc2c4f87ec866d92e0057ec35d65e7547ec5f617cebaf9f22"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-01.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-01.jpg",
       "sha256": "40118cf0b724a0fd62da247043b167fd9984e0f82e6545d1534cc2a6bbd8c7ba"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-02.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-02.jpg",
       "sha256": "b750f8be5ff62e1208bcd12397db5d02bdb1f18bcd881579b0da47508165638b"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-03.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-03.jpg",
       "sha256": "fbd09018721d995e8f7820c93b2205b50a8d6189a0ef4e4204bf48751a39db45"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-04.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-04.jpg",
       "sha256": "f295a7ff83d740b476476c4acf45454811c0248ceb0a02c365751c10c5afb6e3"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-05.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-05.jpg",
       "sha256": "c1857563209392a0030eae3d6dd07eeedaa6eeba45d9d47c919ba35344ae8620"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-06.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-06.jpg",
       "sha256": "491e1fdbbb4f3d0751c090e1d5508dcb81ec742a40f04ff40241fc250b761d9c"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-07.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-07.jpg",
       "sha256": "dba83f1df67c49b526cfb8f5b8d95be1912b67c7f0bb4716a5f42afc37008b7f"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-08.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-08.jpg",
       "sha256": "5ed51e33855049e619f5d025197dcca9b505cb1d6f0781d8226581d0bf27a759"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-09.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-09.jpg",
       "sha256": "1bdff52a03a9470ecf33f92249d62b2c5cbf014fc1d1cab6f850ad55e0850d7a"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-10.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-10.jpg",
       "sha256": "25b0be0f4be2509474883f8d0695df85dab12e0f325d817b8500f6daafa0910c"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-11.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-11.jpg",
       "sha256": "b289c2cb5c59152d9350973ea66221d041433848469adf5a0363e2ea0fc807a9"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-12.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-12.jpg",
       "sha256": "44103cfc51189f34828a184685a778e612f651550570e5234cea33b3ef10e8d9"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-13.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-13.jpg",
       "sha256": "e066071b8d3f57bcffcabdd3b48945a723a1498063c2ee1a6f3f769b01d71d8c"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-14.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-14.jpg",
       "sha256": "6d3e017e8e2622cca5499c234345fdc329dbd39851ac14771e1fd780276d039a"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-15.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-15.jpg",
       "sha256": "508093601a9ac2e0ffe672371fc5312c58639cff0e02a985b45597948afba813"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-16.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-16.jpg",
       "sha256": "53b34a76f8e208f51b8c1ee02684692a60d0dc102c3d7f919b04e8c1c2e40b2c"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-17.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-17.jpg",
       "sha256": "1b67c4168f358a6c2efdc8655ec9b3014f6683b365092bf5991a69c7c14a62c3"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-18.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-18.jpg",
       "sha256": "93c35748382d87149b35160453c5162c5e7496a17a1cb4dd6d39b734dfd09c6a"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-19.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-19.jpg",
       "sha256": "d560bfd86d68386b9924a9f9786bd6f12311573f280f2fe78a485d00199ac139"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/assets/card-20.jpg",
+      "path": "prototypes/second-impression/library-cards/assets/card-20.jpg",
       "sha256": "844a7ee9926398c1f90a7ecc37a797f9589ecb47aceaee1d499860cd9484b37c"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/collection.js",
+      "path": "prototypes/second-impression/library-cards/collection.js",
       "sha256": "09ff2b8aa24e7967382588b4465a84b1e6db3375d793d2057a8270ead586be9b"
     },
     {
-      "path": "prototypes/receipt-portrait/library-cards/production-guide.md",
+      "path": "prototypes/second-impression/library-cards/production-guide.md",
       "sha256": "4dc42d2752181235605fb0610386e2929212382da7d13f73143557866c6456d5"
     },
     {
-      "path": "prototypes/receipt-portrait/main.js",
+      "path": "prototypes/second-impression/main.js",
       "sha256": "2998b8a75bd4acb391656eebefca2c5d8de750e3b2ad7dd036839cc7abf87d01"
     },
     {
-      "path": "prototypes/receipt-portrait/mark-assets.js",
+      "path": "prototypes/second-impression/mark-assets.js",
       "sha256": "b8d76136eb77e5ef5634978f00f9cf0aa9d3a350ac3f2f37276f86d763c874b9"
     },
     {
-      "path": "prototypes/receipt-portrait/marks.js",
+      "path": "prototypes/second-impression/marks.js",
       "sha256": "3b3a368bbc4e8b93914ccc10d05ba079a53b62be145ee6dfc46235863209a509"
     },
     {
-      "path": "prototypes/receipt-portrait/paper-types.js",
+      "path": "prototypes/second-impression/paper-types.js",
       "sha256": "43cb65510dbfe878bba1e8082d53960b6a188466743e65414678ddb9e250ceab"
     },
     {
-      "path": "prototypes/receipt-portrait/paper.js",
+      "path": "prototypes/second-impression/paper.js",
       "sha256": "7cc805ae3bd8834d56232aa0c3ee05e03cd065b37feccaa835f48bb245f2f8d6"
     },
     {
-      "path": "prototypes/receipt-portrait/physical-marks-v1.png",
+      "path": "prototypes/second-impression/physical-marks-v1.png",
       "sha256": "476c0f02bf32b5b6990d154bca5bb360fae003d6b258c491c766d7d6477a782e"
     },
     {
-      "path": "prototypes/receipt-portrait/player.js",
+      "path": "prototypes/second-impression/second-impression-player.js",
       "sha256": "b2245bbdb2809ba989a693426fa3f0ad05fe5cb9e02bed35914a88c4c3de3bcb"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/impression.js",
+      "path": "prototypes/second-impression/print-material/impression.js",
       "sha256": "ee7df2c1573d896d4b30b63dbd77205273793e4dc119cf1a2be603a5a7883f86"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/material.js",
+      "path": "prototypes/second-impression/print-material/material.js",
       "sha256": "e9ac087e17dcd3c0deb2f5686cee42d4aa4a3945aaed67c08558336be04889e8"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/profiles.js",
+      "path": "prototypes/second-impression/print-material/profiles.js",
       "sha256": "3674f66ac2307cee0c6b21906d4b307b22700e9649a69cb1e4984794e019d882"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/renderer.js",
+      "path": "prototypes/second-impression/print-material/renderer.js",
       "sha256": "6cf227963a464c2f289f7af989b367758859256b7659edfdec2f11adeee2c9ed"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/response.js",
+      "path": "prototypes/second-impression/print-material/response.js",
       "sha256": "56d11f4f92c88b1d14c62aa682c378dd12aaa5a763f139d9b8fd63f737dede7e"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/shader.js",
+      "path": "prototypes/second-impression/print-material/shader.js",
       "sha256": "a800ac4e4a6156ed28a6cc3a0bdfb38e8de6e3f48619d6e13db54339b3742606"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/surface-shader.js",
+      "path": "prototypes/second-impression/print-material/surface-shader.js",
       "sha256": "e243a49f5cbbb99efefb369efe19c842c81670f6874ff000b2d06746b2e97ba8"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/transfer-film.png",
+      "path": "prototypes/second-impression/print-material/transfer-film.png",
       "sha256": "d564eccd2fa5481be9a21214f87e1bdb6e5e3bdc6f095d015beef28649c73deb"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/transfer-film.prompt.txt",
+      "path": "prototypes/second-impression/print-material/transfer-film.prompt.txt",
       "sha256": "ee278a31d6cd6abc38244a74bdc8604559bf5b2125810021c9f1a4d9711cf5a0"
     },
     {
-      "path": "prototypes/receipt-portrait/print-material/transfer.js",
+      "path": "prototypes/second-impression/print-material/transfer.js",
       "sha256": "56ca5413586220b1aa35929e460f0338c2c5cdb22cbbc2e0c1506225a062c61b"
     },
     {
-      "path": "prototypes/receipt-portrait/print.js",
+      "path": "prototypes/second-impression/print.js",
       "sha256": "ca1afbb602948dfd164118ecd289eff7917afd73baa9ba67e02257bfe6c53064"
     },
     {
-      "path": "prototypes/receipt-portrait/production-guide.md",
+      "path": "prototypes/second-impression/production-guide.md",
       "sha256": "7c32de65c205e8faf77e12d7617073c6a36db7b62b74cf796221baadc69673a4"
     },
     {
-      "path": "prototypes/receipt-portrait/receipts.js",
+      "path": "prototypes/second-impression/receipts.js",
       "sha256": "11036019f8b7873d28394f073fe3ff0baf94b131a786a4065561034b01a8797a"
     },
     {
-      "path": "prototypes/receipt-portrait/renderer.js",
+      "path": "prototypes/second-impression/renderer.js",
       "sha256": "52892ee2179ae9b31244bde20fd4c702bbb5648089a0109c47891ce8a561818d"
     },
     {
-      "path": "prototypes/receipt-portrait/sample-portrait.png",
+      "path": "prototypes/second-impression/sample-portrait.png",
       "sha256": "a363408e34390a9aeaf370114c0aa0fcc45d5c48244a3e262ff2b7862d5f8067"
     },
     {
-      "path": "prototypes/receipt-portrait/sample.js",
+      "path": "prototypes/second-impression/sample.js",
       "sha256": "bfe9ada2356ee7ddde163e065144b7efc1087ff59cdce87c14ff39fa381bacf1"
     },
     {
-      "path": "prototypes/receipt-portrait/shaders.js",
+      "path": "prototypes/second-impression/shaders.js",
       "sha256": "c00781f25cc62876b67a0f42b50be543bc79a7b5b0c090891a0c5bad4edc3c9a"
     },
     {
-      "path": "prototypes/receipt-portrait/style.css",
+      "path": "prototypes/second-impression/style.css",
       "sha256": "6f384a50e1f7675be2b4678be58011960527c0dcb91c165087c07b7668760bd1"
     },
     {
-      "path": "prototypes/receipt-portrait/subject.js",
+      "path": "prototypes/second-impression/subject.js",
       "sha256": "5261a7f106ebb1a0ca053047ceeb924c82d597ebd24fe8645d343e3f0ed823f7"
     },
     {
-      "path": "prototypes/receipt-portrait/thermal-paper.png",
+      "path": "prototypes/second-impression/thermal-paper.png",
       "sha256": "efc6091c48c1d39679876e881cee7c0f9006bb1d103347a3fea251b12fb603de"
     }
   ]

@@ -11,7 +11,8 @@ export const SETTINGS = {
     "timing": {
       "fps": 12,
       "delay": 500,
-      "jitter": 1
+      "paperJitter": 1,
+      "printJitter": 1
     }
   },
   "variants": {
@@ -34,12 +35,44 @@ export const SETTINGS = {
       },
       "timing": {
         "enabled": {
-          "jitter": true
+          "paperJitter": true,
+          "printJitter": true
         },
         "values": {
           "fps": 12,
           "delay": 500,
-          "jitter": 0.5
+          "paperJitter": 0.5,
+          "printJitter": 0.5
+        }
+      }
+    },
+    "notebook-scraps": {
+      "image": {
+        "enabled": {
+          "size": true,
+          "aspect": true,
+          "gamma": true,
+          "brightness": true,
+          "resolution": true
+        },
+        "values": {
+          "resolution": 112,
+          "gamma": 0.8,
+          "brightness": 0.6,
+          "aspect": 1.3333333333333333,
+          "size": 0.64
+        }
+      },
+      "timing": {
+        "enabled": {
+          "paperJitter": true,
+          "printJitter": true
+        },
+        "values": {
+          "fps": 12,
+          "delay": 500,
+          "paperJitter": 0,
+          "printJitter": 1.4
         }
       }
     }

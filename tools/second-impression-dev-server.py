@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serve the lab locally and save receipt tuning to its fixed settings module."""
+"""Serve the lab locally and save Second impression tuning to its fixed settings module."""
 import argparse
 import json
 import math
@@ -7,11 +7,11 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / 'prototypes/receipt-portrait/dev/settings.js'
+TARGET = ROOT / 'prototypes/second-impression/dev/settings.js'
 LIMITS = {
     'image': {'resolution': (48, 288), 'gamma': (.5, 2.5), 'brightness': (0, 1),
               'aspect': (2 / 3, 16 / 9), 'size': (.25, 2)},
-    'timing': {'fps': (4, 18), 'delay': (0, 1500), 'jitter': (0, 2)},
+    'timing': {'fps': (4, 18), 'delay': (0, 1500), 'paperJitter': (0, 2), 'printJitter': (0, 2)},
 }
 
 
@@ -29,7 +29,7 @@ def validate(data):
         validate_section(section, data['global'][section])
     assert isinstance(data['variants'], dict) and len(data['variants']) <= 1000
     for key, variant in data['variants'].items():
-        assert key in {'receipts', 'library-cards'}
+        assert key in {'receipts', 'library-cards', 'notebook-scraps'}
         assert isinstance(variant, dict) and set(variant) <= set(LIMITS)
         for section, override in variant.items():
             assert set(override) == {'enabled', 'values'}
@@ -49,7 +49,7 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         origin, host = self.headers.get('Origin'), self.headers.get('Host')
         local_hosts = {f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'}
-        if self.path != '/__receipt-settings' or host not in local_hosts or origin != f'http://{host}':
+        if self.path != '/__second-impression-settings' or host not in local_hosts or origin != f'http://{host}':
             self.send_error(403)
             return
         try:
@@ -58,7 +58,7 @@ class Handler(SimpleHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             validate(data)
         except (ValueError, AssertionError, TypeError, KeyError, AttributeError):
-            self.send_error(400, 'Invalid receipt settings')
+            self.send_error(400, 'Invalid Second impression settings')
             return
         source = '// Saved by the local development server. Camera images are never included.\n'
         source += 'export const SETTINGS = ' + json.dumps(data, indent=2, allow_nan=False) + ';\n'
@@ -77,5 +77,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8082)
     args = parser.parse_args()
-    print(f'http://127.0.0.1:{args.port}/prototypes/receipt-portrait/dev/', flush=True)
+    print(f'http://127.0.0.1:{args.port}/prototypes/second-impression/dev/', flush=True)
     ThreadingHTTPServer(('127.0.0.1', args.port), Handler).serve_forever()

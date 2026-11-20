@@ -4,7 +4,7 @@ import { paperType } from '../paper-types.js';
 const $ = id => document.getElementById(id);
 const fields = {
   image: { resolution: 'print-resolution', gamma: 'image-gamma', brightness: 'image-brightness', aspect: 'print-aspect', size: 'print-size' },
-  timing: { fps: 'fps', delay: 'delay', jitter: 'jitter' },
+  timing: { fps: 'fps', delay: 'delay', paperJitter: 'paper-jitter', printJitter: 'print-jitter' },
 };
 
 export class TuningControls {
@@ -101,6 +101,9 @@ export class TuningControls {
     $('print-resolution-value').textContent = `${image.resolution} × ${Math.round(image.resolution / image.aspect)}`;
     $('image-gamma-value').textContent = image.gamma.toFixed(2);
     $('image-brightness-value').textContent = `${Math.round(image.brightness * 100)}%`;
+    const timing = this.mode === 'global' ? this.values.global.timing : this.values.variants[this.key()]?.timing?.values || this.values.global.timing;
+    $('paper-jitter-value').textContent = timing.paperJitter.toFixed(1);
+    $('print-jitter-value').textContent = timing.printJitter.toFixed(1);
     $('print-size-value').textContent = `${Math.round(image.size * 100)}%`;
   }
 
@@ -111,13 +114,13 @@ export class TuningControls {
   async save() {
     const button = $('save-tuning'); button.disabled = true;
     try {
-      const response = await fetch('/__receipt-settings', {
+      const response = await fetch('/__second-impression-settings', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.values),
       });
       if (!response.ok) throw new Error('Save failed');
       $('tuning-status').textContent = 'Saved to dev/settings.js in the project.';
     } catch {
-      $('tuning-status').textContent = 'Could not save. Run python3 tools/receipt-dev-server.py and open its URL, then try again. Copy values is also available.';
+      $('tuning-status').textContent = 'Could not save. Run python3 tools/second-impression-dev-server.py and open its URL, then try again. Copy values is also available.';
     } finally { button.disabled = false; }
   }
 

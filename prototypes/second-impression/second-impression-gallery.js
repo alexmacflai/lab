@@ -1,6 +1,6 @@
 import { PaperRenderer } from './renderer.js';
 
-export class ReceiptGallery {
+export class SecondImpressionGallery {
   constructor(papers, sample, onSelect) {
     this.events = new AbortController();
     this.papers = papers; this.sample = sample; this.onSelect = onSelect;

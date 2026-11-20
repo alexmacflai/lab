@@ -41,6 +41,7 @@ uniform float uRatio;
 uniform vec2 uPrintSize;
 uniform float uPrintOn;
 uniform bool uShadow;
+uniform bool uEdgeAlpha;
 uniform int uInspect;
 out vec4 outColor;
 float grain(vec2 p) {
@@ -50,12 +51,15 @@ float inkCoverage(vec2 uv) {
   return texture(uPrint, clamp(uv, 0., 1.)).a;
 }
 void main() {
-  if (uShadow) { outColor = vec4(.17, .15, .11, .027); return; }
-  // Geometry supplies the silhouette. Interior alpha is always one.
+  float paperAlpha = uEdgeAlpha ? texture(uPaper, vUV).a : 1.;
+  if (paperAlpha < .01) discard;
+  if (uShadow) { outColor = vec4(.17, .15, .11, .027 * paperAlpha); return; }
+  // Geometry supplies the silhouette. Only the opt-in torn fringe has partial alpha.
   if (uInspect == 1) { outColor = vec4(1); return; }
   vec3 normal = normalize(vNormal);
   if (uInspect == 2) { outColor = vec4(normal * .5 + .5, 1); return; }
   vec3 paper = texture(uPaper, vUV).rgb * uTint;
+  if (uEdgeAlpha) paper /= max(paperAlpha, .001);
   vec2 local = vec2(vUV.x - .5, (vUV.y - .5) * uRatio);
   local -= uPrintPose.xy;
   float c = cos(uPrintPose.z), s = sin(uPrintPose.z);
@@ -83,5 +87,5 @@ void main() {
   float illumination = .34 + .79 * diffuse;
   float valley = 1. - .045 * (1. - normal.z);
   vec3 colour = pow(reflectance * illumination * valley, vec3(1. / 2.2));
-  outColor = vec4(colour, 1);
+  outColor = vec4(colour, paperAlpha);
 }`;

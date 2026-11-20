@@ -1,11 +1,11 @@
 ---
 kind: instruction
-description: Design and review rules for believable merchant logos in Receipt Portrait.
+description: Design and review rules for believable merchant logos in Second impression.
 ---
 
 # Receipt identities
 
-Applies when creating, retaining or revising Receipt Portrait merchant logos. Implementation and preservation boundaries are in the [production guide](../prototypes/receipt-portrait/production-guide.md).
+Applies when creating, retaining or revising Second impression merchant logos. Implementation and preservation boundaries are in the [production guide](../prototypes/second-impression/production-guide.md).
 
 ## Identity
 

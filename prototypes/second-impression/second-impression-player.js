@@ -7,10 +7,10 @@ import { Subject } from './subject.js';
 
 const random = amount => (Math.random() - .5) * amount;
 
-export class ReceiptPlayer {
+export class SecondImpressionPlayer {
   constructor(canvas, hooks = {}, fit = false) {
     this.canvas = canvas; this.hooks = hooks; this.fit = fit;
-    this.settings = { fps: 12, delay: 500, jitter: 1 };
+    this.settings = { fps: 12, delay: 500, paperJitter: 1, printJitter: 1 };
     this.index = 0; this.sequence = 0; this.loop = false; this.active = false;
     this.queue = []; this.printed = null; this.last = 0; this.sampleOn = true;
     this.zoom = false; this.inspect = 0; this.hold = null;
@@ -99,10 +99,11 @@ export class ReceiptPlayer {
   draw(still = false) {
     if (!this.renderer) return;
     this.hooks.configure?.(this);
-    const amount = still || !this.loop ? 0 : this.settings.jitter;
+    const paperAmount = still || !this.loop ? 0 : this.settings.paperJitter;
+    const printAmount = still || !this.loop ? 0 : this.settings.printJitter;
     this.renderer.draw(this.index, this.printed || this.hold || (this.sampleOn ? this.sample : null), {
-      pose: [random(.019125) * amount, random(.023375) * amount, random(.019125) * amount],
-      printPose: [random(.0275) * amount, random(.035) * amount, random(.0275) * amount],
+      pose: [random(.019125) * paperAmount, random(.023375) * paperAmount, random(.019125) * paperAmount],
+      printPose: [random(.0275) * printAmount, random(.035) * printAmount, random(.0275) * printAmount],
       zoom: this.zoom, inspect: this.inspect, fit: this.fit,
       frame: this.loop && !still ? this.sequence : undefined,
     });

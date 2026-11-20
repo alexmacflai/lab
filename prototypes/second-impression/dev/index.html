@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <base href="../">
-  <title>Paper print · development</title>
+  <title>Second impression · development</title>
   <link rel="stylesheet" href="dev.css">
   <link rel="stylesheet" href="dev/print-proof/style.css">
 </head>
 <body>
-  <header><a href="../../">Lab</a><span>Paper print / development</span><a href="./">Public view</a></header>
+  <header><a href="../../">Lab</a><span>Second impression / development</span><a href="./">Public view</a></header>
   <main class="workspace">
     <section class="preview" aria-label="Paper viewer">
       <div class="caption"><span id="receipt-name">Receipt collection</span><span id="counter">001 / 100</span></div>
@@ -58,8 +58,10 @@
         <input id="fps" type="range" min="4" max="18" value="12">
         <div class="tuning-heading"><label for="delay">Delay / ms</label><input id="specific-delay" class="property-override" type="checkbox" hidden></div>
         <input id="delay" type="range" min="0" max="1500" step="50" value="500">
-        <div class="tuning-heading"><label for="jitter">Hand placement</label><input id="specific-jitter" class="property-override" type="checkbox" hidden></div>
-        <input id="jitter" type="range" min="0" max="2" step="0.1" value="1"><pre id="values"></pre>
+        <div class="tuning-heading"><label for="paper-jitter">Paper hand placement <output id="paper-jitter-value">1.0</output></label><input id="specific-paper-jitter" class="property-override" type="checkbox" hidden></div>
+        <input id="paper-jitter" type="range" min="0" max="2" step="0.1" value="1">
+        <div class="tuning-heading"><label for="print-jitter">Print hand placement <output id="print-jitter-value">1.0</output></label><input id="specific-print-jitter" class="property-override" type="checkbox" hidden></div>
+        <input id="print-jitter" type="range" min="0" max="2" step="0.1" value="1"><pre id="values"></pre>
       </div></details>
     </aside>
   </main>
@@ -67,7 +69,7 @@
     <details open><summary>Collection</summary><nav class="gallery-nav" aria-label="Collection pages"><button id="gallery-previous">Previous 20</button><span id="gallery-range">1–20 of 100</span><button id="gallery-next">Next 20</button></nav><section id="receipts" aria-label="Paper collection"></section></details>
     <details id="ink-panel"><summary>Print conditions</summary><section id="print-proof" aria-label="Print comparison"></section></details>
     <details id="surface-proof"></details>
-    <p class="proof-note">Select a paper to hold it still. Arrow keys step through the collection; D opens timing controls. <a href="production-guide.md">Receipt guide</a> · <a href="library-cards/production-guide.md">Library card guide</a> · <a href="dev/compression/">Compression review</a></p>
+    <p class="proof-note">Select a paper to hold it still. Arrow keys step through the collection; D opens timing controls. <a href="production-guide.md">Receipt guide</a> · <a href="library-cards/production-guide.md">Library card guide</a> · <a href="dev/compression/">Compression review</a> · <a href="dev/notebook-edge-proof.html">Torn-edge proof</a></p>
   </section>
   <script type="module" src="dev.js"></script>
 </body>
