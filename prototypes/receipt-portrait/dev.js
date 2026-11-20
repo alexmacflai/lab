@@ -1,3 +1,4 @@
+import { TuningControls } from './dev/tuning.js';
 import { ReceiptPlayer } from './player.js';
 import { ReceiptGallery } from './gallery.js';
 import { PrintRenderer } from './print-material/renderer.js';
@@ -7,12 +8,13 @@ import { paperType, fillPaperSelector } from './paper-types.js';
 import { bindDisclosures } from './dev/disclosures.js';
 
 const $ = selector => document.querySelector(selector);
-let player, gallery, proof, surfaces;
+let player, gallery, proof, surfaces, tuning;
 
 function update(p) {
   $('#counter').textContent = `${String(p.index + 1).padStart(3, '0')} / ${p.papers.length}`;
   $('#receipt-name').textContent = p.papers[p.index].name;
   $('#play').textContent = p.loop ? 'Pause proof' : 'Play proof';
+  tuning?.sync();
   gallery?.highlight(p.index);
   proof?.sync(p);
   $('#values').textContent = `${p.settings.fps} fps · ${p.settings.delay} ms delay\n${p.queue.length} frames buffered\n${p.papers[p.index].id}\n${p.papers[p.index].condition} · ${p.papers[p.index].folds.length} folds\nMark: ${p.papers[p.index].mark || 'none'}\n${p.canvas.width} × ${p.canvas.height} display pixels`;
@@ -22,21 +24,6 @@ function select(index) {
   player.select(index);
   const page = Math.floor(player.index / gallery.size);
   if (gallery.page !== page) gallery.show(page, player.index);
-}
-
-function bindImageControls() {
-  const refresh = () => {
-    const width = Number($('#print-resolution').value), gamma = Number($('#image-gamma').value);
-    const size = [width,Math.round(width*1.25)];
-    $('#print-resolution-value').textContent = `${size[0]} × ${size[1]}`;
-    $('#image-gamma-value').textContent = gamma.toFixed(2);
-    for (const renderer of [player.renderer,proof?.renderer].filter(Boolean)) {
-      renderer.imageSize = size; renderer.imageGamma = gamma;
-    }
-    player.draw(true); proof?.rebuild();
-    if (surfaces?.root.open) surfaces.rebuild();
-  };
-  for (const id of ['print-resolution','image-gamma']) $(`#${id}`).addEventListener('input',refresh);
 }
 
 async function changeCollection() {
@@ -69,7 +56,7 @@ function rebuildInspection(type) {
 
 function createProof() {
   proof = new PrintProof(player); proof.renderer.imageSize = player.renderer.imageSize;
-  proof.renderer.imageGamma = player.renderer.imageGamma; proof.rebuild();
+  tuning?.apply(proof.renderer); proof.rebuild();
 }
 
 function bindControls() {
@@ -95,9 +82,6 @@ function bindControls() {
     player.zoom = $('#zoom').checked; player.inspect = Number($('#surface').value); player.draw(true);
   });
   $('#background').addEventListener('change', event => { $('.stage').dataset.background = event.target.value; });
-  for (const key of Object.keys(player.settings)) $(`#${key}`).addEventListener('input', event => {
-    player.settings[key] = Number(event.target.value); player.draw(true);
-  });
   document.addEventListener('keydown', event => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) return;
     if (event.key.toLowerCase() === 'd') $('#debug').querySelector('summary').click();
@@ -122,7 +106,10 @@ async function initialise() {
     await player.load();
     player.attachCamera($('#start'), $('#status'), $('#subject-status'));
     $('#start').disabled = false; $('#start').textContent = 'Start camera'; bindControls();
-    rebuildInspection(paperType('receipts')); bindImageControls();
+    tuning = new TuningControls(player, () => {
+      proof?.rebuild(); if (surfaces?.root.open) surfaces.rebuild();
+    });
+    rebuildInspection(paperType('receipts'));
   } catch (error) {
     $('#start').textContent = 'Preview unavailable';
     $('#status').textContent = 'The proof could not load. It needs WebGL 2 and its image assets. Refresh to try again.';

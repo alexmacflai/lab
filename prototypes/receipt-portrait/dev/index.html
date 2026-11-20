@@ -16,7 +16,7 @@
       <div class="stage" data-background="table"><canvas id="portrait" width="840" height="1040" aria-label="A delayed camera print on paper"></canvas></div>
       <div class="receipt-nav"><button id="previous" aria-label="Previous paper">←</button><button id="play">Play proof</button><button id="next" aria-label="Next paper">→</button></div>
       <div class="controls"><p id="status" role="status">Sample print · camera off.</p><button id="start" disabled>Loading paper…</button></div>
-      <p class="privacy">Camera images stay on this device. Nothing is saved.</p>
+      <p class="privacy">Camera images stay on this device. Camera images are never saved.</p>
     </section>
     <aside class="tools" aria-label="Viewer controls">
       <section class="paper-picker"><h1>Paper</h1><label for="dev-paper-type" class="sr-only">Paper type</label><select id="dev-paper-type"><option value="receipts">Receipts</option></select><p id="collection-status" role="status">100 receipts</p></section>
@@ -32,17 +32,33 @@
         <label class="mobile-camera-option"><input id="back-camera" type="checkbox"> Back camera</label>
         <p id="subject-status" role="status">Person detection downloads on first use. Images stay on this device.</p>
       </div></details>
-      <details><summary>Print image</summary><div class="print-tuning">
-        <label for="print-resolution">Resolution <output id="print-resolution-value" for="print-resolution">96 × 120</output></label>
+      <section class="tuning-mode">
+        <label>Edit values <select id="tuning-mode"><option value="global">Global</option><option value="variant">Paper type</option></select></label>
+        <p id="tuning-target"></p>
+        <button id="save-tuning">Save to project</button> <button id="copy-tuning">Copy values</button>
+        <p id="tuning-status" role="status">Unsaved changes last until reload.</p>
+      </section>
+      <details open><summary>Print image</summary><div class="print-tuning">
+        <div class="tuning-heading"><label for="print-resolution">Resolution <output id="print-resolution-value" for="print-resolution">96 × 120</output></label><input id="specific-print-resolution" class="property-override" type="checkbox" hidden></div>
         <input id="print-resolution" type="range" min="48" max="288" step="8" value="96">
-        <label for="image-gamma">Image gamma <output id="image-gamma-value" for="image-gamma">1.20</output></label>
+        <div class="tuning-heading"><label for="image-gamma">Image gamma <output id="image-gamma-value" for="image-gamma">1.20</output></label><input id="specific-image-gamma" class="property-override" type="checkbox" hidden></div>
         <input id="image-gamma" type="range" min="0.5" max="2.5" step="0.05" value="1.2">
+        <div class="tuning-heading"><label for="image-brightness">Mid-light brightness <output id="image-brightness-value"></output></label><input id="specific-image-brightness" class="property-override" type="checkbox" hidden></div>
+        <input id="image-brightness" type="range" min="0" max="1" step="0.01" value="0">
+        <div class="tuning-heading"><label for="print-aspect">Aspect ratio</label><input id="specific-print-aspect" class="property-override" type="checkbox" hidden></div>
+        <select id="print-aspect"><option value="0.8">4:5 · portrait</option><option value="0.6666666666666666">2:3 · portrait</option><option value="0.75">3:4 · portrait</option><option value="1">1:1 · square</option><option value="1.3333333333333333">4:3 · landscape</option><option value="1.5">3:2 · landscape</option><option value="1.7777777777777777">16:9 · wide</option></select>
+        <div class="tuning-heading"><label for="print-size">Print width <output id="print-size-value"></output></label><input id="specific-print-size" class="property-override" type="checkbox" hidden></div>
+        <input id="print-size" type="range" min="0.25" max="2" step="0.01" value="0.94">
+        <p>Width is relative to the paper. Oversized prints are clipped at its edges. Brightness lifts mid-lights while protecting deep blacks.</p>
         <p>Resolution changes the halftone, not the textures. Gamma adjusts the image before printing.</p>
       </div></details>
       <details id="debug"><summary>Timing and movement</summary><div class="timing">
-        <label>Frames / second <input id="fps" type="range" min="4" max="18" value="12"></label>
-        <label>Delay / ms <input id="delay" type="range" min="0" max="1500" step="50" value="500"></label>
-        <label>Hand placement <input id="jitter" type="range" min="0" max="2" step="0.1" value="1"></label><pre id="values"></pre>
+        <div class="tuning-heading"><label for="fps">Frames / second</label><input id="specific-fps" class="property-override" type="checkbox" hidden></div>
+        <input id="fps" type="range" min="4" max="18" value="12">
+        <div class="tuning-heading"><label for="delay">Delay / ms</label><input id="specific-delay" class="property-override" type="checkbox" hidden></div>
+        <input id="delay" type="range" min="0" max="1500" step="50" value="500">
+        <div class="tuning-heading"><label for="jitter">Hand placement</label><input id="specific-jitter" class="property-override" type="checkbox" hidden></div>
+        <input id="jitter" type="range" min="0" max="2" step="0.1" value="1"><pre id="values"></pre>
       </div></details>
     </aside>
   </main>

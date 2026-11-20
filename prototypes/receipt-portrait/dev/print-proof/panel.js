@@ -90,6 +90,7 @@ export class PrintProof {
   async rebuild() {
     const generation = ++this.generation, index = this.index, cards = document.querySelector('#proof-cards');
     document.querySelector('#proof-source').textContent = `Comparison paper: ${this.player.papers[index].name} · ${this.player.papers[index].condition}. Cards keep the photograph when the camera is on.`;
+    for (const key of ['imageSize','imageGamma','imageBrightness','printSize']) this.renderer[key] = this.player.renderer[key];
     this.renderer.proofView = this.player.renderer.proofView;
     for (let i=0;i<PROFILES.length;i++) {
       if (generation !== this.generation) return;

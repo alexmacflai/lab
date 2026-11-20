@@ -50,6 +50,8 @@ export class SurfaceProof {
     const source = document.querySelector('#surface-source').value === 'grid' ? this.grid : this.player.sample;
     this.renderer.imageSize = this.player.renderer.imageSize;
     this.renderer.imageGamma = this.player.renderer.imageGamma;
+    this.renderer.imageBrightness = this.player.renderer.imageBrightness;
+    this.renderer.printSize = this.player.renderer.printSize;
     for (let i = 0; i < this.papers.length; i++) {
       if (generation !== this.generation || !this.root.open) return;
       // Hold the exact same impression across both sides and all three papers.

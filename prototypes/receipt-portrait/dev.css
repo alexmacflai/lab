@@ -56,3 +56,10 @@ pre { white-space: pre-wrap; font-size: 10px; line-height: 1.7; }
 @media(max-width:800px) { header { padding: 18px 20px; } .workspace { grid-template-columns: minmax(0,1fr) 290px; gap: 20px; padding: 8px 20px 30px; } .review-area { padding: 0 20px 30px; } #receipts { grid-template-columns: repeat(4,minmax(0,1fr)); } }
 @media(max-width:620px) { .workspace { grid-template-columns: 1fr; } .preview { position: static; } .stage { height: 62svh; } #receipts { grid-template-columns: repeat(2,minmax(0,1fr)); } #receipts button img { height: 200px; } .tools { padding: 2px 16px; } .mobile-camera-option { display: flex; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition: none !important; animation: none !important; } }
+.tuning-mode { border-top: 1px solid #18181820; padding: 18px 0; }
+.tuning-mode p, #image-source, #timing-source { font-size: 11px; line-height: 1.6; }
+.tuning-mode button { margin-bottom: 8px; }
+.tuning-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.tuning-heading label { flex: 1; margin: 0; }
+.tuning-heading .property-override { flex: 0 0 16px; cursor: pointer; }
+.print-tuning > select { margin-bottom: 18px; }

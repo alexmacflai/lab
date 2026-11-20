@@ -85,6 +85,7 @@ export class ReceiptPlayer {
 
   tick(time) {
     requestAnimationFrame(this.tick);
+    this.hooks.configure?.(this);
     if (!this.renderer || this.switching || document.hidden || time - this.last + .5 < 1000 / this.settings.fps) return;
     if (!this.active && !this.loop) { this.last = time; return; }
     this.last = time;
@@ -97,6 +98,7 @@ export class ReceiptPlayer {
 
   draw(still = false) {
     if (!this.renderer) return;
+    this.hooks.configure?.(this);
     const amount = still || !this.loop ? 0 : this.settings.jitter;
     this.renderer.draw(this.index, this.printed || this.hold || (this.sampleOn ? this.sample : null), {
       pose: [random(.019125) * amount, random(.023375) * amount, random(.019125) * amount],
