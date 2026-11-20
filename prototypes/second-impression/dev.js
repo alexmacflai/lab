@@ -1,6 +1,6 @@
 import { TuningControls } from './dev/tuning.js';
-import { ReceiptPlayer } from './player.js';
-import { ReceiptGallery } from './gallery.js';
+import { SecondImpressionPlayer } from './second-impression-player.js';
+import { SecondImpressionGallery } from './second-impression-gallery.js';
 import { PrintRenderer } from './print-material/renderer.js';
 import { PrintProof } from './dev/print-proof/panel.js';
 import { SurfaceProof } from './dev/surface-proof/panel.js';
@@ -62,7 +62,7 @@ async function changeCollection(materialOnly = false) {
 }
 
 function rebuildInspection(type) {
-  gallery = new ReceiptGallery(player.papers, type.id === 'library-cards' ? null : player.sample, select); gallery.show(Math.floor(player.index / gallery.size), player.index);
+  gallery = new SecondImpressionGallery(player.papers, type.id === 'library-cards' ? null : player.sample, select); gallery.show(Math.floor(player.index / gallery.size), player.index);
   $('#card-material-control').hidden = type.id !== 'library-cards';
   $('#surface-proof').hidden = false;
   surfaces = new SurfaceProof(player, type.id === 'library-cards' ? libraryComparison(libraryBase) : null);
@@ -111,7 +111,7 @@ function bindControls() {
 
 async function initialise() {
   try {
-    player = new ReceiptPlayer($('#portrait'), { draw: update, Renderer: PrintRenderer,
+    player = new SecondImpressionPlayer($('#portrait'), { draw: update, Renderer: PrintRenderer,
       camera: active => {
         $('#sample').disabled = active; if (active) $('#sample').checked = false;
         $('#back-camera').checked = player.camera?.facing === 'environment';

@@ -5,7 +5,7 @@ This project's guidance and documents, for people and agents: how files here are
 <!-- routing:start (generated, do not edit) -->
 | File | Description | Tags |
 |---|---|---|
-| [receipt-identities.md](receipt-identities.md) | Design and review rules for believable merchant logos in Receipt Portrait. |  |
+| [receipt-identities.md](receipt-identities.md) | Design and review rules for believable merchant logos in Second impression. |  |
 | [setup.md](setup.md) | How to set up, build, test and run the project, the shared resources agents use, and known setup problems. | testing |
 | [agents/](agents/README.md) | How agents work on any task in this project: when to act or ask, scope, approvals, conflicts, communication, verification, parallel work, safety and learning. | testing |
 | [copywriting/](copywriting/README.md) | Shared copy standards for the lab index and every prototype, with room for each piece's own tone. |  |

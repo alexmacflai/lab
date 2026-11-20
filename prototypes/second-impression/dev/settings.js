@@ -11,7 +11,8 @@ export const SETTINGS = {
     "timing": {
       "fps": 12,
       "delay": 500,
-      "jitter": 1
+      "paperJitter": 1,
+      "printJitter": 1
     }
   },
   "variants": {
@@ -34,12 +35,14 @@ export const SETTINGS = {
       },
       "timing": {
         "enabled": {
-          "jitter": true
+          "paperJitter": true,
+          "printJitter": true
         },
         "values": {
           "fps": 12,
           "delay": 500,
-          "jitter": 0.5
+          "paperJitter": 0.5,
+          "printJitter": 0.5
         }
       }
     },

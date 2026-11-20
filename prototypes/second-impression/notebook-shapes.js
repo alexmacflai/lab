@@ -1,9 +1,8 @@
 import { seeded } from './receipts.js';
 
-// Left, right, top, bottom: factory edges remain straight, including page corners.
-const FACTORY = [[true, false, true, false], [false, true, false, true],
-  [true, false, false, false], [false, false, true, false],
-  [false, false, false, false], [false, false, false, false]];
+import { NOTEBOOK_RECORDS } from './notebook-records.js';
+
+const FACTORY = NOTEBOOK_RECORDS.map(record => record.factory);
 
 function smoothSamples(values, t) {
   const p = Math.max(0, Math.min(.999999, t)) * (values.length - 1), i = Math.floor(p);

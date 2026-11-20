@@ -1,4 +1,4 @@
-import { ReceiptPlayer } from './player.js';
+import { SecondImpressionPlayer } from './second-impression-player.js';
 import { PrintRenderer } from './print-material/renderer.js';
 import { bindCameraControls } from './camera-controls.js';
 import { fillPaperSelector, paperType } from './paper-types.js';
@@ -51,7 +51,7 @@ function finishLoading() {
 async function initialise() {
   fillPaperSelector($('#paper-type')); bindCameraControls(configureControl);
   try {
-    player = new ReceiptPlayer($('#portrait'), {
+    player = new SecondImpressionPlayer($('#portrait'), {
       Renderer: PrintRenderer, configure: configurePaperPrint,
       draw: p => { start.setAttribute('aria-busy', String(p.active && !p.printed)); },
       camera: active => {
