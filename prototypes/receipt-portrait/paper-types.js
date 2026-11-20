@@ -3,6 +3,8 @@ export const PAPER_TYPES = [
     load: () => import('./paper.js').then(module => module.loadPaper()) },
   { id: 'library-cards', label: 'Library borrowing cards', shortLabel: 'Library cards', count: 40, public: true,
     load: () => import('./library-cards/collection.js').then(module => module.loadCards()) },
+  { id: 'notebook-scraps', label: 'Torn notebook scraps', shortLabel: 'Notebook scraps', count: 6, public: false,
+    load: () => import('./notebook-scraps.js').then(module => module.loadScraps()) },
 ];
 
 export function paperType(id) { return PAPER_TYPES.find(type => type.id === id) || PAPER_TYPES[0]; }

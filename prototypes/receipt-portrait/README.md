@@ -1,10 +1,10 @@
 ---
-title: Receipt Portrait
-description: A delayed camera portrait printed onto a collection of 100 folded paper receipts.
+title: Second impression
+description: A delayed camera portrait printed onto receipts, library cards and found paper.
 date: 2026-11-18
 ---
 
-# Receipt Portrait
+# Second impression
 
 A collection of 100 authored receipts across 24 design families, including the original six reference receipts. Headers use original pictograms, seals, reverse-print panels and varied wordmarks. Paper conditions range from pristine to pocket-crumpled, with damage fixed per ticket. Twenty-four receipts have one, two or three neatly spaced full-width folds, with mirrored small tilts on successive creases. Thirty-three tickets carry a stain, stroke, note or doodle, including seven coffee stains roughly as wide as the receipt. Notes and eight different doodles use generated scanned-style textures rather than fonts or geometric icons. Each entry has its own transaction, layout settings, stock and edges. Dry-transfer coverage samples a generated material in paper coordinates, combined with contact from the receipt mesh. The camera print keeps its coarse ordered dithering, with restrained finer variation inside the ink deposits. Each frame independently varies its neutral-black ink: most prints are clean or lightly textured, with occasional weak transfer, stronger bleed or fold-related marks. It multiplies into the receipt before the shared surface is lit and rendered, so paper and print bend together. Tight crease compression and restrained highlights over the ink reveal the folds. A geometry-derived shadow follows lifted edges. The receipts use authored layouts and a generated paper material rather than real scans. Camera frames remain in memory on your device and are never uploaded or saved.
 
@@ -48,3 +48,9 @@ Both views use the approved materials: mostly preserved cards, occasional corner
 The collection thumbnails show unprinted records. Turn off **Sample print** to inspect the full face. On desktop, the viewer stays to the left of grouped controls; on smaller screens they stack. Collection thumbnails and expandable comparisons sit below. Changing paper keeps the camera stream and releases old collection renderers. See the [library card production guide](library-cards/production-guide.md) for research and provenance.
 
 All 40 library images use the approved **WebP quality 75** at the existing **800 × 1333** resolution. The batch is 3.89 MB, down from 10.17 MB at quality 90 (61.7% smaller). [Compression review](dev/compression/) retains the three-card comparison and file sizes that informed this choice. Designs, print values and material profiles are unchanged by compression.
+
+## Torn notebook scraps
+
+The development Paper selector includes a six-scrap material proof, with surviving widths of 64–76 mm and height-to-width ratios of 1.15–1.30. Two scraps retain a page corner, two retain one factory edge and two are torn on all four sides. Shapes stay close to rectangles, with small irregularities confined to the perimeter. Two are nearly flat, two have a reopened half-fold and two have perpendicular quarter-folds. Sparse local handling and restrained curl keep the main sections flat. Ruling and generated handwriting use the existing paper textures. These are simulated paper objects, not scans. The public selector lists them as in review.
+
+For the highlight comparison, select **Page corner · quarter fold**, then open **Print conditions**. All eight cards use that same paper, photograph and print settings. Turn off **Detail crops** to compare full scraps. The shared surface lighting applies after every print condition; diagnostics such as **Ink coverage** intentionally omit lighting. The saved print settings are unchanged by this proof.

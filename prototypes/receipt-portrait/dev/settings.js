@@ -42,6 +42,24 @@ export const SETTINGS = {
           "jitter": 0.5
         }
       }
+    },
+    "notebook-scraps": {
+      "image": {
+        "enabled": {
+          "size": true,
+          "aspect": true,
+          "gamma": true,
+          "brightness": true,
+          "resolution": true
+        },
+        "values": {
+          "resolution": 112,
+          "gamma": 0.8,
+          "brightness": 0.6,
+          "aspect": 1.3333333333333333,
+          "size": 0.64
+        }
+      }
     }
   }
 };

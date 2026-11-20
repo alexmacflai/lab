@@ -29,7 +29,7 @@ def validate(data):
         validate_section(section, data['global'][section])
     assert isinstance(data['variants'], dict) and len(data['variants']) <= 1000
     for key, variant in data['variants'].items():
-        assert key in {'receipts', 'library-cards'}
+        assert key in {'receipts', 'library-cards', 'notebook-scraps'}
         assert isinstance(variant, dict) and set(variant) <= set(LIMITS)
         for section, override in variant.items():
             assert set(override) == {'enabled', 'values'}
