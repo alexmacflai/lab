@@ -9,6 +9,7 @@
 </head>
 <body data-loading="true">
   <div id="page-loading" class="page-loading" role="status"><span class="page-spinner" aria-hidden="true"></span><span class="sr-only">Loading paper…</span></div>
+  <div id="paper-loading" class="paper-loading" popover="manual" role="status"><span class="page-spinner" aria-hidden="true"></span><span class="sr-only">Loading paper…</span></div>
   <main class="stage" inert><canvas id="portrait" width="840" height="1040" aria-label="A delayed camera print on paper"></canvas></main>
   <p id="status" role="status" class="sr-only">Loading paper…</p>
   <p id="subject-status" role="status" class="sr-only"></p>
@@ -28,7 +29,7 @@
     <button id="auto-frame" class="switch-row" role="switch" aria-checked="true"><span>Keep me in frame</span><span class="switch-track" aria-hidden="true"></span></button>
     <button id="subject-mask" class="switch-row" role="switch" aria-checked="false"><span>Remove background</span><span class="switch-track" aria-hidden="true"></span></button>
     <button id="back-camera" class="switch-row mobile-camera-option" role="switch" aria-checked="false"><span>Back camera</span><span class="switch-track" aria-hidden="true"></span></button>
-    <label id="paper-choice" class="paper-choice"><span>Paper</span><select id="paper-type" aria-label="Paper type"><option value="receipts">Receipts</option></select><span id="paper-loading" class="paper-loading" role="status"></span></label>
+    <div id="paper-choice" class="paper-choice"><span id="paper-title">Paper</span><fieldset id="paper-type" class="paper-chips" aria-labelledby="paper-title"></fieldset></div>
     </div>
   </dialog>
   <script type="module" src="main.js"></script>

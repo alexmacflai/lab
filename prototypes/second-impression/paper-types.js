@@ -16,3 +16,13 @@ export function fillPaperSelector(select, development = false) {
     option.disabled = !development && !type.public; return option;
   }));
 }
+
+export function fillPaperChoices(group) {
+  group.replaceChildren(...PAPER_TYPES.filter(type => type.public).map(type => {
+    const label = document.createElement('label'); label.className = 'paper-chip';
+    const input = document.createElement('input'); input.type = 'radio';
+    input.name = 'paper-type'; input.value = type.id; input.checked = type.id === 'receipts';
+    const text = document.createElement('span'); text.textContent = type.shortLabel || type.label;
+    label.append(input, text); return label;
+  }));
+}

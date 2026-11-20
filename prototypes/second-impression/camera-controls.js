@@ -52,7 +52,7 @@ export function bindCameraControls(onChange) {
   drawer.addEventListener('cancel', event => { event.preventDefault(); closeDrawer(); });
   drawer.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
-    const buttons = [...drawer.querySelectorAll('button:not(:disabled),select:not(:disabled)')];
+    const buttons = [...drawer.querySelectorAll('button:not(:disabled),input:not(:disabled):checked')];
     if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons.at(-1).focus(); }
     else if (!event.shiftKey && document.activeElement === buttons.at(-1)) { event.preventDefault(); buttons[0].focus(); }
   });
