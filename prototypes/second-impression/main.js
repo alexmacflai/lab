@@ -30,10 +30,15 @@ async function configureControl(id) {
     const type = paperType($('#paper-type').value);
     if (!type.public) { $('#paper-type').value = 'receipts'; return; }
     const selector = $('#paper-type'), previous = player.papers[0].paperType || 'receipts';
-    selector.disabled = true;
+    selector.disabled = true; selector.setAttribute('aria-busy', 'true');
+    $('#paper-loading').textContent = 'Loading paper…';
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     try { await player.changePaper(type.load); }
     catch { selector.value = previous; showError('The paper could not load. Try again.'); }
-    finally { selector.disabled = false; }
+    finally {
+      selector.disabled = false; selector.setAttribute('aria-busy', 'false');
+      $('#paper-loading').textContent = '';
+    }
     return;
   }
   if (id !== 'back-camera') return player?.configureSubject(enabled('subject-mask'), enabled('auto-frame'));

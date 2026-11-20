@@ -74,3 +74,9 @@ body[data-loading="false"] .page-spinner { animation: none; }
 @media(min-width:700px) and (min-height:480px) { .inline-options { gap: 16px; } .inline-options .paper-choice { min-height: 44px; border: 0; gap: 6px; font-size: 13px; } .inline-options .paper-choice select { max-width: 132px; padding: 6px; } }
 
 @media (min-width:700px) and (max-width:780px) and (min-height:480px) { .inline-options { gap: 6px; } }
+
+.paper-choice { position: relative; }
+.paper-loading { position: absolute; right: 0; bottom: -12px; display: flex; align-items: center; gap: 6px; font-size: 11px; white-space: nowrap; }
+.paper-loading:empty { display: none; }
+.paper-loading:not(:empty)::before { content: ''; width: 10px; height: 10px; border: 1.5px solid #18181826; border-top-color: #181818; border-radius: 50%; animation: turn .85s linear infinite; }
+@media (max-width: 699px), (max-height: 479px) { .paper-loading { bottom: -10px; } }
