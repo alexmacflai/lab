@@ -1,4 +1,5 @@
 import { seeded } from './receipts.js';
+import { scaledCornerTexture } from './notebook-edge-baseline.js';
 import { tornCornerTexture } from './notebook-edge-proof.js';
 import { scrapTexture } from './notebook-texture.js';
 import { scrapShape, scrapFolds } from './notebook-shapes.js';
@@ -19,6 +20,7 @@ function scrap(index, stock, handwriting) {
     bumps: [{ u: .82, v: .87, radius: .065, amplitude: .00065 }],
     curl: .0007 + index % 3 * .0002, micro: .0001, phase: index,
     surfacePoint: scrapShape(index, seed, ratio),
+    scaledEdgeTexture: () => scaledCornerTexture(scrapTexture(stock, handwriting, index, widthMm, ratio, seed), seed),
     originalEdgeTexture: () => scrapTexture(stock, handwriting, index, widthMm, ratio, seed),
     makeTexture: () => {
       const texture = scrapTexture(stock, handwriting, index, widthMm, ratio, seed);
