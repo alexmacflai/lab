@@ -17,8 +17,8 @@ export class PrintProof {
     this.resizeCards();
     const resize = () => { if (this.resizeCards()) this.rebuild(); };
     this.resizeObserver = new ResizeObserver(resize); this.resizeObserver.observe(document.querySelector('#proof-cards'));
-    window.addEventListener('resize', resize);
-    this.bind(); player.select(this.index); this.rebuild();
+    this.resizeHandler = resize; window.addEventListener('resize', resize);
+    this.bind(); this.rebuild();
   }
 
   resizeCards() {
@@ -66,6 +66,11 @@ export class PrintProof {
 
   stop() { this.cycling = false; document.querySelector('#proof-cycle').textContent = 'Randomise prints'; }
 
+  dispose() {
+    this.stop(); this.generation++; this.resizeObserver.disconnect();
+    window.removeEventListener('resize', this.resizeHandler); this.renderer.dispose(true);
+  }
+
   choose(index) { this.player.renderer.profile = index; this.player.draw(true); this.highlight(); }
 
   highlight() {
@@ -85,6 +90,7 @@ export class PrintProof {
   async rebuild() {
     const generation = ++this.generation, index = this.index, cards = document.querySelector('#proof-cards');
     document.querySelector('#proof-source').textContent = `Comparison paper: ${this.player.papers[index].name} · ${this.player.papers[index].condition}. Cards keep the photograph when the camera is on.`;
+    for (const key of ['imageSize','imageGamma','imageBrightness','printSize']) this.renderer[key] = this.player.renderer[key];
     this.renderer.proofView = this.player.renderer.proofView;
     for (let i=0;i<PROFILES.length;i++) {
       if (generation !== this.generation) return;

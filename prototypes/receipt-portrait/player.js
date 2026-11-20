@@ -29,6 +29,19 @@ export class ReceiptPlayer {
     this.draw(true); this.tick = this.tick.bind(this); requestAnimationFrame(this.tick);
   }
 
+  async changePaper(load) {
+    const token = this.paperToken = (this.paperToken || 0) + 1;
+    this.switching = true;
+    try {
+      const papers = await load(); if (token !== this.paperToken) return false;
+      const size = this.renderer.imageSize, gamma = this.renderer.imageGamma, profile = this.renderer.profile;
+      this.renderer.dispose(); this.papers = papers;
+      this.renderer = new (this.hooks.Renderer || PaperRenderer)(this.canvas, papers);
+      if (size) { this.renderer.imageSize = size; this.renderer.imageGamma = gamma; this.renderer.profile = profile; }
+      this.index = 0; this.renderer.resize(this.fit); this.switching = false; this.draw(true); return true;
+    } finally { if (token === this.paperToken) this.switching = false; }
+  }
+
   attachCamera(button, status, subjectStatus) {
     this.status = status; this.subject = new Subject(subjectStatus);
     this.camera = new Camera(button, status, active => {
@@ -72,7 +85,8 @@ export class ReceiptPlayer {
 
   tick(time) {
     requestAnimationFrame(this.tick);
-    if (!this.renderer || document.hidden || time - this.last + .5 < 1000 / this.settings.fps) return;
+    this.hooks.configure?.(this);
+    if (!this.renderer || this.switching || document.hidden || time - this.last + .5 < 1000 / this.settings.fps) return;
     if (!this.active && !this.loop) { this.last = time; return; }
     this.last = time;
     if (this.active && this.camera.video.readyState >= 2) this.capture(time);
@@ -84,6 +98,7 @@ export class ReceiptPlayer {
 
   draw(still = false) {
     if (!this.renderer) return;
+    this.hooks.configure?.(this);
     const amount = still || !this.loop ? 0 : this.settings.jitter;
     this.renderer.draw(this.index, this.printed || this.hold || (this.sampleOn ? this.sample : null), {
       pose: [random(.019125) * amount, random(.023375) * amount, random(.019125) * amount],

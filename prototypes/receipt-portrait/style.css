@@ -67,3 +67,8 @@ body[data-loading="true"] .stage, body[data-loading="true"] .camera-bar { opacit
 body[data-loading="false"] .page-loading { opacity: 0; visibility: hidden; }
 .page-spinner { width: 28px; height: 28px; border: 2px solid #18181826; border-top-color: #181818; border-radius: 50%; animation: turn .85s linear infinite; }
 body[data-loading="false"] .page-spinner { animation: none; }
+
+.paper-choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; border-top: 1px solid #18181819; font-size: 15px; }
+.paper-choice select { font: inherit; color: inherit; background: #fff5; border: 1px solid #18181825; border-radius: 8px; padding: 8px; max-width: 72%; transition: background .18s,border-color .18s; }
+.paper-choice select:focus-visible { outline: 2px solid #181818; outline-offset: 3px; }
+@media(min-width:700px) and (min-height:480px) { .inline-options { gap: 16px; } .inline-options .paper-choice { min-height: 44px; border: 0; gap: 6px; font-size: 13px; } .inline-options .paper-choice select { max-width: 95px; padding: 6px; } }

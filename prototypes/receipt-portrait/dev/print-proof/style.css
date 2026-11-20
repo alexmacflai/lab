@@ -22,3 +22,5 @@
 #surface-cards img { display: block; width: 100%; height: auto; }
 #surface-cards figcaption { padding: 12px; font-size: 12px; }
 @media (min-width: 760px) { #surface-proof { width: min(1100px, calc(100vw - 48px)); position: relative; left: 50%; transform: translateX(-50%); } }
+.review-area #surface-proof { width: auto; left: auto; transform: none; margin: 0; padding-top: 0; }
+.review-area #print-proof { margin-top: 0; border: 0; padding-top: 0; }

@@ -16,6 +16,7 @@ function gridPrint() {
 
 export class SurfaceProof {
   constructor(player) {
+    this.events = new AbortController();
     this.player = player; this.root = document.querySelector('#surface-proof');
     this.root.innerHTML = `<summary>Surface comparisons</summary>
       <p>The Small Hours pair isolates the edge fix. Further pairs compare the previous and sharper crease compression, with the same height, highlight shader, ink and placement. Sharper creases and highlights are also used in the public view.</p>
@@ -23,8 +24,8 @@ export class SurfaceProof {
       <label>View <select id="surface-view"><option value="0">Paper and ink</option><option value="2">Surface normals</option></select></label>
       <label><input id="surface-detail" type="checkbox"> Close-up</label></div>
       <div id="surface-cards"></div>`;
-    this.root.addEventListener('toggle', () => { if (this.root.open) this.rebuild(); });
-    this.root.querySelectorAll('select,input').forEach(control => control.addEventListener('change', () => this.rebuild()));
+    this.root.addEventListener('toggle', () => { if (this.root.open) this.rebuild(); }, { signal: this.events.signal });
+    this.root.querySelectorAll('select,input').forEach(control => control.addEventListener('change', () => this.rebuild(), { signal: this.events.signal }));
   }
 
   initialise() {
@@ -49,6 +50,8 @@ export class SurfaceProof {
     const source = document.querySelector('#surface-source').value === 'grid' ? this.grid : this.player.sample;
     this.renderer.imageSize = this.player.renderer.imageSize;
     this.renderer.imageGamma = this.player.renderer.imageGamma;
+    this.renderer.imageBrightness = this.player.renderer.imageBrightness;
+    this.renderer.printSize = this.player.renderer.printSize;
     for (let i = 0; i < this.papers.length; i++) {
       if (generation !== this.generation || !this.root.open) return;
       // Hold the exact same impression across both sides and all three papers.
@@ -64,4 +67,6 @@ export class SurfaceProof {
       await new Promise(resolve => requestAnimationFrame(resolve));
     }
   }
+
+  dispose() { this.generation = (this.generation || 0) + 1; this.events.abort(); this.renderer?.dispose(true); }
 }

@@ -18,8 +18,9 @@ export class PrintRenderer extends PaperRenderer {
     super(canvas, papers, limit, fragment);
     const gl = this.gl; this.profile = -2; this.impression = null; this.proofView = 0; this.responses = new Map();
     this.surfaceUniform = gl.getUniformLocation(this.program, 'uSurfaceRefined');
-    this.imageSize = [96,120]; this.imageGamma = 1.2;
+    this.imageSize = [96,120]; this.imageGamma = 1.2; this.imageBrightness = 0;
     this.imageUniforms = { size:gl.getUniformLocation(this.program,'uImageSize'), gamma:gl.getUniformLocation(this.program,'uImageGamma') };
+    this.brightnessUniform = gl.getUniformLocation(this.program, 'uImageBrightness');
     this.proofUniforms = {};
     for (const name of ['On','View','Ink','Grain','Seed','Rare']) this.proofUniforms[name] = gl.getUniformLocation(this.program, `uProof${name}`);
     gl.uniform1i(gl.getUniformLocation(this.program,'uResponse'),3);
@@ -50,6 +51,11 @@ export class PrintRenderer extends PaperRenderer {
 
   reroll() { this.impression = null; }
 
+  dispose(releaseContext = false) {
+    for (const texture of this.responses.values()) this.gl.deleteTexture(texture);
+    this.gl.deleteTexture(this.neutralResponse); this.gl.deleteTexture(this.film); super.dispose(releaseContext);
+  }
+
   draw(index, printed, options = {}) {
     if (!this.impression || this.appliedProfile !== this.profile || this.lastIndex !== index
       || (options.frame !== undefined && options.frame !== this.lastFrame)) {
@@ -58,6 +64,7 @@ export class PrintRenderer extends PaperRenderer {
     }
     const gl = this.gl, u = this.proofUniforms, profile = this.impression.profile >= 0 ? this.impression : null;
     gl.useProgram(this.program);
+    gl.uniform1f(this.brightnessUniform, this.imageBrightness);
     gl.uniform1i(this.surfaceUniform, this.papers[index].surfaceRefined ? 1 : 0);
     gl.uniform2fv(this.imageUniforms.size,this.imageSize); gl.uniform1f(this.imageUniforms.gamma,this.imageGamma);
     gl.uniform1i(u.On,profile ? 1 : 0); gl.uniform1i(u.View,this.proofView);

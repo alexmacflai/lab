@@ -11,5 +11,7 @@ This project's guidance and documents, for people and agents: how files here are
 | [engineering/](engineering/README.md) | How the project is built and the rules its code follows. | testing |
 | [meta/](meta/README.md) | How files in `knowledge/` and `.agents/skills/` are organised and written, and the principles behind these conventions. | principles, routing, structure, tagging |
 | [product/](product/README.md) | What the product is, who it is for and how it works. | principles, structure |
+| [references/](references/README.md) | Evidence and source material supporting the lab's reports. |  |
+| [reports/](reports/README.md) | Findings, evidence and handoffs for work in the lab. |  |
 | [tools/](tools/README.md) | Scripts that keep `AGENTS.md`, `knowledge/` and `.agents/skills/` consistent with the conventions in `meta/`. |  |
 <!-- routing:end -->

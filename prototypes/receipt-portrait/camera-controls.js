@@ -39,9 +39,9 @@ async function adaptLayout() {
   const token = ++layout, focus = document.activeElement;
   if (drawer.open) await closeDrawer(false);
   if (token !== layout) return;
-  const options = [$('#auto-frame'), $('#subject-mask'), $('#back-camera')];
+  const options = [$('#auto-frame'), $('#subject-mask'), $('#back-camera'), $('#paper-choice')];
   (wide.matches ? $('#inline-options') : $('#drawer-options')).append(...options);
-  if (options.includes(focus)) (wide.matches ? focus.id === 'back-camera' ? $('#start') : focus : opener).focus();
+  if (options.some(option => option.contains(focus))) (wide.matches ? focus.id === 'back-camera' ? $('#start') : focus : opener).focus();
   if (wide.matches) for (const option of options) option.animate([{ transform: 'translateY(4px)' }, { transform: 'translateY(0)' }], { duration: reduced.matches ? 0 : 160 });
 }
 
@@ -52,7 +52,7 @@ export function bindCameraControls(onChange) {
   drawer.addEventListener('cancel', event => { event.preventDefault(); closeDrawer(); });
   drawer.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
-    const buttons = [...drawer.querySelectorAll('button:not(:disabled)')];
+    const buttons = [...drawer.querySelectorAll('button:not(:disabled),select:not(:disabled)')];
     if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons.at(-1).focus(); }
     else if (!event.shiftKey && document.activeElement === buttons.at(-1)) { event.preventDefault(); buttons[0].focus(); }
   });
@@ -63,5 +63,6 @@ export function bindCameraControls(onChange) {
   for (const id of ['auto-frame', 'subject-mask', 'back-camera']) $(`#${id}`).addEventListener('click', () => {
     const button = $(`#${id}`); button.setAttribute('aria-checked', String(button.getAttribute('aria-checked') !== 'true')); onChange(id);
   });
+  $('#paper-type').addEventListener('change', () => onChange('paper-type'));
   wide.addEventListener('change', adaptLayout); adaptLayout();
 }

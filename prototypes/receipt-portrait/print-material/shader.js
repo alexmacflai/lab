@@ -12,10 +12,22 @@ uniform sampler2D uResponse;
 uniform bool uContinuousTone;
 uniform vec2 uImageSize;
 uniform float uImageGamma;
+uniform float uImageBrightness;
+float adjustedTone(float tone) {
+  float light=pow(max(0.,1.-tone),1./uImageGamma);
+  // Protect the deepest shadows; lift midtones and highlights towards paper white.
+  light=mix(light,1.,uImageBrightness*smoothstep(.15,.65,light));
+  return 1.-light;
+}
 float proofRadius;
 float proofMask;
 float proofWet;
 vec3 proofResponse;
+vec4 portraitSource(vec2 uv) {
+  float aspect=uPrintSize.x/uPrintSize.y;
+  vec2 crop=aspect>.8 ? vec2(1.,.8/aspect) : vec2(aspect/.8,1.);
+  return texture(uPrint,(uv-.5)*crop+.5);
+}
 float proofHash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7)) + uProofSeed) * 43758.5453); }
 float materialHash(vec2 p) {
   uvec2 q=uvec2(ivec2(floor(p)));
@@ -39,7 +51,7 @@ ${TRANSFER}
 
 vec2 proofPaper(vec2 uv) {
   float c=cos(uPrintPose.z),s=sin(uPrintPose.z);
-  vec2 p=mat2(c,s,-s,c)*((uv-.5)*vec2(.94,1.175))+uPrintPose.xy;
+  vec2 p=mat2(c,s,-s,c)*((uv-.5)*uPrintSize)+uPrintPose.xy;
   return vec2(p.x,p.y/uRatio)+.5;
 }
 float proofSource(vec2 uv) {
@@ -50,9 +62,9 @@ float proofSource(vec2 uv) {
   float loss=weak*uProofInk.y*(1.-proofWet*.8);
   float contact=1.-response.b*uProofInk.z*.36;
   vec2 sourceUV=uContinuousTone ? (floor(uv*uImageSize)+.5)/uImageSize : uv;
-  vec4 source=texture(uPrint,sourceUV);
+  vec4 source=portraitSource(sourceUV);
   float tone=source.a*(1.-dot(source.rgb,vec3(.299,.587,.114)));
-  if(uContinuousTone) tone=1.-pow(max(0.,1.-tone),1./uImageGamma);
+  if(uContinuousTone) tone=adjustedTone(tone);
   if(!uContinuousTone) return tone*(1.-loss)*contact;
   vec2 cell=floor(uv*vec2(600.,750.));
   float fine=materialHash(cell+vec2(19,71));
@@ -63,15 +75,15 @@ float proofSource(vec2 uv) {
 float heavyEdge(vec2 uv) {
   if(any(lessThan(uv,vec2(0))) || any(greaterThan(uv,vec2(1)))) return 0.;
   vec2 sourceUV=uContinuousTone ? (floor(uv*uImageSize)+.5)/uImageSize : uv;
-  vec4 source=texture(uPrint,sourceUV);
+  vec4 source=portraitSource(sourceUV);
   float tone=source.a*(1.-dot(source.rgb,vec3(.299,.587,.114)));
-  if(uContinuousTone) tone=1.-pow(max(0.,1.-tone),1./uImageGamma);
+  if(uContinuousTone) tone=adjustedTone(tone);
   if(!uContinuousTone) return tone;
   float fine=materialHash(floor(uv*vec2(600.,750.))+vec2(19,71));
   return smoothstep(printerThreshold(uv,fine)-.018,printerThreshold(uv,fine)+.018,tone)*step(.002,tone);
 }
 float heavyBleed(vec2 uv,vec2 mm,float radius,float base) {
-  vec2 pitch=vec2(75.2,94.)/uImageSize,position=uv*vec2(75.2,94.);
+  vec2 pitch=(uPrintSize*80.)/uImageSize,position=uv*(uPrintSize*80.);
   vec2 cell=floor(uv*uImageSize);
   // Grow only narrow exterior edges; never fill a halftone cell from its centre.
   float fibre=texture(uTransferFilm,mm/8.+vec2(fract(uProofSeed*.137),fract(uProofSeed*.719))).r;
@@ -88,7 +100,7 @@ float heavyBleed(vec2 uv,vec2 mm,float radius,float base) {
     float distance=length(max(q,0.));
     if(distance>reach+aa) continue;
     vec2 edge=clamp(position,(donor+.02)*pitch,(donor+.98)*pitch);
-    float deposit=heavyEdge(edge/vec2(75.2,94.));
+    float deposit=heavyEdge(edge/(uPrintSize*80.));
     ink=max(ink,deposit*(1.-smoothstep(reach-aa,reach+aa,distance)));
   }
   return mix(base,ink,smoothstep(.12,.24,radius));
@@ -112,14 +124,14 @@ float proofInk(vec2 uv) {
     vec2 fibre=vec2(cos(a),sin(a))*vec2(1.,.72);
     float wick=proofNoise((mm+vec2(uProofSeed,float(i)*17.))*vec2(6.,28.));
     vec2 offset=fibre*radius*mix(.25,1.,wick);
-    float deposit=proofSource(uv+offset/vec2(75.2,94.));
+    float deposit=proofSource(uv+offset/(uPrintSize*80.));
     float flooding=smoothstep(.25,.7,radius);
     float adhesion=smoothstep(mix(.66,.36,flooding),mix(.82,.60,flooding),wick);
     ink=max(ink,deposit*adhesion*.97);
   }
   if(uProofInk.w>0.) {
-    float drag=max(proofSource(uv-vec2(0,.45/94.))*.93,
-      max(proofSource(uv-vec2(0,.95/94.))*.74,proofSource(uv-vec2(0,1.65/94.))*.38));
+    float drag=max(proofSource(uv-vec2(0,.45/(uPrintSize.y*80.)))*.93,
+      max(proofSource(uv-vec2(0,.95/(uPrintSize.y*80.)))*.74,proofSource(uv-vec2(0,1.65/(uPrintSize.y*80.)))*.38));
     float pressure=ridge*uProofInk.w;
     float moved=step(proofHash(floor(uv*vec2(600.,750.))+113.),pressure);
     float retained=ink*step(proofHash(floor(uv*vec2(600.,750.))+67.),.55);

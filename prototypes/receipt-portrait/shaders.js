@@ -38,6 +38,7 @@ uniform sampler2D uPrint;
 uniform vec3 uTint;
 uniform vec3 uPrintPose;
 uniform float uRatio;
+uniform vec2 uPrintSize;
 uniform float uPrintOn;
 uniform bool uShadow;
 uniform int uInspect;
@@ -58,7 +59,7 @@ void main() {
   vec2 local = vec2(vUV.x - .5, (vUV.y - .5) * uRatio);
   local -= uPrintPose.xy;
   float c = cos(uPrintPose.z), s = sin(uPrintPose.z);
-  vec2 printUV = mat2(c, -s, s, c) * local / vec2(.94, 1.175) + .5;
+  vec2 printUV = mat2(c, -s, s, c) * local / uPrintSize + .5;
   vec4 ink = texture(uPrint, clamp(printUV, 0., 1.));
   // Imperfections live in paper coordinates, so ink follows its folds and never swims.
   vec2 fibre = floor(vUV * vec2(800., 1800.));
