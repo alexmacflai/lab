@@ -1,6 +1,6 @@
 import { loadScraps } from '../notebook-scraps.js';
 import { referenceTearShape } from '../notebook-tear-outline.js';
-import { FACTORY_EDGES } from '../notebook-shapes.js';
+import { FACTORY_EDGES, scrapShape } from '../notebook-shapes.js';
 import { tornCornerTexture } from '../notebook-edge-proof.js';
 import { scaledCornerTexture } from '../notebook-edge-baseline.js';
 import { PrintRenderer } from '../print-material/renderer.js';
@@ -23,7 +23,7 @@ function render() {
   const index = Number(document.querySelector('#paper').value), source = papers[index];
   const factory = FACTORY_EDGES[index];
   const paper = { ...source, surfacePoint: referenceTearShape(index, source.seed, source.ratio), edgeAlpha: true, makeTexture: () => tornCornerTexture(source.originalEdgeTexture(), source.seed, factory, source.widthMm) };
-  const original = { ...source, edgeAlpha: true, makeTexture: () => scaledCornerTexture(source.originalEdgeTexture(), source.seed, factory, source.widthMm) };
+  const original = { ...source, surfacePoint: scrapShape(index, source.seed, source.ratio), edgeAlpha: true, makeTexture: () => scaledCornerTexture(source.originalEdgeTexture(), source.seed, factory, source.widthMm) };
   root.replaceChildren();
   const canvas = document.createElement('canvas'); canvas.width = 1800; canvas.height = 2200;
   const renderer = new PrintRenderer(canvas, [original, paper], 2);

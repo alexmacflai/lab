@@ -2,7 +2,8 @@ import { seeded } from './receipts.js';
 import { scaledCornerTexture } from './notebook-edge-baseline.js';
 import { tornCornerTexture } from './notebook-edge-proof.js';
 import { scrapTexture } from './notebook-texture.js';
-import { scrapShape, scrapFolds } from './notebook-shapes.js';
+import { referenceTearShape } from './notebook-tear-outline.js';
+import { FACTORY_EDGES, scrapFolds } from './notebook-shapes.js';
 
 const NAMES = ['Page corner · almost flat', 'Page corner · quarter fold', 'Side edge · half fold',
   'Top edge · half fold', 'Four tears · almost flat', 'Four tears · quarter fold'];
@@ -13,18 +14,18 @@ function scrap(index, stock, handwriting) {
   const ratio = [1.22, 1.28, 1.18, 1.3, 1.15, 1.25][index];
   const seed = 6301 + index * 137;
   return { id: `notebook-${index + 1}`, name: NAMES[index],
-    edgeAlpha: index === 0, paperType: 'notebook-scraps', widthMm, ratio, seed, edge: 'card', tint: [1, 1, 1],
+    edgeAlpha: true, paperType: 'notebook-scraps', widthMm, ratio, seed, edge: 'card', tint: [1, 1, 1],
     viewHeight: Math.max(1.8, ratio + .25), surfaceRefined: true, creaseSharp: true,
     condition: NAMES[index],
     folds: scrapFolds(index, random),
     bumps: [{ u: .82, v: .87, radius: .065, amplitude: .00065 }],
     curl: .0007 + index % 3 * .0002, micro: .0001, phase: index,
-    surfacePoint: scrapShape(index, seed, ratio),
+    surfacePoint: referenceTearShape(index, seed, ratio),
     scaledEdgeTexture: () => scaledCornerTexture(scrapTexture(stock, handwriting, index, widthMm, ratio, seed), seed),
     originalEdgeTexture: () => scrapTexture(stock, handwriting, index, widthMm, ratio, seed),
     makeTexture: () => {
       const texture = scrapTexture(stock, handwriting, index, widthMm, ratio, seed);
-      return index === 0 ? tornCornerTexture(texture, seed) : texture;
+      return tornCornerTexture(texture, seed, FACTORY_EDGES[index], widthMm);
     } };
 }
 
