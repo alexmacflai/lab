@@ -1,0 +1,11 @@
+@import url('../compression/style.css');
+.total { font-weight: 600; }
+#status { min-height: 21px; color: #181818b0; }
+.image-window canvas { display: block; width: 100%; height: auto; }
+.pair[data-mode="detail"] canvas { position: relative; width: 800px; max-width: none; left: 50%; transform: translateX(-50%); margin-top: -200px; }
+.pair[data-mode="actual"] canvas { width: 800px; max-width: none; }
+.pair[aria-busy="true"] { opacity: .5; }
+#sizes small { display: block; color: #181818a0; }
+tfoot { font-weight: 600; }
+
+table { min-width: 900px; }

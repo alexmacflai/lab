@@ -1,0 +1,150 @@
+[
+  {
+    "name": "notebook-stock",
+    "file": "../../notebook-stock.png",
+    "bytes": 2429487,
+    "variants": [
+      {
+        "id": "webp85",
+        "file": "assets/notebook-stock-webp85.webp",
+        "bytes": 120474,
+        "width": 1448,
+        "height": 1086
+      },
+      {
+        "id": "webp65",
+        "file": "assets/notebook-stock-webp65.webp",
+        "bytes": 41122,
+        "width": 1448,
+        "height": 1086
+      },
+      {
+        "id": "webp-small",
+        "file": "assets/notebook-stock-webp-small.webp",
+        "bytes": 26594,
+        "width": 724,
+        "height": 543
+      },
+      {
+        "id": "jpeg80",
+        "file": "assets/notebook-stock-jpeg80.jpg",
+        "bytes": 160829,
+        "width": 1448,
+        "height": 1086
+      }
+    ],
+    "width": 1448,
+    "height": 1086
+  },
+  {
+    "name": "notebook-handwriting",
+    "file": "../../notebook-handwriting.png",
+    "bytes": 1313785,
+    "variants": [
+      {
+        "id": "webp85",
+        "file": "assets/notebook-handwriting-webp85.webp",
+        "bytes": 70946,
+        "width": 1402,
+        "height": 1122
+      },
+      {
+        "id": "webp65",
+        "file": "assets/notebook-handwriting-webp65.webp",
+        "bytes": 48974,
+        "width": 1402,
+        "height": 1122
+      },
+      {
+        "id": "webp-small",
+        "file": "assets/notebook-handwriting-webp-small.webp",
+        "bytes": 27882,
+        "width": 701,
+        "height": 561
+      },
+      {
+        "id": "jpeg80",
+        "file": "assets/notebook-handwriting-jpeg80.jpg",
+        "bytes": 105657,
+        "width": 1402,
+        "height": 1122
+      }
+    ],
+    "width": 1402,
+    "height": 1122
+  },
+  {
+    "name": "notebook-handwriting-2",
+    "file": "../../notebook-handwriting-2.png",
+    "bytes": 1270202,
+    "variants": [
+      {
+        "id": "webp85",
+        "file": "assets/notebook-handwriting-2-webp85.webp",
+        "bytes": 65476,
+        "width": 1122,
+        "height": 1402
+      },
+      {
+        "id": "webp65",
+        "file": "assets/notebook-handwriting-2-webp65.webp",
+        "bytes": 44222,
+        "width": 1122,
+        "height": 1402
+      },
+      {
+        "id": "webp-small",
+        "file": "assets/notebook-handwriting-2-webp-small.webp",
+        "bytes": 27202,
+        "width": 561,
+        "height": 701
+      },
+      {
+        "id": "jpeg80",
+        "file": "assets/notebook-handwriting-2-jpeg80.jpg",
+        "bytes": 97297,
+        "width": 1122,
+        "height": 1402
+      }
+    ],
+    "width": 1122,
+    "height": 1402
+  },
+  {
+    "name": "notebook-annotations",
+    "file": "../../notebook-annotations.png",
+    "bytes": 1823754,
+    "variants": [
+      {
+        "id": "webp85",
+        "file": "assets/notebook-annotations-webp85.webp",
+        "bytes": 209186,
+        "width": 1086,
+        "height": 1448
+      },
+      {
+        "id": "webp65",
+        "file": "assets/notebook-annotations-webp65.webp",
+        "bytes": 149710,
+        "width": 1086,
+        "height": 1448
+      },
+      {
+        "id": "webp-small",
+        "file": "assets/notebook-annotations-webp-small.webp",
+        "bytes": 74914,
+        "width": 543,
+        "height": 724
+      },
+      {
+        "id": "jpeg80",
+        "file": "assets/notebook-annotations-jpeg80.jpg",
+        "bytes": 272404,
+        "width": 1086,
+        "height": 1448
+      }
+    ],
+    "width": 1086,
+    "height": 1448
+  }
+]
