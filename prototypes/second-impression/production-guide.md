@@ -211,3 +211,12 @@ Cut-edge offsets must not be interpolated across the sheet. `edgeWeight()` confi
 Further **Previous crease** / **Sharper crease** pairs compare the earlier broad compression with the production crease mapping, keeping the height function and shared highlight shader the same. Cases include Noodle House, pristine, single-fold and crumpled receipts, plus each of the three neat-fold patterns. The grid contains solid ink strips to inspect crease reflections. There is no extra animation loop; closing the section cancels unfinished card renders.
 
 Verify all 100 meshes for finite coordinates and correctly oriented normals, check that pristine controls remain flat and full-width creases have evenly spaced centres and mirrored tilts, and run a complete playback cycle after surface changes. Check the portrait for excessive distortion and the grid for unwanted full-sheet waves. The public and dev main previews, print-condition cards and sharper comparison cards share the production renderer.
+
+
+### Baked notebook edges
+
+`notebook-edges/` contains lossless, gzip-compressed pixel patches. Each file stores little-endian width, height and run count, followed by run offsets and lengths. A length’s high bit marks a transparent clear run; other runs store green, red-minus-green, blue-minus-green and alpha bytes. The runtime reconstructs those pixels over the unchanged 2× paper surface. Prepared collections are shared across switches; failed loads clear the promise so a retry can succeed.
+
+Regenerate after changing notebook stock, notes, dimensions or tear drawing. In a browser served from this prototype, import `dev/notebook-edge-bake.js` and iterate `bakeNotebookEdges()`. Each yielded `{ index, bytes }` supplies the compressed content for `notebook-edges/scrap-NN.bin`. The authoring path uses `loadScraps({ procedural: true })` and the original cached-strip renderer. It is not used by public playback. Generation needs no installed image library or production build step.
+
+Compare all 40 reconstructed RGBA surfaces with the procedural path in the same browser and canvas backend. A byte comparison must match before assets are accepted. The lossless patches increase initial download size in exchange for removing runtime fibre generation; slow-network first visits still need measurement. Original sources and the procedural authoring path remain available.

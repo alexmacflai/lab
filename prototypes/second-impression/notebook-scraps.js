@@ -1,3 +1,4 @@
+import { applyNotebookEdges, loadNotebookEdges } from './notebook-edge-assets.js';
 import { NOTEBOOK_RECORDS } from './notebook-records.js';
 import { seeded } from './receipts.js';
 import { scaledCornerTexture } from './notebook-edge-baseline.js';
@@ -7,7 +8,7 @@ import { referenceTearShape } from './notebook-tear-outline.js';
 import { FACTORY_EDGES, scrapFolds } from './notebook-shapes.js';
 
 // All dimensions describe the surviving scrap, not its original sheet.
-function scrap(index, stock, handwriting, annotations) {
+function scrap(index, stock, handwriting, annotations, edges) {
   const random = seeded(6301 + index * 137), widthMm = 64 + index % 5 * 3;
   const record = NOTEBOOK_RECORDS[index], ratio = record.ratio;
   const atlas = handwriting[Math.floor(index / 20)];
@@ -24,22 +25,30 @@ function scrap(index, stock, handwriting, annotations) {
     originalEdgeTexture: () => scrapTexture(stock, atlas, index, widthMm, ratio, seed, record.family, annotations),
     makeTexture: () => {
       const texture = scrapTexture(stock, atlas, index, widthMm, ratio, seed, record.family, annotations);
-      const finished = tornCornerTexture(texture, seed, FACTORY_EDGES[index], widthMm);
+      const finished = edges ? applyNotebookEdges(texture, edges)
+        : tornCornerTexture(texture, seed, FACTORY_EDGES[index], widthMm);
       texture.width = texture.height = 1; return finished;
     } };
 }
 
-export async function loadScraps() {
+let collection;
+
+export function loadScraps({ procedural = false } = {}) {
+  if (procedural) return prepareScraps(true);
+  return collection ||= prepareScraps(false).catch(error => { collection = null; throw error; });
+}
+
+async function prepareScraps(procedural) {
   const stock = new Image(); stock.src = new URL('notebook-stock.webp', import.meta.url);
   const handwriting = ['notebook-handwriting.webp', 'notebook-handwriting-2.webp'].map(path => {
     const image = new Image(); image.src = new URL(path, import.meta.url); return image;
   });
   const annotations = new Image(); annotations.src = new URL('notebook-annotations.webp', import.meta.url);
-  await Promise.all([annotations.decode(), stock.decode(), ...handwriting.map(image => image.decode())]);
-  const papers = NOTEBOOK_RECORDS.map((_, index) => scrap(index, stock, handwriting, annotations));
-  // Bake only narrow edge strips during collection loading. Playback retains its
-  // bounded GPU cache and does not re-rasterise thousands of fibres every frame.
-  for (const paper of papers) {
+  const [edges] = await Promise.all([procedural ? null : loadNotebookEdges(NOTEBOOK_RECORDS.length),
+    annotations.decode(), stock.decode(), ...handwriting.map(image => image.decode())]);
+  const papers = NOTEBOOK_RECORDS.map((_, index) => scrap(index, stock, handwriting, annotations, edges?.[index]));
+  // Retain the procedural path for authoring and exact asset comparisons only.
+  for (const paper of procedural ? papers : []) {
     const prepared = paper.makeTexture(); prepared.width = prepared.height = 1;
     await new Promise(resolve => setTimeout(resolve, 0));
   }
