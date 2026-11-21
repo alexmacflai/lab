@@ -1,3 +1,4 @@
+import { prepareNotebookEdges } from './notebook-edge-preparation.js';
 import { NOTEBOOK_RECORDS } from './notebook-records.js';
 import { seeded } from './receipts.js';
 import { scaledCornerTexture } from './notebook-edge-baseline.js';
@@ -13,7 +14,7 @@ function scrap(index, stock, handwriting, annotations) {
   const atlas = handwriting[Math.floor(index / 20)];
   const seed = 6301 + index * 137;
   return { id: `notebook-${index + 1}`, name: record.name,
-    edgeAlpha: true, paperType: 'notebook-scraps', widthMm, ratio, seed, edge: 'card', tint: [1, 1, 1],
+    edgeAlpha: true, paperType: 'notebook-scraps', factory: FACTORY_EDGES[index], widthMm, ratio, seed, edge: 'card', tint: [1, 1, 1],
     viewHeight: Math.max(1.8, ratio + .25), surfaceRefined: true, creaseSharp: true,
     condition: record.name,
     folds: scrapFolds(record.foldIndex, random),
@@ -22,24 +23,30 @@ function scrap(index, stock, handwriting, annotations) {
     surfacePoint: referenceTearShape(index, seed, ratio),
     scaledEdgeTexture: () => scaledCornerTexture(scrapTexture(stock, atlas, index, widthMm, ratio, seed, record.family, annotations), seed),
     originalEdgeTexture: () => scrapTexture(stock, atlas, index, widthMm, ratio, seed, record.family, annotations),
-    makeTexture: () => {
+    makeTexture: recipe => {
       const texture = scrapTexture(stock, atlas, index, widthMm, ratio, seed, record.family, annotations);
-      const finished = tornCornerTexture(texture, seed, FACTORY_EDGES[index], widthMm);
+      const finished = tornCornerTexture(texture, seed, FACTORY_EDGES[index], widthMm, recipe);
       texture.width = texture.height = 1; return finished;
     } };
 }
 
-export async function loadScraps() {
-  const stock = new Image(); stock.src = new URL('notebook-stock.png', import.meta.url);
-  const handwriting = ['notebook-handwriting.png', 'notebook-handwriting-2.png'].map(path => {
+let collection;
+
+export function loadScraps({ procedural = false } = {}) {
+  if (procedural) return prepareScraps(true);
+  return collection ||= prepareScraps(false).catch(error => { collection = null; throw error; });
+}
+
+async function prepareScraps(procedural) {
+  const stock = new Image(); stock.src = new URL('notebook-stock.webp', import.meta.url);
+  const handwriting = ['notebook-handwriting.webp', 'notebook-handwriting-2.webp'].map(path => {
     const image = new Image(); image.src = new URL(path, import.meta.url); return image;
   });
-  const annotations = new Image(); annotations.src = new URL('notebook-annotations.png', import.meta.url);
+  const annotations = new Image(); annotations.src = new URL('notebook-annotations.webp', import.meta.url);
   await Promise.all([annotations.decode(), stock.decode(), ...handwriting.map(image => image.decode())]);
   const papers = NOTEBOOK_RECORDS.map((_, index) => scrap(index, stock, handwriting, annotations));
-  // Bake only narrow edge strips during collection loading. Playback retains its
-  // bounded GPU cache and does not re-rasterise thousands of fibres every frame.
-  for (const paper of papers) {
+  if (!procedural) await prepareNotebookEdges(papers);
+  for (const paper of procedural ? papers : []) {
     const prepared = paper.makeTexture(); prepared.width = prepared.height = 1;
     await new Promise(resolve => setTimeout(resolve, 0));
   }

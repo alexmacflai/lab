@@ -1,13 +1,13 @@
 import { seeded } from './receipts.js';
+import { replayEdgeRecipe } from './notebook-edge-recipe.js';
 
 const edgeCache = new Map();
 let cachedBytes = 0;
 const CACHE_BYTES = 96 * 1024 * 1024;
 
-export function tornCornerTexture(source, seed, factory = [true, false, true, false], widthMm = 64) {
+export function tornCornerTexture(source, seed, factory = [true, false, true, false], widthMm = 64, recipe) {
   const canvas = document.createElement('canvas'); canvas.width = source.width * 2; canvas.height = source.height * 2;
   const ctx = canvas.getContext('2d', { willReadFrequently: true }); ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-  const mm = canvas.width / widthMm, random = seeded(seed + 723);
   const key = `${seed}/${source.width}/${source.height}/${widthMm}/${factory.join()}`;
   const cached = edgeCache.get(key);
   if (cached) {
@@ -17,18 +17,24 @@ export function tornCornerTexture(source, seed, factory = [true, false, true, fa
     }
     return canvas;
   }
+  if (recipe) replayEdgeRecipe(ctx,recipe);
+  else drawTornEdges(ctx,canvas.width,canvas.height,seed,factory,widthMm);
+  cacheEdges(key, canvas, factory, Math.ceil(canvas.width / widthMm * 3.4));
+  return canvas;
+}
+
+export function drawTornEdges(ctx, width, height, seed, factory, widthMm) {
+  const mm = width / widthMm, random = seeded(seed + 723);
   for (const [sideIndex, side] of ['left', 'right', 'top', 'bottom'].entries()) {
     if (factory[sideIndex]) continue;
     ctx.save();
-    if (side === 'right') { ctx.translate(canvas.width, 0); ctx.rotate(Math.PI / 2); }
-    else if (side === 'bottom') { ctx.translate(0, canvas.height); ctx.scale(1, -1); }
-    else if (side === 'left') { ctx.translate(0, canvas.height); ctx.rotate(-Math.PI / 2); }
-    const length = side === 'right' || side === 'left' ? canvas.height : canvas.width;
+    if (side === 'right') { ctx.translate(width, 0); ctx.rotate(Math.PI / 2); }
+    else if (side === 'bottom') { ctx.translate(0, height); ctx.scale(1, -1); }
+    else if (side === 'left') { ctx.translate(0, height); ctx.rotate(-Math.PI / 2); }
+    const length = side === 'right' || side === 'left' ? height : width;
     dryTear(ctx, length, mm, random, sideIndex < 2);
     ctx.restore();
   }
-  cacheEdges(key, canvas, factory, Math.ceil(mm * 3.4));
-  return canvas;
 }
 
 function field(length, pitch, random) {

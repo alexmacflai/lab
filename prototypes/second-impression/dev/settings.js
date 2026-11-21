@@ -56,9 +56,9 @@ export const SETTINGS = {
           "resolution": true
         },
         "values": {
-          "resolution": 112,
-          "gamma": 0.8,
-          "brightness": 0.6,
+          "resolution": 120,
+          "gamma": 0.9,
+          "brightness": 0.8,
           "aspect": 1.3333333333333333,
           "size": 0.64
         }
@@ -71,8 +71,8 @@ export const SETTINGS = {
         "values": {
           "fps": 12,
           "delay": 500,
-          "paperJitter": 0,
-          "printJitter": 1.4
+          "paperJitter": 0.2,
+          "printJitter": 1.8
         }
       }
     }

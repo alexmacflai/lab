@@ -1,7 +1,7 @@
 import { SecondImpressionPlayer } from './second-impression-player.js';
 import { PrintRenderer } from './print-material/renderer.js';
 import { bindCameraControls } from './camera-controls.js';
-import { fillPaperSelector, paperType } from './paper-types.js';
+import { fillPaperChoices, paperType } from './paper-types.js';
 import { configurePaperPrint } from './paper-print-settings.js';
 
 const $ = selector => document.querySelector(selector);
@@ -27,13 +27,21 @@ async function hideError() {
 
 async function configureControl(id) {
   if (id === 'paper-type') {
-    const type = paperType($('#paper-type').value);
-    if (!type.public) { $('#paper-type').value = 'receipts'; return; }
+    const type = paperType($('#paper-type input:checked').value);
+    if (!type.public) return;
     const selector = $('#paper-type'), previous = player.papers[0].paperType || 'receipts';
-    selector.disabled = true;
+    selector.disabled = true; selector.setAttribute('aria-busy', 'true');
+    $('#paper-loading').showPopover();
+    $('.stage').setAttribute('aria-busy', 'true');
+    hideError();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     try { await player.changePaper(type.load); }
-    catch { selector.value = previous; showError('The paper could not load. Try again.'); }
-    finally { selector.disabled = false; }
+    catch { $(`#paper-type input[value="${previous}"]`).checked = true; showError('The paper could not load. Try again.'); }
+    finally {
+      selector.disabled = false; selector.setAttribute('aria-busy', 'false');
+      $('#paper-loading').hidePopover();
+      $('.stage').setAttribute('aria-busy', 'false');
+    }
     return;
   }
   if (id !== 'back-camera') return player?.configureSubject(enabled('subject-mask'), enabled('auto-frame'));
@@ -49,7 +57,7 @@ function finishLoading() {
 }
 
 async function initialise() {
-  fillPaperSelector($('#paper-type')); bindCameraControls(configureControl);
+  fillPaperChoices($('#paper-type')); bindCameraControls(configureControl);
   try {
     player = new SecondImpressionPlayer($('#portrait'), {
       Renderer: PrintRenderer, configure: configurePaperPrint,

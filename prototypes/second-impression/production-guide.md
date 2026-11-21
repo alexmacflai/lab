@@ -211,3 +211,14 @@ Cut-edge offsets must not be interpolated across the sheet. `edgeWeight()` confi
 Further **Previous crease** / **Sharper crease** pairs compare the earlier broad compression with the production crease mapping, keeping the height function and shared highlight shader the same. Cases include Noodle House, pristine, single-fold and crumpled receipts, plus each of the three neat-fold patterns. The grid contains solid ink strips to inspect crease reflections. There is no extra animation loop; closing the section cancels unfinished card renders.
 
 Verify all 100 meshes for finite coordinates and correctly oriented normals, check that pristine controls remain flat and full-width creases have evenly spaced centres and mirrored tilts, and run a complete playback cycle after surface changes. Check the portrait for excessive distortion and the grid for unwanted full-sheet waves. The public and dev main previews, print-condition cards and sharper comparison cards share the production renderer.
+
+
+### Notebook edge preparation
+
+`notebook-edge-worker.js` computes deterministic Canvas 2D drawing commands from each scrap’s seed, dimensions and factory edges. Commands retain double precision, style strings and call order. The main thread replays them through the original Canvas 2D context and retains the existing perimeter-strip cache. Rasterisation remains on the original canvas because worker canvases did not reproduce its pixels exactly. Pixel-patch assets are no longer shipped.
+
+Preparation requests the next recipe while replaying the current one, yielding between papers so loading feedback can repaint. The worker terminates on success or failure. Concurrent and repeated collection loads share one promise; a failed load clears it for retry. Browsers without workers prepare the same edges on the main thread. The complete collection is prepared before playback, retaining the eight-paper GPU cache and keeping fibre drawing out of the camera loop.
+
+Compare all 40 prepared RGBA surfaces with independent hashes captured from the pre-change procedural path in the same browser and canvas backend. Do not compare only with the shared live cache: that can conceal preparation errors. `loadScraps({ procedural: true })` retains the direct authoring path.
+
+A local Chromium test with HTTP cache disabled, 1.6 Mbps download, 750 kbps upload and 150 ms latency measured first selection at 50.4 seconds with the former 9.35 MB pixel patches and 7.4 seconds with command preparation. Returning to the prepared collection took 0.38 seconds with no new requests. These are synthetic-network measurements on a desktop using a software renderer; physical phones and other network conditions may differ. Initial preparation still costs CPU time, in exchange for removing the large download.
